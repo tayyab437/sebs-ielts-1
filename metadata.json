@@ -1,0 +1,11 @@
+{
+  "name": "SEB's English & IELTS Academy",
+  "description": "Premium AI-powered IELTS preparation platform with personalized learning paths, real-time feedback, and advanced analytics.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

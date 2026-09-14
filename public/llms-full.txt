@@ -1,0 +1,20 @@
+# SEB's Institute - Full Context
+
+> Comprehensive institutional profile, curriculum details, and resources for large language models and search engines.
+
+## Overview
+SEB's Institute (Syed Ejaz Bukhari's Language Institute) is an online language education academy delivering structured courses in IELTS Academic, IELTS General Training, Spoken English Fluency, PTE, and Academic Writing. The institute's motto is "We Teach English, Not Pinglish", emphasizing natural native cadence, correct phonetics, and academic rigor over literal translations.
+
+## Core Courses
+- [IELTS Preparation Course](https://sebsinstitute.com/courses): Covers all 4 modules (Listening, Reading, Writing, Speaking). Includes Cambridge practice tests, Band 9 sample essays, and AI-assisted speaking evaluation.
+- [Spoken English Mastery](https://sebsinstitute.com/courses): 8-week intensive fluency track focusing on articulation, idiomatic phrasing, pronunciation, and real-time confidence.
+- [English Writing Skills](https://sebsinstitute.com/courses): Professional writing syllabus covering IELTS Task 1 (charts, maps, processes) and Task 2 essays, as well as formal correspondence.
+- [PTE Masterclass](https://sebsinstitute.com/courses): Comprehensive test strategies for the Pearson Test of English Academic, targeting 79+ scores.
+
+## Practice Tools
+- [Interactive Mock Tests](https://sebsinstitute.com/mock-tests): Realistic simulation of computer-delivered IELTS with real-time timer, answer review, and automated band score calculation.
+- [Student Success Stories](https://sebsinstitute.com/reviews): Documented student reviews and band score achievements from learners worldwide.
+
+## Contact & Campus
+- [Global Virtual Campus](https://sebsinstitute.com/): Online classes available worldwide via live digital portal.
+- [Admissions Desk](https://sebsinstitute.com/contact): Enrollment queries and course guidance.

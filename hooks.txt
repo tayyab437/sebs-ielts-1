@@ -1,0 +1,20 @@
+50:  useEffect(() => {
+57:  useEffect(() => {
+92:  useEffect(() => {
+98:  useEffect(() => {
+102:  useEffect(() => {
+106:  useEffect(() => {
+139:  useEffect(() => {
+150:  useEffect(() => {
+154:  useEffect(() => {
+158:  useEffect(() => {
+163:  useEffect(() => {
+167:  useEffect(() => {
+203:  useEffect(() => {
+218:  useEffect(() => {
+236:  useEffect(() => {
+352:  useEffect(() => {
+1114:  useEffect(() => {
+1116:      useAudioPlayerStore.getState().setAudioPlayerContent(activeAudioSourceUrl, currentLesson?.id || activeCourse?.id || null, uploadedVoiceName || currentLesson?.title || activeCourse?.title || "IELTS Candidate Audio Track");
+1118:      useAudioPlayerStore.getState().clearAudio();
+1364:              userId = authUser?.id || null;

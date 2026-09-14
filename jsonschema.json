@@ -1,0 +1,3264 @@
+[
+  {
+    "scenario": "IELTS JSON SCHEMA INTEGRATION INSTRUCTIONS & DO'S AND DON'TS",
+    "description": "Comprehensive specification guidelines, Good formats vs Bad formats, schema design rules, validation constraints, and layout parameters for full rendering compatibility.",
+    "rules": {
+      "dos": [
+        "DO use the correct 'type' string identifiers matching the system components: 'MCQ' (Single Selection), 'MULTI_MCQ' (Multiple Selection), 'TF' (True/False/Not Given), 'YN' (Yes/No/Not Given), 'BLANK' (Fill in the Blank), 'INLINE_BLANKS' (Paragraph with Inline Blanks), 'MATCHING' (Matching Headings/Information), 'reading-passage', 'audio', 'image', 'video', 'divider', 'tip', 'band-descriptor', 'step', 'part1', 'cue-card', 'part3', 'task1', 'task2'.",
+        "DO design multi-question sets or complex Reading tests with 'layout_type': 'split', putting content resources (e.g. 'reading-passage', 'audio', 'image') under 'blocks.left' and the active interactive questions (e.g. 'MCQ', 'INLINE_BLANKS', 'MATCHING') under 'blocks.right' to generate responsive side-by-side splits.",
+        "DO use a single 'question-range' block to provide the heading (range) and instructions for a group of questions. This prevents duplication of instruction text within individual question blocks.",
+        "DO format 'INLINE_BLANKS' questions with distinct input placeholders using either '_____' (five underscores) or '[BLANK]' as markers inside the 'text' string (or array of strings joined with newlines). Make sure to supply the corresponding answers as a single string divided by vertical pipes '|' (e.g., 'water|sand|oxygen') under the 'correctAnswer' key. The system will map each placeholder to a distinct sub-question.",
+        "DO format 'MATCHING' blocks using two sets of parallel options: write prompts inside the 'text' block separated by newlines ('\\n') and write the correct matched answers in the same order inside the 'correctAnswer' string, also separated by newlines ('\\n') (e.g., 'A\\nC\\nB'). This maps each line into a standalone interactive drop-down matchup row.",
+        "DO specify correct answers for single selection 'MCQ' blocks using either 'correctIndex' (the integer index, e.g. 0, 1, 2) or 'correctAnswer' matching the exact character label (e.g. 'A', 'B', 'C', 'D').",
+        "DO provide multiple correct index answers under 'correctIndexes' (an array of integers, e.g. [0, 2]) for 'MULTI_MCQ' blocks to support multi-select validation.",
+        "DO ensure distinct IDs are generated as unique alphanumeric strings for every block to avoid DOM collisions, component re-mounting issues, or mixed state caching in localStorage.",
+        "DO use uppercase values ('TRUE', 'FALSE', 'NOT GIVEN' or 'YES', 'NO', 'NOT GIVEN') for 'TF' and 'YN' question validation to prevent validation mismatch bypass.",
+        "DO analyze Markdown input to determine how many questions belong to each section (e.g. Passage 1 / Section 1 = Q1–13, Passage 2 / Section 2 = Q14–27, Passage 3 / Section 3 = Q28–40), and explicitly attach 'sectionNumber': 1, 2, or 3 (and 'data.sectionNumber': 1|2|3) to EVERY passage block in 'blocks.left' and EVERY question/instruction block in 'blocks.right'. This gives the Course Designer a clear view of which questions belong to which section.",
+        "DO insert 'divider' blocks ({ \"type\": \"divider\" }) in 'blocks.left' between reading passages and in 'blocks.right' between question sets for different sections. The Course Designer uses the 'divider' block as an explicit section boundary: encountering a divider in 'blocks.left' or 'blocks.right' splits content from that point onwards into the next section (Section 1 -> Section 2 -> Section 3).",
+        "DO ensure each question block specifies its exact question range or question number (e.g. questionNumber: 1, startQNum: 14) along with 'sectionNumber': 1|2|3 so that questions can be cleanly filtered and grouped by section without any section bleeding."
+      ],
+      "donts": [
+        "DONT duplicate instructions or headings inside individual question blocks (data.instruction, data.sectionHeading) if a 'question-range' block is already providing them for that set.",
+        "DONT mix questions of different sections together or allow Section 3 questions to bleed into Section 2 or Section 1. Ensure every question block's section metadata ('sectionNumber': 1|2|3) or question range strictly belongs to its respective reading section.",
+        "DONT omit 'sectionNumber' / 'section' metadata from question blocks or passage blocks when generating multi-section reading tests from Markdown or text input.",
+        "DONT provide plain unstructured question text without appropriate placeholders in 'INLINE_BLANKS' blocks. If no '_____' or '[BLANK]' is detected in the text, sub-question mapping will fail.",
+        "DONT mix different representations of MCQ index validations — if correct choice is index 0, do not declare it as string '0' in 'correctAnswer' without matching keys, and avoid inconsistency in labeling indices vs character options.",
+        "DONT wrap raw objects inside 'text' properties in your questions; always ensure the text is either a plain string or an array of strings that can be formatted. Objects will render as '[object Object]' layouts on the frontend.",
+        "DONT exceed a standard array length match inside matching paragraphs and keys — if there are 3 matching rows, there must be exactly 3 answer groups separated by newlines.",
+        "DONT expose sensitive credentials or database connection elements inside any instructions or schema fields.",
+        "DONT leave layout lists empty if children exist — e.g. if 'layout_type' is 'single', populate 'blocks.single' and leave 'left' and 'right' empty, while if 'layout_type' is 'split', leave 'single' empty and populate 'left' and 'right'."
+      ],
+      "good_formats_by_type": {
+        "MCQ": {
+          "format": {
+            "id": "mcq-example-1",
+            "type": "MCQ",
+            "sectionNumber": 1,
+            "data": {
+              "sectionNumber": 1,
+              "questionNumber": 1,
+              "question": "Which agricultural method is discussed in details?",
+              "options": [
+                "Hydroponics vertical farming",
+                "Traditional open-air rotation",
+                "Subterranean thermal harvesting",
+                "High-density monoculture grids"
+              ],
+              "correctIndex": 0,
+              "explanation": "Hydroponics is introduced in paragraph A as the core vertical agricultural method."
+            }
+          }
+        },
+        "MULTI_MCQ": {
+          "format": {
+            "id": "multi-mcq-example-1",
+            "type": "MULTI_MCQ",
+            "sectionNumber": 1,
+            "data": {
+              "sectionNumber": 1,
+              "startQNum": 2,
+              "text": "Identify TWO benefits of vertical farming mentioned in the text.",
+              "options": [
+                "Zero pesticide cultivation",
+                "Reduced municipal grid power use",
+                "Consistent year-round crop yields",
+                "Cheaper global logistics corridors",
+                "Lower crop nutritional profiles"
+              ],
+              "correctIndexes": [0, 2],
+              "explanation": "The text states that fully sealed vertical farms avoid pests completely and run continuous seasonal growth cycles."
+            }
+          }
+        },
+        "TF_YN": {
+          "TF_format": {
+            "id": "tf-example-1",
+            "type": "TF",
+            "sectionNumber": 1,
+            "data": {
+              "sectionNumber": 1,
+              "questionNumber": 4,
+              "text": "The local council funded the expansion of the botanical garden.",
+              "correctAnswer": "NOT GIVEN",
+              "explanation": "No information regarding funding or council involvement is mentioned in the historical logs."
+            }
+          },
+          "YN_format": {
+            "id": "yn-example-1",
+            "type": "YN",
+            "sectionNumber": 1,
+            "data": {
+              "sectionNumber": 1,
+              "questionNumber": 5,
+              "text": "The lead scientist initially rejected the carbon-dating metrics.",
+              "correctAnswer": "YES",
+              "explanation": "The text states that the principal researcher expressed deep skepticism regarding the initial isotope dates."
+            }
+          }
+        },
+        "BLANK": {
+          "format": {
+            "id": "blank-example-1",
+            "type": "BLANK",
+            "sectionNumber": 1,
+            "data": {
+              "sectionNumber": 1,
+              "questionNumber": 6,
+              "text": "The core component used to insulate the battery terminals is made of [ceramic].",
+              "correctAnswer": "ceramic"
+            }
+          }
+        },
+        "INLINE_BLANKS": {
+          "format": {
+            "id": "inline-blanks-example-1",
+            "type": "INLINE_BLANKS",
+            "sectionNumber": 1,
+            "data": {
+              "sectionNumber": 1,
+              "startQNum": 7,
+              "text": "Standard fuel cells convert chemical energy into _____ through electro-chemical reactions. The bypass valve releases excess _____ to regulate system temperature, while the _____ plates gather current.",
+              "correctAnswer": "electricity|hydrogen|conducting"
+            }
+          }
+        },
+        "MATCHING": {
+          "format": {
+            "id": "matching-example-1",
+            "type": "MATCHING",
+            "sectionNumber": 2,
+            "data": {
+              "sectionNumber": 2,
+              "startQNum": 14,
+              "text": "Match the following findings to the correct research institution:\nNASA Advanced Labs\nTokyo Agricultural Center\nOxford Paleo-climatology Group",
+              "correctAnswer": "NASA Advanced Labs\nTokyo Agricultural Center\nOxford Paleo-climatology Group",
+              "explanation": "Items in prompt lines are matched exactly with answers in the corresponding index line of correctAnswers."
+            }
+          }
+        }
+      },
+      "bad_formats_by_type": {
+        "MCQ": {
+          "error_pattern": "Declaring correct choices as alphabetical string labels like 'A' when the validation component only expects integer indices via 'correctIndex', causing a script crash during comparison.",
+          "example": {
+            "type": "MCQ",
+            "data": {
+              "question": "What is the primary theme?",
+              "options": ["A. Growth", "B. Decay"],
+              "correctAnswer": "A"
+            }
+          }
+        },
+        "INLINE_BLANKS": {
+          "error_pattern": "Failing to match the count of underline/blank placeholders to correct answers split by vertical pipes, causing out-of-bounds evaluation or unvalidated blank inputs.",
+          "example": {
+            "type": "INLINE_BLANKS",
+            "data": {
+              "text": "First blank: _____ and second blank: _____",
+              "correctAnswer": "single-answer-only"
+            }
+          }
+        },
+        "MATCHING": {
+          "error_pattern": "Formatting prompt or correct answer items inside raw arrays rather than newline-joined strings, which forces standard components to fail at line-splitting or render literal JSON fragments.",
+          "example": {
+            "type": "MATCHING",
+            "data": {
+              "text": ["Prompt 1", "Prompt 2"],
+              "correctAnswer": ["Answer 1", "Answer 2"]
+            }
+          }
+        }
+      },
+      "troubleshooting": {
+        "unanswered_validation_glitches": "Ensure every question block contains a populated 'id' key. Component modules map state to 'answers[q.id]' - if multiple questions share the same value or have no layout id, writing one input field triggers multiple component re-renders or overrides unrelated fields.",
+        "whitespace_normalization": "The compiler checks student responses by running '.trim().toLowerCase()'. However, avoid extra white space inside correctAnswer strings representing keys (e.g. use 'lead' instead of ' lead '), as exact options or splits should be clean.",
+        "case_sensitivity_notes": "All text completions and blanks are compared via case-insensitive matching, but the correct configuration keys should ideally match clean dictionary forms to support precise explanations."
+      }
+    }
+  },
+  {
+    "scenario": "1. Creating a Full Reading Mock Test (Single Layout)",
+    "description": "A fully functional standalone Course object for an IELTS Reading Mock Test featuring 3 reading passages side-by-side with questions. Since 'CourseData' supports 'single' layout, 'blocks.single' is populated.",
+    "json": {
+      "title": "IELTS Academic Reading Test 1",
+      "description": "Complete Reading test with 3 passages and 40 questions.",
+      "thumbnail_url": "",
+      "course_type": "reading",
+      "layout_type": "single",
+      "status": "Published",
+      "blocks": {
+        "single": [
+          {
+            "id": "heading-1",
+            "type": "heading",
+            "data": { "text": "IELTS Reading Test", "level": 1 }
+          },
+          {
+            "id": "rp-1",
+            "type": "reading-passage",
+            "data": {
+              "title": "Passage 1: Bees and Pollination",
+              "content": "Bees are important pollinators..."
+            }
+          }
+        ],
+        "left": [],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "2. Creating a Split Layout (Left: Passage, Right: Questions)",
+    "description": "IELTS tests typically feature split layouts where the reading passage is on the left and questions on the right. Here's a split setup.",
+    "json": {
+      "title": "Reading Test - Split Layout",
+      "description": "Passage on left, questions on right.",
+      "layout_type": "split",
+      "status": "Draft",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "p-1",
+            "type": "reading-passage",
+            "data": { "title": "Passage", "content": "Text here..." }
+          }
+        ],
+        "right": [
+          {
+            "id": "q-1",
+            "type": "true-false-not-given",
+            "data": {
+              "questionText": "Do you agree?",
+              "options": ["TRUE", "FALSE", "NOT GIVEN"]
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "3. Adding a Basic Heading",
+    "description": "Using a heading block to break sections.",
+    "exampleBlock": {
+      "id": "h-1",
+      "type": "heading",
+      "data": { "text": "Section 1: General Training", "level": 2 }
+    }
+  },
+  {
+    "scenario": "4. Adding Paragraph Text",
+    "description": "Basic text content for instructions.",
+    "exampleBlock": {
+      "id": "t-1",
+      "type": "text",
+      "data": {
+        "text": "Please read the instructions carefully before attempting the quiz."
+      }
+    }
+  },
+  {
+    "scenario": "5. Adding an Image",
+    "description": "Inserting an image using the 'image' block type.",
+    "exampleBlock": {
+      "id": "img-1",
+      "type": "image",
+      "data": {
+        "url": "https://example.com/graph.png",
+        "caption": "Figure 1: Global bee population",
+        "alt": "A chart showing bee populations"
+      }
+    }
+  },
+  {
+    "scenario": "6. Adding an Audio Player",
+    "description": "Embedding an audio track for listening exercises.",
+    "exampleBlock": {
+      "id": "audio-1",
+      "type": "audio",
+      "data": {
+        "url": "https://example.com/audio.mp3",
+        "title": "Section 1 Audio"
+      }
+    }
+  },
+  {
+    "scenario": "7. Embedding a Video",
+    "description": "Embed a video tutorial or lesson.",
+    "exampleBlock": {
+      "id": "vid-1",
+      "type": "video",
+      "data": {
+        "url": "https://youtube.com/...",
+        "title": "Introduction Lesson"
+      }
+    }
+  },
+  {
+    "scenario": "8. Embedding a PDF",
+    "description": "Embed a PDF document such as band descriptors.",
+    "exampleBlock": {
+      "id": "pdf-1",
+      "type": "pdf",
+      "data": {
+        "url": "https://example.com/document.pdf",
+        "title": "IELTS Descriptors"
+      }
+    }
+  },
+  {
+    "scenario": "9. Adding a Divider",
+    "description": "A visual separator.",
+    "exampleBlock": {
+      "id": "div-1",
+      "type": "divider",
+      "data": {}
+    }
+  },
+  {
+    "scenario": "10. Reading Passage",
+    "description": "A block specifically for rendering a long reading text with paragraphs.",
+    "exampleBlock": {
+      "id": "read-1",
+      "type": "reading-passage",
+      "data": {
+        "title": "History of the Bicycle",
+        "content": "The bicycle was invented in..."
+      }
+    }
+  },
+  {
+    "scenario": "11. Multiple Choice Question (MCQ)",
+    "description": "A 4-option multiple choice question.",
+    "exampleBlock": {
+      "id": "mcq-1",
+      "type": "mcq",
+      "data": {
+        "question": "What is the main topic?",
+        "options": ["A", "B", "C", "D"],
+        "correct": "A"
+      }
+    }
+  },
+  {
+    "scenario": "12. True/False/Not Given",
+    "description": "TFNG question type for reading.",
+    "exampleBlock": {
+      "id": "tfng-1",
+      "type": "true-false-not-given",
+      "data": { "statement": "Bees produce honey.", "correct": "TRUE" }
+    }
+  },
+  {
+    "scenario": "13. Fill in the Blanks",
+    "description": "A paragraph with missing words where students type the answer.",
+    "exampleBlock": {
+      "id": "fib-1",
+      "type": "fill-blanks",
+      "data": {
+        "statement": "The quick brown [BLANK] jumps over the lazy [BLANK].",
+        "answers": "fox|dog"
+      }
+    }
+  },
+  {
+    "scenario": "14. Matching Headings",
+    "description": "Choose the correct heading for each paragraph.",
+    "exampleBlock": {
+      "id": "mh-1",
+      "type": "matching-headings",
+      "data": {
+        "headings": "i. History\nii. Future",
+        "paragraphs": "Paragraph A\nParagraph B",
+        "answers": "i\nii"
+      }
+    }
+  },
+  {
+    "scenario": "15. Matching Information",
+    "description": "Match information to paragraphs.",
+    "exampleBlock": {
+      "id": "mi-1",
+      "type": "matching-information",
+      "data": {
+        "paragraphs": "Detail about cost\nDetail about weather",
+        "headings": "Paragraph A\nParagraph B\nParagraph C",
+        "answers": "Paragraph C\nParagraph A"
+      }
+    }
+  },
+  {
+    "scenario": "16. Matching Features",
+    "description": "Match statements to categories (e.g. researchers).",
+    "exampleBlock": {
+      "id": "mf-1",
+      "type": "matching-features",
+      "data": {
+        "statements": [
+          { "text": "Discovered X", "qNum": 7, "answer": "John Doe" }
+        ],
+        "features": ["John Doe", "Jane Smith"]
+      }
+    }
+  },
+  {
+    "scenario": "17. Sentence Completion",
+    "description": "Complete the sentences with NO MORE THAN TWO WORDS.",
+    "exampleBlock": {
+      "id": "sc-1",
+      "type": "sentence-completion",
+      "data": {
+        "statement": "The tree is known for its [BLANK] which is dark.",
+        "answers": "bark"
+      }
+    }
+  },
+  {
+    "scenario": "18. Summary Completion",
+    "description": "Fill in a summary paragraph.",
+    "exampleBlock": {
+      "id": "sum-1",
+      "type": "summary-completion",
+      "data": {
+        "statement": "First, the [BLANK] rang, then...",
+        "answers": "alarm"
+      }
+    }
+  },
+  {
+    "scenario": "19. Table Completion",
+    "description": "Row/col missing values.",
+    "exampleBlock": {
+      "id": "tc-1",
+      "type": "table-completion",
+      "data": { "statement": "1999 | ____", "answers": "Y2K Bug" }
+    }
+  },
+  {
+    "scenario": "20. Flow Chart Completion",
+    "description": "Complete steps in a process.",
+    "exampleBlock": {
+      "id": "fc-1",
+      "type": "flow-chart",
+      "data": {
+        "steps": [
+          {
+            "title": "Step 1",
+            "description": "Gather [ingredients]",
+            "qNum": 11
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "21. Diagram Label",
+    "description": "Label parts of an image.",
+    "exampleBlock": {
+      "id": "dl-1",
+      "type": "diagram-label",
+      "data": {
+        "image": "schema.png",
+        "labels": [{ "x": 10, "y": 20, "answer": "Valve", "qNum": 12 }]
+      }
+    }
+  },
+  {
+    "scenario": "22. Listening Section Header",
+    "description": "Denotes a new section of an audio track.",
+    "exampleBlock": {
+      "id": "lsh-1",
+      "type": "listening-section",
+      "data": {
+        "sectionNumber": 1,
+        "title": "Conversation at a rental agency",
+        "audioTimestamp": "00:00"
+      }
+    }
+  },
+  {
+    "scenario": "23. Listening MCQ",
+    "description": "Multiple choice for listening.",
+    "exampleBlock": {
+      "id": "lmcq-1",
+      "type": "listening-mcq",
+      "data": {
+        "question": "Why is she calling?",
+        "options": ["Rent a car", "Buy a car"],
+        "correctAnswer": "Rent a car",
+        "qNum": 13
+      }
+    }
+  },
+  {
+    "scenario": "24. Listening Fill Blanks",
+    "description": "Form completion for listening.",
+    "exampleBlock": {
+      "id": "lfb-1",
+      "type": "listening-fill-blanks",
+      "data": { "text": "Customer Name: John [Smith]", "qNumStart": 14 }
+    }
+  },
+  {
+    "scenario": "25. Academic Writing Task 1",
+    "description": "Chart/Graph description.",
+    "exampleBlock": {
+      "id": "awt1-1",
+      "type": "academic-task1",
+      "data": {
+        "images": ["graph.png"],
+        "prompt": "Summarise the information by selecting and reporting the main features."
+      }
+    }
+  },
+  {
+    "scenario": "26. General Writing Task 1",
+    "description": "Letter writing.",
+    "exampleBlock": {
+      "id": "gwt1-1",
+      "type": "general-task1",
+      "data": {
+        "prompt": "Write a letter to your landlord...",
+        "bulletPoints": ["explain the problem", "propose a solution"]
+      }
+    }
+  },
+  {
+    "scenario": "27. Writing Task 2",
+    "description": "Academic / General Essay.",
+    "exampleBlock": {
+      "id": "wt2-1",
+      "type": "task2",
+      "data": {
+        "prompt": "Some people think that... To what extent do you agree?",
+        "minWords": 250
+      }
+    }
+  },
+  {
+    "scenario": "28. Speaking Part 1",
+    "description": "General questions.",
+    "exampleBlock": {
+      "id": "sp1-1",
+      "type": "part1",
+      "data": {
+        "topic": "Hometown",
+        "questions": ["Where are you from?", "Do you like it there?"]
+      }
+    }
+  },
+  {
+    "scenario": "29. Speaking Cue Card (Part 2)",
+    "description": "Long turn prompt.",
+    "exampleBlock": {
+      "id": "sp2-1",
+      "type": "cue-card",
+      "data": {
+        "topic": "Describe a book you read recently.",
+        "bullets": ["What it was", "Who wrote it", "Why you liked it"]
+      }
+    }
+  },
+  {
+    "scenario": "30. Speaking Part 3",
+    "description": "Discussion topics based on Part 2.",
+    "exampleBlock": {
+      "id": "sp3-1",
+      "type": "part3",
+      "data": {
+        "topic": "Reading Habits",
+        "questions": ["Do young people read enough?"]
+      }
+    }
+  },
+  {
+    "scenario": "31. Structural: Lesson Wrapper",
+    "description": "Wrapping content inside a sub-lesson.",
+    "exampleBlock": {
+      "id": "les-1",
+      "type": "lesson",
+      "data": { "title": "Module 1", "description": "Intro to reading" }
+    }
+  },
+  {
+    "scenario": "32. Assignment Block",
+    "description": "A block denoting homework or an assignment task.",
+    "exampleBlock": {
+      "id": "ass-1",
+      "type": "assignment",
+      "data": {
+        "title": "Homework 1",
+        "dueDate": "2023-12-01",
+        "details": "Read passage 1."
+      }
+    }
+  },
+  {
+    "scenario": "33. Quiz Container",
+    "description": "Wrapper for a group of questions.",
+    "exampleBlock": {
+      "id": "qz-1",
+      "type": "quiz",
+      "data": { "title": "Quiz 1", "timerMinutes": 20 }
+    }
+  },
+  {
+    "scenario": "34. Downloadable Resource",
+    "description": "A file for students to download.",
+    "exampleBlock": {
+      "id": "dl-1",
+      "type": "downloadable-resource",
+      "data": { "url": "worksheet.pdf", "title": "Practice Worksheet" }
+    }
+  },
+  {
+    "scenario": "35. Question Range Note",
+    "description": "Header indicating range and detailed instructions for the following questions.",
+    "exampleBlock": {
+      "id": "qr-1",
+      "type": "question-range",
+      "data": { 
+        "range": "Questions 1-7: True / False / Not Given", 
+        "instruction": "Write:\nTRUE if the statement agrees with the information\nFALSE if the statement contradicts the information\nNOT GIVEN if there is no information"
+      }
+    }
+  },
+  {
+    "scenario": "36. Note Box",
+    "description": "A highlighted callout or note.",
+    "exampleBlock": {
+      "id": "note-1",
+      "type": "note",
+      "data": {
+        "text": "Remember to use capitals for proper nouns.",
+        "type": "info"
+      }
+    }
+  },
+  {
+    "scenario": "37. Exam Tip",
+    "description": "Strategy or tip box.",
+    "exampleBlock": {
+      "id": "tip-1",
+      "type": "tip",
+      "data": { "text": "Skim the text before reading details." }
+    }
+  },
+  {
+    "scenario": "38. Band Descriptor",
+    "description": "Criteria breakdown for writing or speaking.",
+    "exampleBlock": {
+      "id": "bd-1",
+      "type": "band-descriptor",
+      "data": {
+        "criteria": "Task Achievement",
+        "band": "7",
+        "description": "Addresses all parts of the task..."
+      }
+    }
+  },
+  {
+    "scenario": "39. Adding Many Blocks to Left Panel (Split Layout)",
+    "description": "Using layout_type 'split' and populating the 'left' array with multiple chunks of texts and images.",
+    "json": {
+      "title": "Complex Reading Layout",
+      "layout_type": "split",
+      "status": "Draft",
+      "blocks": {
+        "single": [],
+        "left": [
+          { "id": "t1", "type": "text", "data": { "text": "Text chunk 1" } },
+          { "id": "img1", "type": "image", "data": { "url": "img.png" } },
+          { "id": "t2", "type": "text", "data": { "text": "Text chunk 2" } }
+        ],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "40. Adding Many Questions to Right Panel",
+    "description": "Putting MCQ, TFNG, Fill Blanks, all in the right column.",
+    "json": {
+      "title": "Questions Array",
+      "layout_type": "split",
+      "status": "Draft",
+      "blocks": {
+        "single": [],
+        "left": [],
+        "right": [
+          { "id": "q1", "type": "mcq", "data": {} },
+          { "id": "q2", "type": "true-false-not-given", "data": {} },
+          { "id": "q3", "type": "fill-blanks", "data": {} }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "41. Multiple Lessons Scenario",
+    "description": "Using multiple 'lesson' blocks within a single layout to divide major content chunks.",
+    "json": {
+      "title": "Complete Course with Multiple Lessons",
+      "layout_type": "single",
+      "blocks": {
+        "single": [
+          {
+            "id": "l1",
+            "type": "lesson",
+            "data": { "title": "Lesson 1: Listening basics" }
+          },
+          { "id": "a1", "type": "audio", "data": { "url": "l1.mp3" } },
+          {
+            "id": "l2",
+            "type": "lesson",
+            "data": { "title": "Lesson 2: Advanced listening" }
+          },
+          { "id": "a2", "type": "audio", "data": { "url": "l2.mp3" } }
+        ],
+        "left": [],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "42. Course with embedded video and resources",
+    "description": "Creating an online self-paced module",
+    "json": {
+      "title": "Video Module",
+      "layout_type": "single",
+      "blocks": {
+        "single": [
+          { "id": "v1", "type": "video", "data": { "url": "video.mp4" } },
+          {
+            "id": "d1",
+            "type": "downloadable-resource",
+            "data": { "url": "notes.pdf" }
+          }
+        ],
+        "left": [],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "43. Speaking Mock Test",
+    "description": "A sequence of Part 1, Part 2 (Cue Card), and Part 3 blocks.",
+    "json": {
+      "title": "Speaking Mock",
+      "layout_type": "single",
+      "blocks": {
+        "single": [
+          { "id": "sp1", "type": "part1", "data": { "topic": "Work" } },
+          {
+            "id": "sp2",
+            "type": "cue-card",
+            "data": { "topic": "A project you did" }
+          },
+          { "id": "sp3", "type": "part3", "data": { "topic": "Teamwork" } }
+        ],
+        "left": [],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "44. Writing Mock Test (Both Tasks)",
+    "description": "Academic Writing test with Task 1 & Task 2.",
+    "json": {
+      "title": "Academic Writing Mock",
+      "layout_type": "single",
+      "blocks": {
+        "single": [
+          {
+            "id": "wt1",
+            "type": "academic-task1",
+            "data": { "prompt": "Describe chart..." }
+          },
+          { "id": "div", "type": "divider", "data": {} },
+          {
+            "id": "wt2",
+            "type": "task2",
+            "data": { "prompt": "Write essay..." }
+          }
+        ],
+        "left": [],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "45. Nested Content via Quiz Containers",
+    "description": "Normally quizzes hold child questions. The block renderer handles this linearly.",
+    "json": {
+      "title": "Quiz Grouping",
+      "layout_type": "single",
+      "blocks": {
+        "single": [
+          { "id": "qz", "type": "quiz", "data": { "title": "Pop Quiz" } },
+          { "id": "mq", "type": "mcq", "data": { "question": "Q1" } }
+        ],
+        "left": [],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "46. Yes/No/Not Given Variation",
+    "description": "TFNG block can be adapted for YNNG reading tasks.",
+    "exampleBlock": {
+      "id": "ynng-1",
+      "type": "true-false-not-given",
+      "data": {
+        "format": "YES-NO-NOT GIVEN",
+        "statements": [{ "text": "Are you happy?", "answer": "YES", "qNum": 1 }]
+      }
+    }
+  },
+  {
+    "scenario": "47. Multiple Sentence Completion",
+    "description": "5 sentences in a single block.",
+    "exampleBlock": {
+      "id": "sc5-1",
+      "type": "sentence-completion",
+      "data": {
+        "instruction": "ONE WORD ONLY",
+        "sentences": [
+          { "text": "1. [cat]", "qNum": 1 },
+          { "text": "2. [dog]", "qNum": 2 },
+          { "text": "3. [bird]", "qNum": 3 },
+          { "text": "4. [fish]", "qNum": 4 },
+          { "text": "5. [cow]", "qNum": 5 }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "48. Empty Template",
+    "description": "A completely blank template to start a split layout from JSON.",
+    "json": {
+      "title": "Blank Split Layout",
+      "description": "Start designing...",
+      "course_type": "reading",
+      "layout_type": "split",
+      "status": "Draft",
+      "blocks": { "single": [], "left": [], "right": [] }
+    }
+  },
+  {
+    "scenario": "49. Using 'audio_url' property at Course level",
+    "description": "For a global audio track that plays for the entire course.",
+    "json": {
+      "title": "Global Audio Test",
+      "audio_url": "https://example.com/entire-test.mp3",
+      "layout_type": "split",
+      "blocks": {
+        "single": [],
+        "left": [],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "50. Complete End-to-End Migration",
+    "description": "Translating the PDF test provided ('The Science of Colour') into a CourseData JSON structure.",
+    "json": {
+      "title": "IELTS Academic Reading Test: The Science of Colour",
+      "description": "Level: C1 | Total Passage Word Limit: Up to 2400 Words | Questions: 40",
+      "layout_type": "split",
+      "status": "Published",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "heading-1",
+            "type": "heading",
+            "data": { "text": "Passage 1: How Humans See Colour", "level": 2 }
+          },
+          {
+            "id": "p1-content",
+            "type": "reading-passage",
+            "data": {
+              "title": "",
+              "content": "Colour appears to be a simple feature... [full text here]"
+            }
+          }
+        ],
+        "right": [
+          {
+            "id": "qr-1",
+            "type": "question-range",
+            "data": {
+              "range": "Questions 1-7: True / False / Not Given",
+              "instruction": "Write:\nTRUE if the statement agrees with the information\nFALSE if the statement contradicts the information\nNOT GIVEN if there is no information"
+            }
+          },
+          {
+            "id": "tfng-1",
+            "type": "true-false-not-given",
+            "data": {
+              "statements": [
+                {
+                  "text": "Colour results from an interaction between light, objects, eyes, and the brain.",
+                  "answer": "TRUE",
+                  "qNum": 1
+                },
+                {
+                  "text": "Objects possess colour in exactly the same way they possess weight.",
+                  "answer": "FALSE",
+                  "qNum": 2
+                }
+              ]
+            }
+          },
+          {
+            "id": "qr-2",
+            "type": "question-range",
+            "data": { 
+              "range": "Questions 8-10: Sentence Completion", 
+              "instruction": "Choose NO MORE THAN TWO WORDS from the passage for each answer." 
+            }
+          },
+          {
+            "id": "sc-1",
+            "type": "sentence-completion",
+            "data": {
+              "instruction": "Choose NO MORE THAN TWO WORDS",
+              "sentences": [
+                {
+                  "text": "Visible light is part of the [electromagnetic] spectrum.",
+                  "qNum": 8,
+                  "answer": "electromagnetic"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "51. Complete End-to-End Migration For Passage 2",
+    "description": "Translating the PDF test provided ('The Science of Colour Passage 2') into a CourseData JSON structure.",
+    "json": {
+      "title": "IELTS Academic Reading Test: Passage 2",
+      "description": "Level: C1",
+      "layout_type": "split",
+      "status": "Published",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "heading-2",
+            "type": "heading",
+            "data": {
+              "text": "Passage 2: Colour, Meaning, and Human Behaviour",
+              "level": 2
+            }
+          },
+          {
+            "id": "p2-content",
+            "type": "reading-passage",
+            "data": {
+              "title": "",
+              "content": "Colour does not only belong to physics... [full text here]"
+            }
+          }
+        ],
+        "right": [
+          {
+            "id": "qr-3",
+            "type": "question-range",
+            "data": { 
+              "range": "Questions 14-19: Matching Headings", 
+              "instruction": "Choose the correct heading for each paragraph from the list of headings below." 
+            }
+          },
+          {
+            "id": "mh-2",
+            "type": "matching-headings",
+            "data": {
+              "headings": [
+                "i. The need for inclusive visual communication",
+                "ii. Cultural variation in colour meaning"
+              ],
+              "paragraphs": [
+                {
+                  "name": "Paragraph 1",
+                  "qNum": 14,
+                  "answer": "ii. Cultural variation in colour meaning"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "52. Complete End-to-End Migration For Passage 3",
+    "description": "Translating the PDF test provided ('The Science of Colour Passage 3') into a CourseData JSON structure.",
+    "json": {
+      "title": "IELTS Academic Reading Test: Passage 3",
+      "description": "Level: C1",
+      "layout_type": "split",
+      "status": "Published",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "heading-3",
+            "type": "heading",
+            "data": {
+              "text": "Passage 3: Colour in Technology, Art, and the Future",
+              "level": 2
+            }
+          }
+        ],
+        "right": [
+          {
+            "id": "qr-4",
+            "type": "question-range",
+            "data": { 
+              "range": "Questions 37-38: Multiple Choice", 
+              "instruction": "Choose the correct letter, A, B, C or D." 
+            }
+          },
+          {
+            "id": "mcq-37",
+            "type": "mcq",
+            "data": {
+              "question": "What is the main argument of Passage 3?",
+              "options": ["A", "B", "C", "D"],
+              "correctAnswer": "B",
+              "questionNumber": 37
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "53. Complete 4-Section IELTS Listening Mock Test (Single Layout)",
+    "description": "A very large, complex single-layout structure containing 4 listening sections, multiple audio tracks, notes, and a wide variety of question types simulating a full 40-question IELTS Listening test.",
+    "json": {
+      "title": "Full Official IELTS Listening Mock Test",
+      "course_type": "listening",
+      "layout_type": "single",
+      "status": "Published",
+      "blocks": {
+        "single": [
+          {
+            "id": "head-1",
+            "type": "heading",
+            "data": { "text": "Listening Test", "level": 1 }
+          },
+          {
+            "id": "instruct",
+            "type": "note",
+            "data": {
+              "text": "You will hear a number of different recordings and you will have to answer questions on what you hear.",
+              "type": "info"
+            }
+          },
+          {
+            "id": "sec-1",
+            "type": "listening-section",
+            "data": { "sectionNumber": 1, "title": "A Telephone Conversation" }
+          },
+          { "id": "audio-1", "type": "audio", "data": { "url": "part1.mp3" } },
+          {
+            "id": "qr-1",
+            "type": "question-range",
+            "data": {
+              "range": "1-5",
+              "instruction": "Complete the form below. Write NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer."
+            }
+          },
+          {
+            "id": "fb-1",
+            "type": "listening-fill-blanks",
+            "data": {
+              "text": "Customer Name: Jane [Doe]\nAddress: 14 [Green] Street\nPhone Number: [07788992211]\nItem lost: A [leather] suitcase\nDate lost: [14th April]",
+              "qNumStart": 1
+            }
+          },
+          {
+            "id": "sec-2",
+            "type": "listening-section",
+            "data": { "sectionNumber": 2, "title": "A Guide Giving a Tour" }
+          },
+          { "id": "audio-2", "type": "audio", "data": { "url": "part2.mp3" } },
+          {
+            "id": "dl-1",
+            "type": "diagram-label",
+            "data": {
+              "image": "museum-map.png",
+              "labels": [
+                { "qNum": 11, "answer": "Gift Shop", "x": 10, "y": 20 },
+                { "qNum": 12, "answer": "Ancient History", "x": 50, "y": 60 }
+              ]
+            }
+          },
+          {
+            "id": "sec-3",
+            "type": "listening-section",
+            "data": {
+              "sectionNumber": 3,
+              "title": "Two Students Discussing a Project"
+            }
+          },
+          { "id": "audio-3", "type": "audio", "data": { "url": "part3.mp3" } },
+          {
+            "id": "mc2-1",
+            "type": "listening-mcq",
+            "data": {
+              "question": "What point does Jack make about the research?",
+              "options": [
+                "It was too short",
+                "It lacked participants",
+                "It was well-funded"
+              ],
+              "correctAnswer": "It lacked participants",
+              "qNum": 21
+            }
+          },
+          {
+            "id": "mc2-2",
+            "type": "listening-mcq",
+            "data": {
+              "question": "Sarah thinks the next step is to:",
+              "options": [
+                "Write the report",
+                "Design another questionnaire",
+                "Consult their tutor"
+              ],
+              "correctAnswer": "Consult their tutor",
+              "qNum": 22
+            }
+          },
+          {
+            "id": "tc-1",
+            "type": "table-completion",
+            "data": {
+              "headers": ["Method", "Advantage", "Disadvantage"],
+              "rows": [
+                ["Survey", "[Quick]", "Low response rate"],
+                ["Interview", "In-depth", "[Time-consuming]"]
+              ],
+              "answers": [
+                { "qNum": 23, "text": "Quick" },
+                { "qNum": 24, "text": "Time-consuming" }
+              ]
+            }
+          },
+          {
+            "id": "sec-4",
+            "type": "listening-section",
+            "data": {
+              "sectionNumber": 4,
+              "title": "A University Lecture on Urban Planning"
+            }
+          },
+          { "id": "audio-4", "type": "audio", "data": { "url": "part4.mp3" } },
+          {
+            "id": "sc-1",
+            "type": "sentence-completion",
+            "data": {
+              "instruction": "ONE WORD ONLY",
+              "sentences": [
+                {
+                  "text": "The defining characteristic of the new city model is its [sustainability].",
+                  "qNum": 31,
+                  "answer": "sustainability"
+                },
+                {
+                  "text": "Architects focused heavily on maximizing [sunlight].",
+                  "qNum": 32,
+                  "answer": "sunlight"
+                }
+              ]
+            }
+          }
+        ],
+        "left": [],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "54. Ultra-Complex 3-Passage Split Layout (Full Reading Test)",
+    "description": "Simulates a complete Academic Reading Test. Left column contains all 3 long reading passages. Right column contains all varied quiz blocks nested heavily to track 40 questions.",
+    "json": {
+      "title": "Complete IELTS Academic Reading Test",
+      "layout_type": "split",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "head-p1",
+            "type": "heading",
+            "data": { "text": "Passage 1", "level": 2 }
+          },
+          {
+            "id": "read-1",
+            "type": "reading-passage",
+            "data": {
+              "title": "The Evolution of Language",
+              "content": "Language is the most complex human phenomenon... [500 words]"
+            }
+          },
+          { "id": "div-1", "type": "divider", "data": {} },
+          {
+            "id": "head-p2",
+            "type": "heading",
+            "data": { "text": "Passage 2", "level": 2 }
+          },
+          {
+            "id": "img-p2",
+            "type": "image",
+            "data": {
+              "url": "bridge.png",
+              "caption": "The first suspension bridge"
+            }
+          },
+          {
+            "id": "read-2",
+            "type": "reading-passage",
+            "data": {
+              "title": "Engineering Marvels of the 19th Century",
+              "content": "The 1800s saw incredible leaps... [700 words]"
+            }
+          },
+          { "id": "div-2", "type": "divider", "data": {} },
+          {
+            "id": "head-p3",
+            "type": "heading",
+            "data": { "text": "Passage 3", "level": 2 }
+          },
+          {
+            "id": "read-3",
+            "type": "reading-passage",
+            "data": {
+              "title": "Quantum Computing and the Future",
+              "content": "Modern computers rely on binary... [800 words]"
+            }
+          }
+        ],
+        "right": [
+          {
+            "id": "qr-p1",
+            "type": "question-range",
+            "data": {
+              "range": "1-13",
+              "instruction": "Questions for Passage 1"
+            }
+          },
+          {
+            "id": "tfng-1",
+            "type": "true-false-not-given",
+            "data": {
+              "statements": [
+                {
+                  "text": "Language evolution is simple.",
+                  "answer": "FALSE",
+                  "qNum": 1
+                },
+                {
+                  "text": "Animals have languages similar to humans.",
+                  "answer": "NOT GIVEN",
+                  "qNum": 2
+                }
+              ]
+            }
+          },
+          {
+            "id": "mi-1",
+            "type": "matching-information",
+            "data": {
+              "statements": [
+                {
+                  "text": "A description of early vocal tract changes.",
+                  "answer": "Paragraph C",
+                  "qNum": 3
+                }
+              ],
+              "options": ["Paragraph A", "Paragraph B", "Paragraph C"]
+            }
+          },
+          {
+            "id": "qr-p2",
+            "type": "question-range",
+            "data": {
+              "range": "14-26",
+              "instruction": "Questions for Passage 2"
+            }
+          },
+          {
+            "id": "mh-1",
+            "type": "matching-headings",
+            "data": {
+              "headings": [
+                "i. Initial struggles",
+                "ii. A breakthrough in materials"
+              ],
+              "paragraphs": [
+                {
+                  "name": "Paragraph A",
+                  "answer": "i. Initial struggles",
+                  "qNum": 14
+                }
+              ]
+            }
+          },
+          {
+            "id": "sum-1",
+            "type": "summary-completion",
+            "data": {
+              "title": "Bridge Construction",
+              "text": "The builders first laid down the [foundations], before stringing the [cables].",
+              "answers": ["foundations", "cables"],
+              "startQNum": 15
+            }
+          },
+          {
+            "id": "qr-p3",
+            "type": "question-range",
+            "data": {
+              "range": "27-40",
+              "instruction": "Questions for Passage 3"
+            }
+          },
+          {
+            "id": "mcq-3",
+            "type": "mcq",
+            "data": {
+              "question": "The primary benefit of qubits is:",
+              "options": ["Storage", "Speed", "Superposition", "Size"],
+              "correctAnswer": "Superposition",
+              "questionNumber": 27
+            }
+          },
+          {
+            "id": "fc-1",
+            "type": "flow-chart",
+            "data": {
+              "steps": [
+                {
+                  "title": "Data Input",
+                  "description": "System takes [binary] data",
+                  "qNum": 28
+                },
+                {
+                  "title": "Processing",
+                  "description": "Converts it via [algorithms]",
+                  "qNum": 29
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "55. Mixed-Media Academic Pathway / Self-Paced Training Module",
+    "description": "An incredibly rich, mixed-media single layout. Starts with a video lecture, provides a PDF download sheet, shows some interactive tips and notes, followed by an assignment and a comprehensive Quiz container holding multiple assessment blocks.",
+    "json": {
+      "title": "Module 3: Advanced Academic Writing",
+      "layout_type": "single",
+      "blocks": {
+        "single": [
+          {
+            "id": "h-1",
+            "type": "heading",
+            "data": { "text": "Welcome to Module 3", "level": 1 }
+          },
+          {
+            "id": "vid-1",
+            "type": "video",
+            "data": {
+              "url": "lecture1.mp4",
+              "title": "Understanding Task 2 Parameters"
+            }
+          },
+          {
+            "id": "dl-1",
+            "type": "downloadable-resource",
+            "data": {
+              "url": "task2-rubric.pdf",
+              "title": "Official IELTS Writing Task 2 Rubric"
+            }
+          },
+          {
+            "id": "t-1",
+            "type": "text",
+            "data": {
+              "text": "In this module, you will learn how to structure a high-scoring IELTS essay. Watch the video above carefully and download the rubric."
+            }
+          },
+          {
+            "id": "tip-1",
+            "type": "tip",
+            "data": {
+              "text": "Always spend the first 5 minutes planning your essay structure before you begin writing."
+            }
+          },
+          {
+            "id": "bd-1",
+            "type": "band-descriptor",
+            "data": {
+              "criteria": "Coherence and Cohesion",
+              "band": "8",
+              "description": "Sequences information and ideas logically; manages all aspects of cohesion well."
+            }
+          },
+          {
+            "id": "qz-1",
+            "type": "quiz",
+            "data": { "title": "Knowledge Check", "timerMinutes": 10 }
+          },
+          {
+            "id": "mc1",
+            "type": "mcq",
+            "data": {
+              "question": "What is the recommended time for Task 2?",
+              "options": ["20 mins", "30 mins", "40 mins", "60 mins"],
+              "correctAnswer": "40 mins",
+              "questionNumber": 1
+            }
+          },
+          {
+            "id": "mc2",
+            "type": "mcq",
+            "data": {
+              "question": "How many words are required?",
+              "options": ["150", "200", "250", "300"],
+              "correctAnswer": "250",
+              "questionNumber": 2
+            }
+          },
+          {
+            "id": "ass-1",
+            "type": "assignment",
+            "data": {
+              "title": "Practice Essay Setup",
+              "details": "Draft an introduction for the prompt provided in your downloadable resource.",
+              "dueDate": "2024-01-01"
+            }
+          }
+        ],
+        "left": [],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "56. Complex Master-Detail Split Screen for Teacher Assessment",
+    "description": "Simulates a complex split screen where the left pane holds student submissions/materials and the right pane holds varied assessment forms, band descriptors, examiner notes, and audio playback controls.",
+    "json": {
+      "title": "Examiner Marking Interface - Mock",
+      "layout_type": "split",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "h-l1",
+            "type": "heading",
+            "data": { "text": "Student Submission Profile", "level": 2 }
+          },
+          {
+            "id": "img-l1",
+            "type": "image",
+            "data": {
+              "url": "student-identity.png",
+              "caption": "Candidate ID: 994821"
+            }
+          },
+          {
+            "id": "t-l1",
+            "type": "text",
+            "data": {
+              "text": "The candidate has submitted a recording for their Speaking Mock Part 2."
+            }
+          },
+          {
+            "id": "aud-l1",
+            "type": "audio",
+            "data": {
+              "url": "candidate-recording.mp3",
+              "title": "Speaking Part 2"
+            }
+          },
+          {
+            "id": "txt-transcript",
+            "type": "reading-passage",
+            "data": {
+              "title": "Auto-Transcript",
+              "content": "I would like to tell you about a time I visited a museum... [transcript continues]"
+            }
+          }
+        ],
+        "right": [
+          {
+            "id": "h-r1",
+            "type": "heading",
+            "data": { "text": "Examiner Rubric & Feedback", "level": 2 }
+          },
+          {
+            "id": "bd-r1",
+            "type": "band-descriptor",
+            "data": {
+              "criteria": "Fluency and Coherence",
+              "band": "Target: 7+",
+              "description": "Candidate must speak at length without noticeable effort or loss of coherence."
+            }
+          },
+          {
+            "id": "tip-r1",
+            "type": "tip",
+            "data": {
+              "text": "Did the candidate use discourse markers effectively? Make a note below."
+            }
+          },
+          {
+            "id": "ass-r1",
+            "type": "assignment",
+            "data": {
+              "title": "Examiner Report",
+              "details": "Please fill out the standard marking sheet and assign a band score.",
+              "dueDate": "Immediate"
+            }
+          },
+          {
+            "id": "qz-r1",
+            "type": "quiz",
+            "data": { "title": "Criteria Checklist", "timerMinutes": 0 }
+          },
+          {
+            "id": "tfng-r1",
+            "type": "true-false-not-given",
+            "data": {
+              "format": "YES-NO-NOT GIVEN",
+              "statements": [
+                {
+                  "text": "Did the candidate address all parts of the cue card?",
+                  "answer": "YES",
+                  "qNum": 1
+                },
+                {
+                  "text": "Was there significant hesitation for language?",
+                  "answer": "NO",
+                  "qNum": 2
+                }
+              ]
+            }
+          },
+          {
+            "id": "note-r1",
+            "type": "note",
+            "data": {
+              "text": "Remember to submit final score to the centralized LMS after this evaluation.",
+              "type": "warning"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "57. Comprehensive Writing Test (Single Layout)",
+    "description": "A fully-fledged standalone writing test featuring detailed instructions, tips, and dedicated blocks for Task 1 and Task 2 along with evaluation rubrics.",
+    "json": {
+      "title": "Comprehensive IELTS Writing Mock Test",
+      "course_type": "writing",
+      "layout_type": "single",
+      "status": "Published",
+      "blocks": {
+        "single": [
+          {
+            "id": "head-1",
+            "type": "heading",
+            "data": { "text": "IELTS Academic Writing", "level": 1 }
+          },
+          {
+            "id": "note-intro",
+            "type": "note",
+            "data": {
+              "text": "You should spend about 20 minutes on Task 1 and 40 minutes on Task 2.",
+              "type": "info"
+            }
+          },
+          {
+            "id": "tip-1",
+            "type": "tip",
+            "data": {
+              "text": "Make sure you meet the minimum word counts (150 for Task 1, 250 for Task 2) to avoid a penalty."
+            }
+          },
+          { "id": "div-1", "type": "divider", "data": {} },
+          {
+            "id": "head-t1",
+            "type": "heading",
+            "data": { "text": "Writing Task 1", "level": 2 }
+          },
+          {
+            "id": "t1-prompt",
+            "type": "academic-task1",
+            "data": {
+              "prompt": "The charts below show the percentage of water used for different purposes in six areas of the world. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+              "images": ["water-usage-chart1.png", "water-usage-chart2.png"]
+            }
+          },
+          {
+            "id": "bd-t1",
+            "type": "band-descriptor",
+            "data": {
+              "criteria": "Task 1 Achievement",
+              "band": "Target 7",
+              "description": "Covers the requirements of the task. Presents a clear overview of main trends, differences or stages."
+            }
+          },
+          { "id": "div-2", "type": "divider", "data": {} },
+          {
+            "id": "head-t2",
+            "type": "heading",
+            "data": { "text": "Writing Task 2", "level": 2 }
+          },
+          {
+            "id": "t2-prompt",
+            "type": "task2",
+            "data": {
+              "prompt": "In the future, nobody will buy printed newspapers or books because they will be able to read everything they want online without paying. To what extent do you agree or disagree with this statement?",
+              "minWords": 250
+            }
+          },
+          {
+            "id": "bd-t2",
+            "type": "band-descriptor",
+            "data": {
+              "criteria": "Task 2 Response",
+              "band": "Target 7",
+              "description": "Addresses all parts of the task. Presents a clear position throughout the response."
+            }
+          },
+          {
+            "id": "ass-submit",
+            "type": "assignment",
+            "data": {
+              "title": "Submit Your Essays",
+              "details": "Upload your handwritten essays as a scanned PDF or copy-paste your typed response.",
+              "dueDate": "End of class"
+            }
+          }
+        ],
+        "left": [],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "58. Immersive Reading Comprehension with Embedded Media (Split Layout)",
+    "description": "A complex split screen simulating a richly formatted reading text on the left (including embedded diagrams and info notes) with varied assessment tasks on the right.",
+    "json": {
+      "title": "Immersive Reading: The Architecture of Ancient Rome",
+      "course_type": "reading",
+      "layout_type": "split",
+      "status": "Published",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "rp-head",
+            "type": "heading",
+            "data": { "text": "Roman Engineering Innovations", "level": 2 }
+          },
+          {
+            "id": "rp-text1",
+            "type": "reading-passage",
+            "data": {
+              "title": "The Arch and the Dome",
+              "content": "The Romans did not invent the arch, but they were the first to master it. This structural component allowed them to build massive... [text continues]"
+            }
+          },
+          {
+            "id": "rp-img1",
+            "type": "image",
+            "data": {
+              "url": "roman-aqueduct.png",
+              "caption": "Figure 1: The Pont du Gard aqueduct",
+              "alt": "Aqueduct structure showing arches"
+            }
+          },
+          {
+            "id": "rp-note",
+            "type": "note",
+            "data": {
+              "text": "Did you know? Roman concrete, or opus caementicium, was remarkably durable due to the inclusion of volcanic ash.",
+              "type": "info"
+            }
+          },
+          {
+            "id": "rp-text2",
+            "type": "reading-passage",
+            "data": {
+              "title": "Urban Infrastructure",
+              "content": "Aqueducts, public baths, and complex road networks formed the backbone of the Roman Empire... [text continues]"
+            }
+          }
+        ],
+        "right": [
+          {
+            "id": "qz-r1",
+            "type": "quiz",
+            "data": { "title": "Passage Comprehension", "timerMinutes": 30 }
+          },
+          {
+            "id": "qr-1",
+            "type": "question-range",
+            "data": {
+              "range": "1-5",
+              "instruction": "Label the diagram below."
+            }
+          },
+          {
+            "id": "dl-1",
+            "type": "diagram-label",
+            "data": {
+              "image": "arch-diagram.png",
+              "labels": [
+                { "qNum": 1, "answer": "Keystone", "x": 50, "y": 10 },
+                { "qNum": 2, "answer": "Voussoir", "x": 30, "y": 40 }
+              ]
+            }
+          },
+          {
+            "id": "qr-2",
+            "type": "question-range",
+            "data": {
+              "range": "6-10",
+              "instruction": "Complete the table below."
+            }
+          },
+          {
+            "id": "tc-1",
+            "type": "table-completion",
+            "data": {
+              "headers": ["Structure", "Material", "Purpose"],
+              "rows": [
+                ["Aqueduct", "Stone and [concrete]", "Transport water"],
+                ["Colosseum", "Travertine", "[Entertainment]"]
+              ],
+              "answers": [
+                { "qNum": 6, "text": "concrete" },
+                { "qNum": 7, "text": "Entertainment" }
+              ]
+            }
+          },
+          {
+            "id": "qr-3",
+            "type": "question-range",
+            "data": { "range": "11-13", "instruction": "Match the features." }
+          },
+          {
+            "id": "mf-1",
+            "type": "matching-features",
+            "data": {
+              "statements": [
+                {
+                  "text": "Pioneered the wide-scale use of volcanic ash.",
+                  "answer": "Romans",
+                  "qNum": 11
+                },
+                {
+                  "text": "Original inventors of the arch structure.",
+                  "answer": "Etruscans",
+                  "qNum": 12
+                }
+              ],
+              "features": ["Romans", "Etruscans", "Greeks"]
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "59. Full Speaking Mock Interface (Single Layout)",
+    "description": "Simulates an end-to-end Speaking Test experience. Includes examiner audio prompts for the student to listen to, detailed instructions, and all three speaking parts.",
+    "json": {
+      "title": "Interactive IELTS Speaking Mock Test",
+      "course_type": "speaking",
+      "layout_type": "single",
+      "status": "Published",
+      "blocks": {
+        "single": [
+          {
+            "id": "head-sp",
+            "type": "heading",
+            "data": { "text": "Speaking Test Preparation", "level": 1 }
+          },
+          {
+            "id": "note-intro",
+            "type": "note",
+            "data": {
+              "text": "Play the audio tracks below and record your responses using an external device or app.",
+              "type": "info"
+            }
+          },
+          { "id": "div-s1", "type": "divider", "data": {} },
+          {
+            "id": "head-part1",
+            "type": "heading",
+            "data": { "text": "Part 1: Introduction and Interview", "level": 2 }
+          },
+          {
+            "id": "aud-p1",
+            "type": "audio",
+            "data": {
+              "url": "examiner-part1.mp3",
+              "title": "Examiner Questions: Hometown and Hobbies"
+            }
+          },
+          {
+            "id": "sp1",
+            "type": "part1",
+            "data": {
+              "topic": "Food and Dining",
+              "questions": [
+                "What is your favorite food?",
+                "Do you often eat out?",
+                "Did you learn to cook when you were a child?"
+              ]
+            }
+          },
+          { "id": "div-s2", "type": "divider", "data": {} },
+          {
+            "id": "head-part2",
+            "type": "heading",
+            "data": { "text": "Part 2: Long Turn (Cue Card)", "level": 2 }
+          },
+          {
+            "id": "note-p2",
+            "type": "note",
+            "data": {
+              "text": "You have 1 minute to prepare and 1-2 minutes to speak.",
+              "type": "warning"
+            }
+          },
+          {
+            "id": "sp2",
+            "type": "cue-card",
+            "data": {
+              "topic": "Describe a successful small business that you know about.",
+              "bullets": [
+                "What business it is",
+                "Where it is located",
+                "Who runs the business",
+                "And explain why you think it is successful."
+              ]
+            }
+          },
+          { "id": "div-s3", "type": "divider", "data": {} },
+          {
+            "id": "head-part3",
+            "type": "heading",
+            "data": { "text": "Part 3: Two-way Discussion", "level": 2 }
+          },
+          {
+            "id": "aud-p3",
+            "type": "audio",
+            "data": {
+              "url": "examiner-part3.mp3",
+              "title": "Examiner Questions: Business and Society"
+            }
+          },
+          {
+            "id": "sp3",
+            "type": "part3",
+            "data": {
+              "topic": "Small Businesses",
+              "questions": [
+                "What are the advantages of running a small business compared to a large corporation?",
+                "Do you think small businesses will survive in the future?"
+              ]
+            }
+          }
+        ],
+        "left": [],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "60. Complete General Training Reading Test (Split Layout)",
+    "description": "Simulates Section 1 of the GT Reading test which typically involves multiple short texts (like advertisements or notices) on the left, mapped to questions on the right.",
+    "json": {
+      "title": "General Training Reading: Section 1",
+      "course_type": "reading",
+      "layout_type": "split",
+      "status": "Published",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "head-gt",
+            "type": "heading",
+            "data": { "text": "Section 1", "level": 2 }
+          },
+          {
+            "id": "instruct-l",
+            "type": "text",
+            "data": { "text": "Read the text below and answer Questions 1-8." }
+          },
+          {
+            "id": "ad-A",
+            "type": "reading-passage",
+            "data": {
+              "title": "A. City Gym Memberships",
+              "content": "Join our fully-equipped gym. 24/7 access. $40/month."
+            }
+          },
+          {
+            "id": "ad-B",
+            "type": "reading-passage",
+            "data": {
+              "title": "B. Downtown Pool",
+              "content": "Public swimming pool. Open 6am - 10pm. Heated water."
+            }
+          },
+          {
+            "id": "ad-C",
+            "type": "reading-passage",
+            "data": {
+              "title": "C. Yoga Studio 54",
+              "content": "Beginner and advanced classes. Hot yoga on weekends."
+            }
+          },
+          {
+            "id": "ad-D",
+            "type": "reading-passage",
+            "data": {
+              "title": "D. Community Sports Centre",
+              "content": "Basketball, tennis courts available for hourly rental."
+            }
+          }
+        ],
+        "right": [
+          {
+            "id": "qr-gt1",
+            "type": "question-range",
+            "data": {
+              "range": "1-8",
+              "instruction": "Look at the four advertisements, A-D. For which advertisement are the following statements true?"
+            }
+          },
+          {
+            "id": "mi-gt1",
+            "type": "matching-information",
+            "data": {
+              "statements": [
+                { "text": "It is open all night.", "answer": "A", "qNum": 1 },
+                {
+                  "text": "You can rent equipment for team sports.",
+                  "answer": "D",
+                  "qNum": 2
+                },
+                {
+                  "text": "It offers heated facilities.",
+                  "answer": "B",
+                  "qNum": 3
+                }
+              ],
+              "options": ["A", "B", "C", "D"]
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "61. Complex Multi-Level Interactive Course Module (Single Layout)",
+    "description": "An interactive digital learning module structure featuring a progressive sequence: video lecture -> summary text -> downloadable notes -> embedded audio -> nested quiz -> assignment.",
+    "json": {
+      "title": "Module 5: Strategies for TFNG Questions",
+      "course_type": "reading",
+      "layout_type": "single",
+      "status": "Published",
+      "blocks": {
+        "single": [
+          {
+            "id": "les-mod5",
+            "type": "lesson",
+            "data": {
+              "title": "Mastering True / False / Not Given",
+              "description": "The most challenging question type"
+            }
+          },
+          {
+            "id": "vid-strat",
+            "type": "video",
+            "data": {
+              "url": "tfng-strategy.mp4",
+              "title": "TFNG Masterclass Video"
+            }
+          },
+          {
+            "id": "tip-strat",
+            "type": "tip",
+            "data": {
+              "text": "Remember: 'False' means the passage directly contradicts the statement. 'Not Given' means it's impossible to say."
+            }
+          },
+          {
+            "id": "t-summary",
+            "type": "text",
+            "data": {
+              "text": "Watch the video above and then review the downloadable checklist."
+            }
+          },
+          {
+            "id": "dl-strat",
+            "type": "downloadable-resource",
+            "data": {
+              "url": "tfng-flowchart.pdf",
+              "title": "Decision Flowchart for TFNG"
+            }
+          },
+          {
+            "id": "aud-summary",
+            "type": "audio",
+            "data": {
+              "url": "tfng-summary.mp3",
+              "title": "Audio Recap: 2-minute summary"
+            }
+          },
+          { "id": "div-quiz", "type": "divider", "data": {} },
+          {
+            "id": "qz-practice",
+            "type": "quiz",
+            "data": { "title": "Mini Practice Exercise", "timerMinutes": 10 }
+          },
+          {
+            "id": "rp-mini",
+            "type": "reading-passage",
+            "data": {
+              "title": "Mini Text",
+              "content": "Trees in urban areas reduce ambient temperatures and improve air quality."
+            }
+          },
+          {
+            "id": "tfng-prac",
+            "type": "true-false-not-given",
+            "data": {
+              "statements": [
+                {
+                  "text": "City trees can make the air cleaner.",
+                  "answer": "TRUE",
+                  "qNum": 1
+                },
+                {
+                  "text": "Urban trees live longer than rural trees.",
+                  "answer": "NOT GIVEN",
+                  "qNum": 2
+                }
+              ]
+            }
+          },
+          {
+            "id": "ass-homework",
+            "type": "assignment",
+            "data": {
+              "title": "Homework Task",
+              "details": "Complete practice test 2 in your workbook.",
+              "dueDate": "Next Friday"
+            }
+          }
+        ],
+        "left": [],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "62. Grammar & Vocabulary Intensive Practice (Split Layout)",
+    "description": "Focuses heavily on targeted language practice. A reading text sits on the left. The right side is packed with diverse sentence-level activities (Fill blanks, sentence completions).",
+    "json": {
+      "title": "Vocabulary Builder: Environment & Climate",
+      "course_type": "reading",
+      "layout_type": "split",
+      "status": "Crafting",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "head-vocab",
+            "type": "heading",
+            "data": { "text": "Core Text: Climate Shifts", "level": 2 }
+          },
+          {
+            "id": "rp-vocab",
+            "type": "reading-passage",
+            "data": {
+              "title": "",
+              "content": "Anthropogenic factors have contributed significantly to global warming. The emission of greenhouse gases exacerbates the greenhouse effect, leading to rising sea levels and extreme weather patterns..."
+            }
+          }
+        ],
+        "right": [
+          {
+            "id": "qz-vocab",
+            "type": "quiz",
+            "data": { "title": "Vocabulary Checks", "timerMinutes": 15 }
+          },
+          {
+            "id": "qr-fib",
+            "type": "question-range",
+            "data": {
+              "range": "1-3",
+              "instruction": "Fill in the blanks using words from the text."
+            }
+          },
+          {
+            "id": "fib-vocab",
+            "type": "fill-blanks",
+            "data": {
+              "text": "Human-caused or [Anthropogenic] factors are a major issue. They release [greenhouse] gases.",
+              "answers": ["Anthropogenic", "greenhouse"],
+              "startQNum": 1
+            }
+          },
+          {
+            "id": "qr-sc",
+            "type": "question-range",
+            "data": {
+              "range": "4-5",
+              "instruction": "Complete the sentences below."
+            }
+          },
+          {
+            "id": "sc-vocab",
+            "type": "sentence-completion",
+            "data": {
+              "instruction": "ONE WORD ONLY",
+              "sentences": [
+                {
+                  "text": "Rising sea levels are a direct result of the greenhouse [effect].",
+                  "qNum": 4,
+                  "answer": "effect"
+                },
+                {
+                  "text": "We are experiencing more extreme [weather].",
+                  "qNum": 5,
+                  "answer": "weather"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "63. Seminar Workshop Layout (Single Layout)",
+    "description": "An agenda/outline-style course design for a live workshop or seminar. Utilizes heavy use of headings, notes, dividers, and downloadable slides.",
+    "json": {
+      "title": "Weekend IELTS Bootcamp Seminar",
+      "course_type": "other",
+      "layout_type": "single",
+      "status": "Published",
+      "blocks": {
+        "single": [
+          {
+            "id": "head-boot",
+            "type": "heading",
+            "data": { "text": "Saturday Schedule & Materials", "level": 1 }
+          },
+          {
+            "id": "note-welcome",
+            "type": "note",
+            "data": {
+              "text": "Welcome to the intensive bootcamp. Please download the materials before the session begins.",
+              "type": "info"
+            }
+          },
+          {
+            "id": "dl-slides",
+            "type": "downloadable-resource",
+            "data": {
+              "url": "saturday-slides.pdf",
+              "title": "Full Slide Deck (PDF)"
+            }
+          },
+          { "id": "div-b1", "type": "divider", "data": {} },
+          {
+            "id": "head-s1",
+            "type": "heading",
+            "data": { "text": "09:00 - 10:30 | Reading Deep Dive", "level": 2 }
+          },
+          {
+            "id": "tip-s1",
+            "type": "tip",
+            "data": {
+              "text": "Focus for this session: Skimming and Scanning techniques."
+            }
+          },
+          {
+            "id": "dl-s1",
+            "type": "downloadable-resource",
+            "data": {
+              "url": "reading-packet.pdf",
+              "title": "Reading Practice Packet"
+            }
+          },
+          { "id": "div-b2", "type": "divider", "data": {} },
+          {
+            "id": "head-s2",
+            "type": "heading",
+            "data": {
+              "text": "11:00 - 12:30 | Writing Task 1 Data Analytics",
+              "level": 2
+            }
+          },
+          {
+            "id": "img-s2",
+            "type": "image",
+            "data": {
+              "url": "complex-graph.png",
+              "caption": "Graph we will dissect in class"
+            }
+          },
+          {
+            "id": "ass-s2",
+            "type": "assignment",
+            "data": {
+              "title": "Lunch Break Homework",
+              "details": "Draft a 150-word summary of the graph above.",
+              "dueDate": "13:30"
+            }
+          }
+        ],
+        "left": [],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "64. Detailed Listening Test Review (Split Layout)",
+    "description": "A post-test review layout. Left side shows the full transcript of a listening test marking where answers were found. Right side shows the questions, answers, and examiner commentary via notes.",
+    "json": {
+      "title": "Listening Practice Test 4: Review and Feedback",
+      "course_type": "listening",
+      "layout_type": "split",
+      "status": "Draft",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "head-trans",
+            "type": "heading",
+            "data": { "text": "Test Transcript (Section 3)", "level": 2 }
+          },
+          {
+            "id": "aud-trans",
+            "type": "audio",
+            "data": { "url": "test4-sec3.mp3", "title": "Play back to review" }
+          },
+          {
+            "id": "rp-trans",
+            "type": "reading-passage",
+            "data": {
+              "title": "Transcript",
+              "content": "Tutor: So, how did the survey go?\nStudent: Well, we expected 100 replies, but we only got back 45. (Q21 Answer here)\nTutor: That's a low response rate. Did you analyze them?\nStudent: Yes, it was quite time-consuming... (Q22 Answer here)"
+            }
+          }
+        ],
+        "right": [
+          {
+            "id": "head-rev",
+            "type": "heading",
+            "data": { "text": "Guided Review", "level": 2 }
+          },
+          {
+            "id": "qz-rev",
+            "type": "quiz",
+            "data": { "title": "Review Questions", "timerMinutes": 0 }
+          },
+          {
+            "id": "mcq-rev",
+            "type": "listening-mcq",
+            "data": {
+              "question": "How many survey replies were received?",
+              "options": ["45", "100", "55"],
+              "correctAnswer": "45",
+              "qNum": 21
+            }
+          },
+          {
+            "id": "note-rev1",
+            "type": "note",
+            "data": {
+              "text": "Examiner's Note: Notice the distractor. The student says they expected 100, but actually got 45. Always listen for corrections or shifts in information.",
+              "type": "warning"
+            }
+          },
+          {
+            "id": "tc-rev",
+            "type": "table-completion",
+            "data": {
+              "headers": ["Task", "Issue"],
+              "rows": [["Analysis", "[Time-consuming]"]],
+              "answers": [{ "qNum": 22, "text": "Time-consuming" }]
+            }
+          },
+          {
+            "id": "note-rev2",
+            "type": "note",
+            "data": {
+              "text": "Examiner's Note: Spelling matters! Remember the hyphen in 'Time-consuming'.",
+              "type": "info"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "65. End-of-Term Assessment Matrix (Single Layout)",
+    "description": "An enormous quiz wrapper in a single layout simulating a massive multi-section assessment containing 10+ varied question blocks sequentially.",
+    "json": {
+      "title": "End of Term Mega-Assessment",
+      "course_type": "reading",
+      "layout_type": "single",
+      "status": "Published",
+      "blocks": {
+        "single": [
+          {
+            "id": "head-mega",
+            "type": "heading",
+            "data": { "text": "Final Exam Matrix", "level": 1 }
+          },
+          {
+            "id": "qz-mega",
+            "type": "quiz",
+            "data": { "title": "Section 1", "timerMinutes": 60 }
+          },
+          {
+            "id": "mcq-m1",
+            "type": "mcq",
+            "data": {
+              "question": "Grammar: Which sentence is correct?",
+              "options": [
+                "She don't like it.",
+                "She doesn't likes it.",
+                "She doesn't like it."
+              ],
+              "correctAnswer": "She doesn't like it.",
+              "questionNumber": 1
+            }
+          },
+          {
+            "id": "tfng-m1",
+            "type": "true-false-not-given",
+            "data": {
+              "statements": [
+                {
+                  "text": "Water boils at 100 degrees Celsius.",
+                  "answer": "TRUE",
+                  "qNum": 2
+                }
+              ]
+            }
+          },
+          {
+            "id": "fib-m1",
+            "type": "fill-blanks",
+            "data": {
+              "text": "The largest ocean is the [Pacific].",
+              "answers": ["Pacific"],
+              "startQNum": 3
+            }
+          },
+          {
+            "id": "mh-m1",
+            "type": "matching-headings",
+            "data": {
+              "headings": ["i. Topic A", "ii. Topic B"],
+              "paragraphs": [
+                { "name": "Paragraph 1", "answer": "i. Topic A", "qNum": 4 }
+              ]
+            }
+          },
+          {
+            "id": "mi-m1",
+            "type": "matching-information",
+            "data": {
+              "statements": [{ "text": "Detail X", "answer": "A", "qNum": 5 }],
+              "options": ["A", "B"]
+            }
+          },
+          {
+            "id": "tc-m1",
+            "type": "table-completion",
+            "data": {
+              "headers": ["A", "B"],
+              "rows": [["[X]", "Y"]],
+              "answers": [{ "qNum": 6, "text": "X" }]
+            }
+          },
+          {
+            "id": "fc-m1",
+            "type": "flow-chart",
+            "data": {
+              "steps": [
+                { "title": "Step 1", "description": "Do [Z]", "qNum": 7 }
+              ]
+            }
+          },
+          {
+            "id": "dl-m1",
+            "type": "diagram-label",
+            "data": {
+              "image": "diagram.png",
+              "labels": [{ "answer": "Core", "x": 50, "y": 50, "qNum": 8 }]
+            }
+          }
+        ],
+        "left": [],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "66. Ultimate All-In-One IELTS Masterclass (Single Layout)",
+    "description": "A showcase structure simulating an all-in-one preparation guide. It combines reading, listening, writing, and speaking content sequentially using dividers and contextual headers to create an enormous, comprehensive page.",
+    "json": {
+      "title": "IELTS Masterclass: Complete Overview",
+      "course_type": "other",
+      "layout_type": "single",
+      "status": "Published",
+      "blocks": {
+        "single": [
+          {
+            "id": "mh-title",
+            "type": "heading",
+            "data": { "text": "The Complete IELTS Journey", "level": 1 }
+          },
+          {
+            "id": "mh-intro",
+            "type": "text",
+            "data": {
+              "text": "Welcome to the masterclass. We will cover all four skills today."
+            }
+          },
+          { "id": "mh-d1", "type": "divider", "data": {} },
+          {
+            "id": "mh-h1",
+            "type": "heading",
+            "data": { "text": "1. Reading Module", "level": 2 }
+          },
+          {
+            "id": "mh-rp",
+            "type": "reading-passage",
+            "data": {
+              "title": "Global Trade",
+              "content": "The shipping industry..."
+            }
+          },
+          {
+            "id": "mh-tfng",
+            "type": "true-false-not-given",
+            "data": {
+              "statements": [
+                {
+                  "text": "Shipping is cheap.",
+                  "answer": "NOT GIVEN",
+                  "qNum": 1
+                }
+              ]
+            }
+          },
+          { "id": "mh-d2", "type": "divider", "data": {} },
+          {
+            "id": "mh-h2",
+            "type": "heading",
+            "data": { "text": "2. Listening Module", "level": 2 }
+          },
+          {
+            "id": "mh-aud",
+            "type": "audio",
+            "data": { "url": "demo.mp3", "title": "Airport Announcement" }
+          },
+          {
+            "id": "mh-lsc",
+            "type": "sentence-completion",
+            "data": {
+              "instruction": "No more than one word.",
+              "sentences": [
+                {
+                  "text": "The flight is delayed due to [weather].",
+                  "qNum": 2,
+                  "answer": "weather"
+                }
+              ]
+            }
+          },
+          { "id": "mh-d3", "type": "divider", "data": {} },
+          {
+            "id": "mh-h3",
+            "type": "heading",
+            "data": { "text": "3. Writing Module", "level": 2 }
+          },
+          {
+            "id": "mh-wt1",
+            "type": "academic-task1",
+            "data": {
+              "prompt": "Describe the core chart above.",
+              "images": ["core-chart.png"]
+            }
+          },
+          { "id": "mh-d4", "type": "divider", "data": {} },
+          {
+            "id": "mh-h4",
+            "type": "heading",
+            "data": { "text": "4. Speaking Module", "level": 2 }
+          },
+          {
+            "id": "mh-sp2",
+            "type": "cue-card",
+            "data": {
+              "topic": "Describe a difficult challenge you overcame.",
+              "bullets": ["What it was", "When it happened"]
+            }
+          },
+          {
+            "id": "mh-t2",
+            "type": "tip",
+            "data": { "text": "End of Masterclass! Good luck on your exam." }
+          }
+        ],
+        "left": [],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "67. Academic Reading Passage with Dual Matching Types (Split Layout)",
+    "description": "An advanced split layout containing a long reading passage on the left and two distinct matching question designs (heading matching and feature matching) on the right.",
+    "json": {
+      "title": "Urban Infrastructure and Development",
+      "description": "Practice matching headings and features based on historical structures.",
+      "thumbnail_url": "",
+      "course_type": "Reading Test",
+      "layout_type": "split",
+      "status": "Published",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "rp-infra",
+            "type": "reading-passage",
+            "data": {
+              "title": "The Evolution of Sewer Systems",
+              "text": "Paragraph A: In ancient history, sanitation was primitive.\nParagraph B: The industrial era caused massive city expansion without plan."
+            }
+          }
+        ],
+        "right": [
+          {
+            "id": "infra-mh-1",
+            "type": "matching-headings",
+            "data": {
+              "headings": [
+                "i. Early sanitation systems",
+                "ii. Unplanned industrial congestion"
+              ],
+              "paragraphs": [
+                { "name": "Paragraph A", "qNum": 14, "answer": "i. Early sanitation systems" },
+                { "name": "Paragraph B", "qNum": 15, "answer": "ii. Unplanned industrial congestion" }
+              ],
+              "instruction": "Match the correct heading i-ii with paragraphs A-B."
+            }
+          },
+          {
+            "id": "infra-mi-1",
+            "type": "matching-information",
+            "data": {
+              "statements": [
+                { "qNum": 16, "text": "A reference to classical health methods", "answer": "Paragraph A" }
+              ],
+              "options": ["Paragraph A", "Paragraph B"],
+              "instruction": "Match the information statement with correct paragraph."
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "68. Advanced Science Passage with Diagram Labeling and Sentence Completion (Split Layout)",
+    "description": "A split layout featuring an environmental passage on the left, with diagram/flow chart completion and sentence completion on the right.",
+    "json": {
+      "title": "The Nitrogen Cycle Process",
+      "description": "Identify nitrogen changes and complete process gaps.",
+      "thumbnail_url": "",
+      "course_type": "Reading Test",
+      "layout_type": "split",
+      "status": "Published",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "rp-nitrogen",
+            "type": "reading-passage",
+            "data": {
+              "title": "Nitrogen Fixation Dynamics",
+              "text": "Atmospheric nitrogen is converted to ammonia by bacteria. This is nitrification."
+            }
+          }
+        ],
+        "right": [
+          {
+            "id": "diag-n1",
+            "type": "sentence-completion",
+            "data": {
+              "instruction": "Complete the blanks using NO MORE THAN TWO WORDS.",
+              "sentences": [
+                { "qNum": 1, "text": "Ammonia is created when nitrogen is processed by [bacteria].", "answer": "bacteria" }
+              ]
+            }
+          },
+          {
+            "id": "table-n1",
+            "type": "table-completion",
+            "data": {
+              "headers": ["Stage", "Catalyst"],
+              "rows": [
+                ["Nitrification", "Bacteria"],
+                ["Fixation", "____"]
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "69. Historical Passage with True/False/Not Given and Multiple Choice (Split Layout)",
+    "description": "A split layout with a history lesson on navigation on the left, coupled with True/False/Not Given statement arrays and double MCQ types on the right.",
+    "json": {
+      "title": "Ancient Oceanic Seafaring",
+      "description": "Test factual navigation claims.",
+      "thumbnail_url": "",
+      "course_type": "Reading Test",
+      "layout_type": "split",
+      "status": "Published",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "rp-seafaring",
+            "type": "reading-passage",
+            "data": {
+              "title": "Early Polynesian Migration",
+              "text": "Lacking magnetic compasses, early Polynesians relied on star paths and birds."
+            }
+          }
+        ],
+        "right": [
+          {
+            "id": "sea-tf-1",
+            "type": "true-false-not-given",
+            "data": {
+              "instruction": "Identify if statements match passage facts.",
+              "statements": [
+                { "qNum": 1, "text": "Early Polynesians carried advanced compasses.", "answer": "FALSE" }
+              ]
+            }
+          },
+          {
+            "id": "sea-mcq-1",
+            "type": "mcq",
+            "data": {
+              "question": "What did Polynesians use to navigate?",
+              "options": ["Compass", "Stars and birds", "Subsurface sonar", "Metal maps"],
+              "correctAnswer": "B",
+              "questionNumber": 2
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "70. Multi-Task Writing Suite with Task 1 Map Comparison and Task 2 Discussion Guide (Single Layout)",
+    "description": "A single column full-course writing study block designed to display Task 1 Map diagrams and a Task 2 Essay prompt.",
+    "json": {
+      "title": "Academic Writing Master Plan",
+      "description": "Double-header targets both standard academic writing tasks.",
+      "thumbnail_url": "",
+      "course_type": "Writing Test",
+      "layout_type": "single",
+      "status": "Draft",
+      "blocks": {
+        "single": [
+          {
+            "id": "wt-map-t1",
+            "type": "academic-task1",
+            "data": {
+              "title": "Task 1: Town Expansion Comparison",
+              "prompt": "Summarize the changes in the town of Bramley between 1995 and 2015."
+            }
+          },
+          { "id": "sep-wt", "type": "divider", "data": {} },
+          {
+            "id": "wt-essay-t2",
+            "type": "task2",
+            "data": {
+              "title": "Task 2: Globalization",
+              "prompt": "Some believe that globalization benefits local culture, while others fear it destroys identity. Discuss both views."
+            }
+          }
+        ],
+        "left": [],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "71. Academic Reading Passage with Summary Completion having Multiple Clustered Blanks (Split Layout)",
+    "description": "A split layout testing summary paragraph completion containing multiple inline bracket answers that parses into matching INLINE_BLANKS questions.",
+    "json": {
+      "title": "The Rise of Artificial Intelligence",
+      "description": "Complete the overview paragraph based on machine learning history.",
+      "thumbnail_url": "",
+      "course_type": "Reading Test",
+      "layout_type": "split",
+      "status": "Published",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "rp-ai",
+            "type": "reading-passage",
+            "data": {
+              "title": "Neural Network Fundamentals",
+              "text": "Deep learning models adjust weighted variables to detect image segments correctly."
+            }
+          }
+        ],
+        "right": [
+          {
+            "id": "sum-ai-1",
+            "type": "summary-completion",
+            "data": {
+              "instruction": "Fill the gaps carefully with exact terms.",
+              "statement": "Systems learn by tuning [weighted] parameters so they classify [segments] inside modern processors.",
+              "answers": "weighted|segments",
+              "startQNum": 10
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "72. 3-Part Modular Speaking Test with Embedded Audio/Video Prompting (Single Layout)",
+    "description": "A complete speech evaluation curriculum rendering consecutive introduced, cue card, and discussion blocks alongside streaming media feeds.",
+    "json": {
+      "title": "ELTS Speaking Full Evaluation",
+      "description": "Simulates standard oral exams parts 1, 2, and 3.",
+      "thumbnail_url": "",
+      "course_type": "Speaking Test",
+      "layout_type": "single",
+      "status": "Published",
+      "blocks": {
+        "single": [
+          {
+            "id": "sp-h",
+            "type": "heading",
+            "data": { "text": "Speaking Test Interactive Portal" }
+          },
+          {
+            "id": "sp1",
+            "type": "part1",
+            "data": {
+              "title": "Part 1: Leisure & Hobbies",
+              "prompt": "Let's talk about your free time. What do you do on weekends?"
+            }
+          },
+          {
+            "id": "sp2-cue",
+            "type": "cue-card",
+            "data": {
+              "title": "Part 2: Description Prompt",
+              "prompt": "Describe a historical place you would like to visit."
+            }
+          },
+          {
+            "id": "sp3-dis",
+            "type": "part3",
+            "data": {
+              "title": "Part 3: Preservation Dilemmas",
+              "prompt": "Why is preserving historical structures financially challenging?"
+            }
+          }
+        ],
+        "left": [],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "73. Comprehensive Listening Test Section 4 with Flow Chart and Table Completion (Split Layout)",
+    "description": "A split layout demonstrating listening lecture section 4 with high-density note and table structured layouts on the right alongside continuous audio playback.",
+    "json": {
+      "title": "Lecturer Notes on Soil Science",
+      "description": "Complete notes detailing sand particles.",
+      "thumbnail_url": "",
+      "course_type": "Listening Test",
+      "layout_type": "split",
+      "status": "Published",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "list-aud-sec",
+            "type": "audio",
+            "data": { "url": "soil-lecture.mp3", "title": "Section 4 Soil Composition" }
+          }
+        ],
+        "right": [
+          {
+            "id": "sc-soil",
+            "type": "sentence-completion",
+            "data": {
+              "sentences": [
+                { "qNum": 31, "text": "Coarse sand promotes rapid drainage of [wastewater] away from routes.", "answer": "wastewater" }
+              ]
+            }
+          },
+          {
+            "id": "table-soil",
+            "type": "table-completion",
+            "data": {
+              "headers": ["Particle", "Function"],
+              "rows": [
+                ["Coarse Sand", "Drainage"],
+                ["Fine Silt", "____"]
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "74. Business Migration Passage with Matching Headings and Short Answer Blanks (Split Layout)",
+    "description": "A split business reading passage utilizing structural matching headings paragraphs and inline blank text fields.",
+    "json": {
+      "title": "Corporate Mobility in Globalization",
+      "description": "Analyze multi-national headquarters choices.",
+      "thumbnail_url": "",
+      "course_type": "Reading Test",
+      "layout_type": "split",
+      "status": "Published",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "rp-corp",
+            "type": "reading-passage",
+            "data": {
+              "title": "Commercial Real-estate Selection",
+              "text": "Paragraph 1: Agglomeration advantages attract similar tech companies."
+            }
+          }
+        ],
+        "right": [
+          {
+            "id": "corp-mh1",
+            "type": "matching-headings",
+            "data": {
+              "headings": ["i. Agglomeration gravity"],
+              "paragraphs": [
+                { "name": "Paragraph 1", "qNum": 14, "answer": "i. Agglomeration gravity" }
+              ]
+            }
+          },
+          {
+            "id": "corp-fb1",
+            "type": "fill-blanks",
+            "data": {
+              "statement": "Tech leaders select locations to minimize [overhead] taxes.",
+              "answers": "overhead"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "75. Advanced Reading Mastery Course with Embedded Resources, PDF, and Media Block (Split Layout)",
+    "description": "An educational split layout course connecting standard reading passage files with high-quality downloadable resources and instructions.",
+    "json": {
+      "title": "Mastering the IELTS Reading Grid",
+      "description": "Professional training module targeting advanced skim strategies.",
+      "thumbnail_url": "",
+      "course_type": "Reading Test",
+      "layout_type": "split",
+      "status": "Published",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "rp-skim",
+            "type": "reading-passage",
+            "data": {
+              "title": "The Science of Scanning",
+              "text": "Scanning allows the reader to isolate coordinates inside complex texts rapidly."
+            }
+          },
+          {
+            "id": "pdf-skim",
+            "type": "pdf",
+            "data": { "url": "skim-handout.pdf", "caption": "Printable Strategy Sheets" }
+          }
+        ],
+        "right": [
+          {
+            "id": "skim-fb1",
+            "type": "fill-blanks",
+            "data": {
+              "statement": "Scanning avoids translating every [word] on the page.",
+              "answers": "word"
+            }
+          },
+          {
+            "id": "res-skim",
+            "type": "downloadable-resource",
+            "data": {
+              "title": "Scanning Homework Tracker.pdf",
+              "fileSize": "14.2 MB"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "76. Vocabulary Practice Track with Mixed Questions and Band Descriptor Tips (Single Layout)",
+    "description": "A single-layout course module demonstrating tips-integrated list with multiple-choice vocab queries and descriptive band score panels.",
+    "json": {
+      "title": "High-Band Lexical Resources",
+      "description": "Strengthen your vocabulary using focused callouts.",
+      "thumbnail_url": "",
+      "course_type": "Reading Test",
+      "layout_type": "single",
+      "status": "Published",
+      "blocks": {
+        "single": [
+          {
+            "id": "lex-v1",
+            "type": "band-descriptor",
+            "data": { "text": "Band 8 candidates use uncommon lexical items accurately." }
+          },
+          {
+            "id": "v-mcq-1",
+            "type": "mcq",
+            "data": {
+              "question": "Which word is a synonym of 'ubiquitous'?",
+              "options": ["Omnipresent", "Rare", "Isolated", "Unstable"],
+              "correctAnswer": "A",
+              "questionNumber": 1
+            }
+          },
+          {
+            "id": "lex-t1",
+            "type": "tip",
+            "data": { "text": "Do not repeat the exact words from essay topic prompts; paraphrase!" }
+          }
+        ],
+        "left": [],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "77. Highly Complex Science Reading Exam with Inline Blanks and Multi-MCQ Checklist (Split Layout)",
+    "description": "An advanced split layout course on marine microbiology that integrates inline paragraph blanks, multi-selection MCQs, and traditional headings matching alongside passage text.",
+    "json": {
+      "title": "Bioluminescence in Deep Marine Ecosystems",
+      "description": "An analytical IELTS reading module focusing on twilight zone organism chemistry.",
+      "thumbnail_url": "",
+      "course_type": "Reading Test",
+      "layout_type": "split",
+      "status": "Published",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "rp-bio-1",
+            "type": "reading-passage",
+            "data": {
+              "title": "Passage 1: Light Below the Sunlit Zone",
+              "text": "Deep sea bioluminescence functions primarily as a defensive mechanism. In the twilight zones (200m - 1000m), marine creatures synthesize luciferin compounds to signal mates or startle micro-predators. Unlike surface species that rely on ambient light waves, deep-sea organisms utilize highly concentrated chemical interactions that emit short-wavelength blue light, which travels furthest underwater. Marine biologists have isolated specific peptide catalyst inhibitors that explain why these glows occur in rhythmic bursts rather than constant emissions."
+            }
+          }
+        ],
+        "right": [
+          {
+            "id": "bio-ib-1",
+            "type": "INLINE_BLANKS",
+            "data": {
+              "text": "Bioluminescence in the twilight zone is primarily used for _____ defense. Deep-sea organisms produce specialized _____ compounds showing short-wavelength emission profiles, which travel far because of marine physics. Rhythmic bursts are regulated by certain peptide _____.",
+              "correctAnswer": "defensive|luciferin|inhibitors"
+            }
+          },
+          {
+            "id": "bio-multi-1",
+            "type": "MULTI_MCQ",
+            "data": {
+              "text": "Choose TWO factors that explain the rhythm and transmission of deep-sea bioluminescence.",
+              "options": [
+                "Emission of long-wavelength red frequencies",
+                "High density of ambient solar wavelengths",
+                "Synthesis of specialized luciferin molecules",
+                "Regulatory interactions driven by peptide catalyst inhibitors",
+                "Constant non-rhythmic electrical fields"
+              ],
+              "correctIndexes": [2, 3]
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "78. Interactive Architectural Listening Lecture with Multiple Playback Segments and Flowcharts (Split Layout)",
+    "description": "A robust listening scenario containing segmented stream cues, diagram-labeled graphics and multi-option listening blanks.",
+    "json": {
+      "title": "Eco-friendly Megacity Architecture",
+      "description": "Full Section 3 & 4 listening exam with sound clips and table metrics.",
+      "thumbnail_url": "",
+      "course_type": "Listening Test",
+      "layout_type": "split",
+      "status": "Published",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "list-arch-header",
+            "type": "listening-section",
+            "data": {
+              "sectionNumber": 3,
+              "title": "Case Study: Singapore Forest Canopy Architecture",
+              "audioTimestamp": "00:00"
+            }
+          },
+          {
+            "id": "audio-arch-1",
+            "type": "audio",
+            "data": {
+              "url": "megacity-canopy-lecture.mp3",
+              "title": "Singapore Canopy Lecture Audio"
+            }
+          }
+        ],
+        "right": [
+          {
+            "id": "table-arch-comp",
+            "type": "table-completion",
+            "data": {
+              "headers": ["Structure Zone", "Cooling Mechanism", "Target Efficiency"],
+              "rows": [
+                ["Forest Canopy Canopy Grid", "Shading / Thermal dispersion", "____"],
+                ["Subterranean Intake", "____", "18% Reduction"]
+              ],
+              "answers": "Evapotranspiration|Groundwater Loop"
+            }
+          },
+          {
+            "id": "arch-fl-1",
+            "type": "INLINE_BLANKS",
+            "data": {
+              "text": "The Singapore Megacity uses specialized forest grids for shading and cooling. The active process is known as _____ and the geothermal loops operate via deep _____ circuits.",
+              "correctAnswer": "Evapotranspiration|Groundwater"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "79. Advanced Multi-Tab Reading Examination with Section Dividers and MCQ Blocks (Split Layout)",
+    "description": "A split layout demonstrating multiple consecutive reading passage tabs under 'blocks.left' separated by divider blocks, allowing students to click tabs on the left while answering MCQs and matching items on the right.",
+    "json": {
+      "title": "Academic Reading General Assessment 30",
+      "description": "General reading exam featuring three tabbed passage segments.",
+      "thumbnail_url": "",
+      "course_type": "Reading Test",
+      "layout_type": "split",
+      "status": "Published",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "pass-sc-a",
+            "type": "reading-passage",
+            "data": {
+              "title": "Part A: Ancient Irrigation",
+              "text": "Early Mesopotamian farming channels relied entirely on spring snowmelts. Engineers dug complex dykes to store water blocks."
+            }
+          },
+          {
+            "id": "tab-div-1",
+            "type": "divider",
+            "data": { "title": "Section Boundary" }
+          },
+          {
+            "id": "pass-sc-b",
+            "type": "reading-passage",
+            "data": {
+              "title": "Part B: Roman Aqueducts",
+              "text": "Roman gravity aqueducts prioritized gradient precision. Slopes were constructed at less than half a degree."
+            }
+          }
+        ],
+        "right": [
+          {
+            "id": "aq-mcq-1",
+            "type": "MCQ",
+            "data": {
+              "question": "What controlled Roman aqueduct water velocities?",
+              "options": [
+                "Narrow pressurized valves",
+                "Gravity gradients configured at very slight slopes",
+                "Submersible mechanical lift wheels"
+              ],
+              "correctIndex": 1
+            }
+          },
+          {
+            "id": "aq-tf-1",
+            "type": "TF",
+            "data": {
+              "text": "Roman aqueduct gradients were extremely steep to ensure fast transit.",
+              "correctAnswer": "FALSE"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "80. Dual-Task Academic Writing Curriculum with Core Metrics and Band Level Descriptions (Single Layout)",
+    "description": "An instructional single-layout class structure showcasing graphical interpretation alongside argument guidelines, and tip lists.",
+    "json": {
+      "title": "Task 1 & Task 2 Writing Masterclass",
+      "description": "Practice academic charting and logical argument mapping with feedback guides.",
+      "thumbnail_url": "",
+      "course_type": "Writing Course",
+      "layout_type": "single",
+      "status": "Published",
+      "blocks": {
+        "single": [
+          {
+            "id": "wt-tip-b8",
+            "type": "band-descriptor",
+            "data": { "text": "Band 8 Criteria: Present a fully developed response with relevant, fully extended and supported ideas." }
+          },
+          {
+            "id": "task1-chart",
+            "type": "task1",
+            "data": {
+              "title": "Task 1: Carbon Emissions by Sector (1990 - 2020)",
+              "prompt": "The bar chart shows carbon emission contributions. Summarize the main trends and select key features."
+            }
+          },
+          {
+            "id": "task2-essay",
+            "type": "task2",
+            "data": {
+              "title": "Task 2: Automated Workplaces",
+              "prompt": "Automation increases productivity but reduces working-class opportunities. To what extent do you agree or disagree?"
+            }
+          }
+        ],
+        "left": [],
+        "right": []
+      }
+    }
+  },
+  {
+    "scenario": "81. Advanced Headline Matching and Detail Association Module (Split Layout)",
+    "description": "A split layout demonstrating line-based matching questions targeting research methodologies and historic eras.",
+    "json": {
+      "title": "Timeline of Cognitive Psychology Pioneers",
+      "description": "Match theories to their early experimental centers.",
+      "thumbnail_url": "",
+      "course_type": "Reading Test",
+      "layout_type": "split",
+      "status": "Published",
+      "blocks": {
+        "single": [],
+        "left": [
+          {
+            "id": "rp-pioneers",
+            "type": "reading-passage",
+            "data": {
+              "title": "The Leipzig and Harvard Laboratories",
+              "text": "Paragraph A: Wundt established Leipzig to log reaction times.\nParagraph B: William James integrated functionalism models at Harvard."
+            }
+          }
+        ],
+        "right": [
+          {
+            "id": "match-hd-1",
+            "type": "MATCHING",
+            "data": {
+              "text": "Recording physiological reactions under lab criteria\nApplying functional evolutionary concepts to memory",
+              "correctAnswer": "Paragraph A\nParagraph B",
+              "explanation": "Paragraph A introduces chemical or physical reaction records. Paragraph B references functionalism."
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "scenario": "82. Language Skills Builder with Mixed Lexical Tips and Inline Blanks (Single Layout)",
+    "description": "A single-layout diagnostic drill with multiple tips, key vocabulary indicators, and inline paragraph blanks with answers.",
+    "json": {
+      "title": "Grammar and Vocabulary booster: Cohesive Devices",
+      "description": "Sharpen passive-voice structures and linking phrases.",
+      "thumbnail_url": "",
+      "course_type": "Reading Test",
+      "layout_type": "single",
+      "status": "Published",
+      "blocks": {
+        "single": [
+          {
+            "id": "tip-passive",
+            "type": "tip",
+            "data": { "text": "Use passive forms (e.g., 'it was observed') to elevate academic objectivity." }
+          },
+          {
+            "id": "vocab-blank-1",
+            "type": "INLINE_BLANKS",
+            "data": {
+              "text": "The experiment was _____ (carry) out in sterile chambers. Consequently, several changes were _____ (record) in the output logs.",
+              "correctAnswer": "carried|recorded"
+            }
+          },
+          {
+            "id": "band-lexical",
+            "type": "band-descriptor",
+            "data": { "text": "Vocabulary selection counts for 25% of both Writing and Speaking scores." }
+          }
+        ],
+        "left": [],
+        "right": []
+      }
+    }
+  }
+]

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sebsinstitute.com/sitemap.xml
+# LLM training and assistant discovery:
+# https://llmstxt.org/
+# https://sebsinstitute.com/llms.txt

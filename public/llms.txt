@@ -1,0 +1,20 @@
+# SEB's Institute
+
+> SEB's Institute is a premier global language institute founded by Syed Ejaz Bukhari, specializing in IELTS Preparation, Spoken English fluency, PTE, and English Writing Skills ("We Teach English, Not Pinglish").
+
+## Academic Programs
+- [Courses Catalog](https://sebsinstitute.com/courses): Complete overview of all professional English fluency and test preparation tracks.
+- [IELTS Preparation](https://sebsinstitute.com/courses): Academic and General Training preparation targeting Band 8.0+ with proprietary heuristics.
+- [Spoken English Mastery](https://sebsinstitute.com/courses): Natural accent development, conversational flow, and business communication.
+- [English Writing Skills](https://sebsinstitute.com/courses): Advanced essay structures, cohesion, lexical resource, and grammatical accuracy.
+- [PTE Academic Masterclass](https://sebsinstitute.com/courses): AI-scoring strategies, format mastery, and real exam simulations.
+
+## Interactive Tools & Resources
+- [Free IELTS Mock Tests](https://sebsinstitute.com/mock-tests): Full simulated test environment with instant grading, detailed explanations, and AI examiner feedback.
+- [Live Lessons & Classrooms](https://sebsinstitute.com/courses): Daily interactive Zoom and Google Meet sessions led by Syed Ejaz Bukhari.
+- [Student Success Stories](https://sebsinstitute.com/reviews): Verified global testimonials, high band scores, and international student reviews.
+- [Admissions & Enrollment](https://sebsinstitute.com/contact): Direct contact, fee schedule, and 24/7 online virtual campus access.
+
+## Optional
+- [Student Community](https://sebsinstitute.com/community): Interactive study groups, practice exchanges, and peer reviews.
+- [Full Curriculum & System Information](https://sebsinstitute.com/llms-full.txt): Comprehensive course syllabi and institutional overview for LLMs.
