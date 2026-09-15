@@ -7,24 +7,25 @@ import { useState, useEffect, useRef, lazy, Suspense } from "react";
 // Home is eagerly loaded for instant initial render
 import { Toaster, toast } from "sonner";
 import HomePage from "./pages/public/Home";
+import { lazyWithRetry } from "./lib/lazyRetry";
 
-// Route-level code splitting for secondary pages to minimize initial bundle size and maximize LCP
-const LoginPage = lazy(() => import("./pages/auth/Login"));
-const SignupPage = lazy(() => import("./pages/auth/Signup"));
-const DashboardPage = lazy(() => import("./pages/dashboard/StudentDashboard"));
-const WritingModule = lazy(() => import("./pages/dashboard/WritingModule"));
-const MockTestPage = lazy(() => import("./pages/dashboard/MockTest"));
-const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
-const TeacherDashboard = lazy(() => import("./pages/dashboard/TeacherDashboard"));
-const StudentCourses = lazy(() => import("./pages/public/Courses"));
-const PricingPage = lazy(() => import("./pages/public/Pricing"));
-const TermsPage = lazy(() => import("./pages/public/Terms"));
-const PrivacyPage = lazy(() => import("./pages/public/Privacy"));
-const CustomPageView = lazy(() => import("./pages/public/CustomPageView"));
-const AboutPage = lazy(() => import("./pages/public/About"));
-const ContactPage = lazy(() => import("./pages/public/Contact"));
-const PracticePage = lazy(() => import("./pages/public/Practice"));
-const NotFoundPage = lazy(() => import("./pages/public/NotFound"));
+// Route-level code splitting with resilience for secondary pages
+const LoginPage = lazyWithRetry(() => import("./pages/auth/Login"));
+const SignupPage = lazyWithRetry(() => import("./pages/auth/Signup"));
+const DashboardPage = lazyWithRetry(() => import("./pages/dashboard/StudentDashboard"));
+const WritingModule = lazyWithRetry(() => import("./pages/dashboard/WritingModule"));
+const MockTestPage = lazyWithRetry(() => import("./pages/dashboard/MockTest"));
+const AdminDashboard = lazyWithRetry(() => import("./pages/admin/AdminDashboard"));
+const TeacherDashboard = lazyWithRetry(() => import("./pages/dashboard/TeacherDashboard"));
+const StudentCourses = lazyWithRetry(() => import("./pages/public/Courses"));
+const PricingPage = lazyWithRetry(() => import("./pages/public/Pricing"));
+const TermsPage = lazyWithRetry(() => import("./pages/public/Terms"));
+const PrivacyPage = lazyWithRetry(() => import("./pages/public/Privacy"));
+const CustomPageView = lazyWithRetry(() => import("./pages/public/CustomPageView"));
+const AboutPage = lazyWithRetry(() => import("./pages/public/About"));
+const ContactPage = lazyWithRetry(() => import("./pages/public/Contact"));
+const PracticePage = lazyWithRetry(() => import("./pages/public/Practice"));
+const NotFoundPage = lazyWithRetry(() => import("./pages/public/NotFound"));
 
 import { supabase } from "./lib/supabaseClient";
 import { useTheme } from "./components/theme-provider";

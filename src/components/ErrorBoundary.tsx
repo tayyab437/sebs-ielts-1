@@ -26,6 +26,21 @@ export class ErrorBoundary extends Component<Props, State> {
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught Error caught by top-level ErrorBoundary:", error, errorInfo);
     this.setState({ error, errorInfo });
+
+    // Detect if this was a chunk loading / dynamic import failure from a new deployment
+    const isChunkLoadError = 
+      error?.message?.includes("Failed to fetch dynamically imported module") ||
+      error?.message?.includes("dynamically imported module") ||
+      error?.message?.includes("Loading chunk") ||
+      error?.message?.includes("Loading CSS chunk");
+
+    if (isChunkLoadError) {
+      const alreadyRefreshed = sessionStorage.getItem("chunk_retry_refreshed") === "true";
+      if (!alreadyRefreshed) {
+        sessionStorage.setItem("chunk_retry_refreshed", "true");
+        window.location.reload();
+      }
+    }
   }
 
   private handleReload = () => {
