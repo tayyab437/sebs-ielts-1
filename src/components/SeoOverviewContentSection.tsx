@@ -36,10 +36,10 @@ export default function SeoOverviewContentSection() {
               Authentic Computer-Delivered IELTS Mock Tests
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              At <strong>SEB's Institute</strong>, candidates prepare for both <strong>IELTS Academic</strong> and <strong>General Training</strong> with an exact replica of the computer-delivered exam interface. Designed to reflect the live testing environments administered worldwide by the British Council and IDP, our platform features identical split-screen reading viewports, synchronized listening audios with individual time markers, and real-time word counters for Writing Tasks 1 and 2.
+              At <strong>SEB's Institute</strong>, candidates prepare for both <Link to="/academic-tests" className="text-[#00a8cc] font-semibold hover:underline">IELTS Academic</Link> and <Link to="/general-training-tests" className="text-[#00a8cc] font-semibold hover:underline">General Training</Link> with an exact replica of the computer-delivered exam interface. Designed to reflect the live testing environments administered worldwide by the British Council and IDP, our platform features identical split-screen reading viewports, synchronized listening audios with individual time markers, and real-time word counters for Writing Tasks 1 and 2.
             </p>
             <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Every practice test provides instant diagnostic metrics and granular sub-score calculations. With our proprietary Locate &amp; Explain tool, students immediately identify the exact text lines and audio timestamps that validate each answer, demystifying True/False/Not Given logic and eliminating common distractor traps.
+              Explore our <Link to="/mock-tests" className="text-[#00a8cc] font-semibold hover:underline">100+ IELTS practice tests</Link> providing instant diagnostic metrics and granular sub-score calculations. With our proprietary Locate &amp; Explain tool, students immediately identify the exact text lines and audio timestamps that validate each answer, demystifying True/False/Not Given logic and eliminating common distractor traps.
             </p>
           </div>
 
@@ -50,10 +50,10 @@ export default function SeoOverviewContentSection() {
               Elite Spoken English Coaching &amp; AI Band Rubrics
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Founded by renowned linguistics coach <strong>Syed Ejaz Bukhari</strong>, SEB's Institute is celebrated for its vocal conditioning methodology: <em>"We Teach English, Not Pinglish."</em> Our communicative syllabus directly targets mother-tongue influence (MTI), auditory phonetic mapping, and speech prosody. Whether preparing for high-stakes university admissions, professional healthcare licensing (GMC, NMC), or immigration visas (Express Entry, UK Skilled Worker), students acquire instinctive conversational confidence.
+              Founded by renowned linguistics coach <Link to="/about" className="text-[#00a8cc] font-semibold hover:underline">Syed Ejaz Bukhari</Link>, SEB's Institute is celebrated for its vocal conditioning methodology: <em>"We Teach English, Not Pinglish."</em> Our communicative syllabus in our <Link to="/courses" className="text-[#00a8cc] font-semibold hover:underline">English courses</Link> directly targets mother-tongue influence (MTI), auditory phonetic mapping, and speech prosody. Whether preparing for university admissions, healthcare licensing (GMC, NMC), or immigration visas, students acquire instinctive conversational confidence.
             </p>
             <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Our intelligent <strong>AI IELTS Writing and Speaking Evaluator</strong> analyzes submitted essays and vocal recordings across the four official British Council band criteria: Task Achievement, Coherence &amp; Cohesion, Lexical Resource, and Grammatical Range and Accuracy. Candidates receive instant Band 0–9.0 evaluations with line-by-line grammar corrections and vocabulary enhancement suggestions to secure a target score of Band 8.5+.
+              Our intelligent <Link to="/dashboard/writing" className="text-[#00a8cc] font-semibold hover:underline">AI IELTS Writing Evaluator</Link> analyzes submitted essays and vocal recordings across official band criteria: Task Achievement, Coherence &amp; Cohesion, Lexical Resource, and Grammatical Range &amp; Accuracy. Candidates receive instant Band 0–9.0 evaluations with line-by-line grammar corrections to secure a target score of Band 8.5+.
             </p>
           </div>
 

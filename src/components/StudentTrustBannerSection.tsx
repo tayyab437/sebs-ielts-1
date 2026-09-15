@@ -29,7 +29,7 @@ export default function StudentTrustBannerSection() {
       <div key={idx} className="w-full h-full min-h-[55px] sm:min-h-[75px] overflow-hidden bg-slate-200">
         <img
           src={studentPhotos[shuffledIndices[idx] % studentPhotos.length]}
-          alt="IELTS student"
+          alt="IELTS Band 8.5 student candidate"
           loading="lazy"
           decoding="async"
           width={150}
@@ -42,7 +42,10 @@ export default function StudentTrustBannerSection() {
   });
 
   return (
-    <section className="relative w-full overflow-hidden bg-slate-100 py-10 sm:py-16 border-b border-slate-200">
+    <section 
+      aria-label="Student Success & Community" 
+      className="relative w-full overflow-hidden bg-slate-100 py-10 sm:py-16 border-b border-slate-200"
+    >
       <style>{`
         @keyframes slideLeft {
           0% { transform: translateX(0); }
@@ -107,7 +110,7 @@ export default function StudentTrustBannerSection() {
       {/* 3. HTML Foreground Subtitle Content */}
       <div className="relative z-20 max-w-6xl mx-auto px-4 sm:px-6 text-center flex flex-col items-center justify-center pt-24 sm:pt-28">
         <h2 className="text-xl sm:text-3xl md:text-4xl font-extrabold text-[#1a365d] tracking-tight py-1 inline-block">
-          students trust us to learn
+          Students Trust SEB's Institute for IELTS &amp; English
         </h2>
       </div>
     </section>
