@@ -143,7 +143,7 @@ export default function SocialShareBar({
               key={item.name}
               href={item.url}
               target="_blank"
-              rel="noopener noreferrer"
+              rel="nofollow ugc noopener noreferrer"
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-transform active:scale-95 ${item.color}`}
               aria-label={item.label}
               title={item.label}

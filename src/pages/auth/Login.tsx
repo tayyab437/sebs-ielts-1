@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const [logoUrl, setLogoUrl] = useState(() => sanitizeAssetUrl(localStorage.getItem("site_logo_url"), "/sebs_official_logo_v2_1780389206872.png"));
+  const [logoUrl, setLogoUrl] = useState(() => sanitizeAssetUrl(localStorage.getItem("site_logo_url"), "/sebs_official_logo_315.webp"));
   const [logoAlt, setLogoAlt] = useState(() => localStorage.getItem("site_logo_alt") || "SEB's Institute Logo");
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export default function LoginPage() {
     });
 
     const syncLogo = () => {
-      setLogoUrl(sanitizeAssetUrl(localStorage.getItem("site_logo_url"), "/sebs_official_logo_v2_1780389206872.png"));
+      setLogoUrl(sanitizeAssetUrl(localStorage.getItem("site_logo_url"), "/sebs_official_logo_315.webp"));
       setLogoAlt(localStorage.getItem("site_logo_alt") || "SEB's Institute Logo");
     };
     window.addEventListener("storage", syncLogo);
@@ -134,7 +134,16 @@ export default function LoginPage() {
       >
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center space-x-2 mb-4">
-            <img src={logoUrl} alt={logoAlt} className="h-12 w-auto object-contain mix-blend-multiply" referrerPolicy="no-referrer" />
+            <img 
+              src={logoUrl} 
+              alt={logoAlt} 
+              width={140}
+              height={76}
+              loading="eager"
+              decoding="async"
+              className="h-12 w-auto object-contain mix-blend-multiply" 
+              referrerPolicy="no-referrer" 
+            />
             <span className="text-2xl font-bold tracking-tight text-primary">Institute</span>
           </Link>
           <h1 className="text-2xl font-bold tracking-tight text-primary">Welcome Back</h1>

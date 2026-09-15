@@ -80,7 +80,7 @@ export default function SeoOverviewContentSection() {
             <a
               href="https://takeielts.britishcouncil.org"
               target="_blank"
-              rel="noopener noreferrer"
+              rel="nofollow noopener noreferrer"
               className="group flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-[#00a8cc] transition-all shadow-2xs"
             >
               <div>
@@ -95,7 +95,7 @@ export default function SeoOverviewContentSection() {
             <a
               href="https://www.ieltsidp.com"
               target="_blank"
-              rel="noopener noreferrer"
+              rel="nofollow noopener noreferrer"
               className="group flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-[#00a8cc] transition-all shadow-2xs"
             >
               <div>
@@ -110,7 +110,7 @@ export default function SeoOverviewContentSection() {
             <a
               href="https://www.cambridgeenglish.org"
               target="_blank"
-              rel="noopener noreferrer"
+              rel="nofollow noopener noreferrer"
               className="group flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-[#00a8cc] transition-all shadow-2xs"
             >
               <div>
@@ -125,7 +125,7 @@ export default function SeoOverviewContentSection() {
             <a
               href="https://www.ielts.org"
               target="_blank"
-              rel="noopener noreferrer"
+              rel="nofollow noopener noreferrer"
               className="group flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-[#00a8cc] transition-all shadow-2xs"
             >
               <div>

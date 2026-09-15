@@ -54,11 +54,11 @@ export interface SiteSettings {
 }
 
 export const defaultSettings: SiteSettings = {
-  site_favicon_url: "/sebs_official_logo_v2_1780389206872.png",
+  site_favicon_url: "/sebs_official_logo_315.webp",
   site_favicon_alt: "SEB's Institute Favicon",
-  site_logo_url: "/sebs_official_logo_v2_1780389206872.png",
+  site_logo_url: "/sebs_official_logo_315.webp",
   site_logo_alt: "SEB's Institute Logo",
-  site_hero_image_url: "/ielts_prep_banner_1781330535098.jpg",
+  site_hero_image_url: "/ielts_prep_banner_960.webp",
   site_hero_image_alt: "SEBS English & IELTS Language Academy learning evaluation interface mockup",
   site_bukhari_audio_url: "",
   site_bukhari_audio_transcript: "Welcome to SEB's Institute! I'm Syed Ejaz Bukhari, your principal coach.",
@@ -100,12 +100,29 @@ export const defaultSettings: SiteSettings = {
   meta_link_writing: "https://sebsinstitute.com/dashboard/writing"
 };
 
+export function updateDocumentFavicon(faviconUrl: string) {
+  if (!faviconUrl || typeof document === "undefined") return;
+  const selectors = ["link[rel~='icon']", "link[rel='shortcut icon']", "link[rel='apple-touch-icon']"];
+  let updated = false;
+  selectors.forEach((selector) => {
+    const existing = document.querySelectorAll<HTMLLinkElement>(selector);
+    existing.forEach((el) => {
+      el.href = faviconUrl;
+      updated = true;
+    });
+  });
+  if (!updated) {
+    const link = document.createElement("link");
+    link.rel = "icon";
+    link.href = faviconUrl;
+    document.head.appendChild(link);
+  }
+}
+
 export function sanitizeAssetUrl(url: string | null | undefined, defaultUrl: string): string {
   if (!url) return defaultUrl;
   const trimmed = url.trim();
-  if (trimmed.includes("ibb.co") || trimmed.includes("01-logo-curve")) {
-    return defaultUrl;
-  }
+  if (!trimmed) return defaultUrl;
   if (trimmed.startsWith("/src/assets/images/")) {
     return trimmed.replace("/src/assets/images/", "/");
   }
@@ -115,8 +132,16 @@ export function sanitizeAssetUrl(url: string | null | undefined, defaultUrl: str
 let activeFetchPromise: Promise<SiteSettings> | null = null;
 let cachedSettings: SiteSettings | null = null;
 
-export async function fetchSiteSettings(): Promise<SiteSettings> {
-  if (cachedSettings) {
+export function invalidateSettingsCache() {
+  cachedSettings = null;
+  activeFetchPromise = null;
+}
+
+export async function fetchSiteSettings(bypassCache = false): Promise<SiteSettings> {
+  if (bypassCache) {
+    cachedSettings = null;
+    activeFetchPromise = null;
+  } else if (cachedSettings) {
     return cachedSettings;
   }
   if (activeFetchPromise) {
@@ -141,6 +166,9 @@ export async function fetchSiteSettings(): Promise<SiteSettings> {
             sanitizedData.site_hero_image_url = sanitizeAssetUrl(sanitizedData.site_hero_image_url, defaultSettings.site_hero_image_url);
           }
           cachedSettings = { ...defaultSettings, ...sanitizedData };
+          if (cachedSettings.site_favicon_url) {
+            updateDocumentFavicon(cachedSettings.site_favicon_url);
+          }
           return cachedSettings;
         }
       }
@@ -149,7 +177,11 @@ export async function fetchSiteSettings(): Promise<SiteSettings> {
     } finally {
       activeFetchPromise = null;
     }
-    return getLocalSettings();
+    const local = getLocalSettings();
+    if (local.site_favicon_url) {
+      updateDocumentFavicon(local.site_favicon_url);
+    }
+    return local;
   })();
 
   return activeFetchPromise;
@@ -164,8 +196,13 @@ export async function saveSiteSettings(settings: Partial<SiteSettings>): Promise
     }
   });
   
+  if (settings.site_favicon_url) {
+    updateDocumentFavicon(settings.site_favicon_url);
+  }
+
   // Clear the cache so future calls fetch fresh data
   cachedSettings = null;
+  activeFetchPromise = null;
   
   window.dispatchEvent(new Event("storage")); // Trigger local updates for other tabs
 

@@ -100,12 +100,29 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply font-sans;
-    font-size: 15px;
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    touch-action: manipulation;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background text-foreground;
+    touch-action: manipulation;
+  }
+
+  /* Eliminate 300ms tap delay and ensure responsive tap responsiveness across mobile browsers */
+  button, a, input, select, textarea, [role="button"] {
+    touch-action: manipulation;
+  }
+
+  /* Prevent automatic viewport zoom on input focus on iOS Safari & Chrome Mobile */
+  @media (max-width: 768px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
   }
 }
 
@@ -116,6 +133,12 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Content visibility optimization for off-screen sections: defers layout/paint until scrolled into view */
+  .content-visibility-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 500px;
   }
 }
 

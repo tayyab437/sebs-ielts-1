@@ -383,13 +383,20 @@ async function startServer() {
     next();
   });
 
-  // Security Headers Middleware
+  // Security & SEO Headers Middleware
   app.use((req, res, next) => {
     res.removeHeader("X-Powered-By");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("X-Frame-Options", "SAMEORIGIN");
     res.setHeader("X-XSS-Protection", "1; mode=block");
     res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+
+    // Explicitly declare indexing directive for search engines
+    if (req.path.startsWith("/admin") || req.path.startsWith("/api/")) {
+      res.setHeader("X-Robots-Tag", "noindex, nofollow");
+    } else {
+      res.setHeader("X-Robots-Tag", "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1");
+    }
     next();
   });
 
@@ -2393,6 +2400,27 @@ Ensure that the output is formatted as a valid JSON object matching the followin
     }
   });
 
+  // Explicit handlers for favicon.ico and favicon.png
+  app.get("/favicon.ico", (req, res) => {
+    const icoPath = path.join(process.cwd(), "public", "favicon.ico");
+    if (fs.existsSync(icoPath)) {
+      res.setHeader("Content-Type", "image/x-icon");
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      return res.sendFile(icoPath);
+    }
+    res.status(404).end();
+  });
+
+  app.get("/favicon.png", (req, res) => {
+    const pngPath = path.join(process.cwd(), "public", "favicon.png");
+    if (fs.existsSync(pngPath)) {
+      res.setHeader("Content-Type", "image/png");
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      return res.sendFile(pngPath);
+    }
+    res.status(404).end();
+  });
+
   // Explicit handlers for llms.txt, llms-full.txt and robots.txt
   app.get("/llms.txt", (req, res) => {
     const publicPath = path.join(process.cwd(), "public", "llms.txt");
@@ -2417,14 +2445,41 @@ Ensure that the output is formatted as a valid JSON object matching the followin
   });
 
   app.get("/robots.txt", (req, res) => {
+    res.removeHeader("X-Frame-Options");
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    
     const publicPath = path.join(process.cwd(), "public", "robots.txt");
     const distPath = path.join(process.cwd(), "dist", "robots.txt");
     const filePath = fs.existsSync(publicPath) ? publicPath : distPath;
     if (fs.existsSync(filePath)) {
-      res.setHeader("Content-Type", "text/plain; charset=utf-8");
       return res.sendFile(filePath);
     }
-    res.status(404).send("Not Found");
+    // Fallback if file not found
+    return res.send(`User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+Sitemap: https://sebsinstitute.com/sitemap.xml
+`);
+  });
+
+  // Explicit XML Sitemap Handlers
+  app.get(["/sitemap.xml", "/sitemap_index.xml"], (req, res) => {
+    res.removeHeader("X-Frame-Options");
+    res.setHeader("Content-Type", "application/xml; charset=utf-8");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+
+    const publicPath = path.join(process.cwd(), "public", "sitemap.xml");
+    const distPath = path.join(process.cwd(), "dist", "sitemap.xml");
+    const filePath = fs.existsSync(publicPath) ? publicPath : distPath;
+    if (fs.existsSync(filePath)) {
+      return res.sendFile(filePath);
+    }
+    res.status(404).send("<?xml version=\"1.0\" encoding=\"UTF-8\"?><error>Sitemap not found</error>");
   });
 
   // Vite middleware for development
@@ -2436,7 +2491,17 @@ Ensure that the output is formatted as a valid JSON object matching the followin
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
+    app.use(express.static(distPath, {
+      maxAge: '1y',
+      immutable: true,
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+        } else if (filePath.match(/\.(js|css|webp|png|jpg|jpeg|gif|ico|svg|woff|woff2)$/)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        }
+      }
+    }));
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });

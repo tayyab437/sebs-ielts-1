@@ -2,27 +2,29 @@ import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-do
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "motion/react";
 import { Home, BookOpen, GraduationCap, Trophy, LayoutDashboard, User, LogIn, Menu, X, ArrowRight, ShieldCheck, Globe, Users, Star, BarChart3, Clock, Sparkles, Sun, Moon, Bell, Facebook, Youtube, Instagram, Linkedin, Send, Mail, Phone, MapPin, Megaphone, Search, ExternalLink } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 
-// Lazy loading or direct imports for now
+// Home is eagerly loaded for instant initial render
 import { Toaster, toast } from "sonner";
 import HomePage from "./pages/public/Home";
-import LoginPage from "./pages/auth/Login";
-import SignupPage from "./pages/auth/Signup";
-import DashboardPage from "./pages/dashboard/StudentDashboard";
-import WritingModule from "./pages/dashboard/WritingModule";
-import MockTestPage from "./pages/dashboard/MockTest";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import TeacherDashboard from "./pages/dashboard/TeacherDashboard";
-import StudentCourses from "./pages/public/Courses";
-import PricingPage from "./pages/public/Pricing";
-import TermsPage from "./pages/public/Terms";
-import PrivacyPage from "./pages/public/Privacy";
-import CustomPageView from "./pages/public/CustomPageView";
-import AboutPage from "./pages/public/About";
-import ContactPage from "./pages/public/Contact";
-import PracticePage from "./pages/public/Practice";
-import NotFoundPage from "./pages/public/NotFound";
+
+// Route-level code splitting for secondary pages to minimize initial bundle size and maximize LCP
+const LoginPage = lazy(() => import("./pages/auth/Login"));
+const SignupPage = lazy(() => import("./pages/auth/Signup"));
+const DashboardPage = lazy(() => import("./pages/dashboard/StudentDashboard"));
+const WritingModule = lazy(() => import("./pages/dashboard/WritingModule"));
+const MockTestPage = lazy(() => import("./pages/dashboard/MockTest"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const TeacherDashboard = lazy(() => import("./pages/dashboard/TeacherDashboard"));
+const StudentCourses = lazy(() => import("./pages/public/Courses"));
+const PricingPage = lazy(() => import("./pages/public/Pricing"));
+const TermsPage = lazy(() => import("./pages/public/Terms"));
+const PrivacyPage = lazy(() => import("./pages/public/Privacy"));
+const CustomPageView = lazy(() => import("./pages/public/CustomPageView"));
+const AboutPage = lazy(() => import("./pages/public/About"));
+const ContactPage = lazy(() => import("./pages/public/Contact"));
+const PracticePage = lazy(() => import("./pages/public/Practice"));
+const NotFoundPage = lazy(() => import("./pages/public/NotFound"));
 
 import { supabase } from "./lib/supabaseClient";
 import { useTheme } from "./components/theme-provider";
@@ -31,16 +33,16 @@ import { fetchSiteSettings } from "./lib/settings";
 import { PageSEOManager } from "./components/PageSEOManager";
 
 function Footer() {
-  const [logoUrl, setLogoUrl] = useState("/sebs_official_logo_v2_1780389206872.png");
+  const [logoUrl, setLogoUrl] = useState("/sebs_official_logo_315.webp");
   const [logoAlt, setLogoAlt] = useState("SEB's Institute Logo");
   const [emailValue, setEmailValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const handleFooterLogoSync = () => {
-      fetchSiteSettings().then(settings => {
-        setLogoUrl(settings.site_logo_url);
-        setLogoAlt(settings.site_logo_alt);
+      fetchSiteSettings(true).then(settings => {
+        if (settings?.site_logo_url) setLogoUrl(settings.site_logo_url);
+        if (settings?.site_logo_alt) setLogoAlt(settings.site_logo_alt);
       });
     };
     handleFooterLogoSync();
@@ -78,6 +80,10 @@ function Footer() {
               <img 
                 src={logoUrl} 
                 alt={logoAlt} 
+                width={160}
+                height={87}
+                loading="lazy"
+                decoding="async"
                 className="h-14 w-auto object-contain dark:brightness-200 dark:invert transition-transform duration-300 group-hover:scale-105" 
                 referrerPolicy="no-referrer"
               />
@@ -103,10 +109,10 @@ function Footer() {
                     key={idx}
                     href={social.url}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel="nofollow noopener noreferrer"
                     aria-label={`Visit SEB's Institute on ${social.name}`}
                     title={`Visit SEB's Institute on ${social.name}`}
-                    className="w-10 h-10 min-w-[40px] min-h-[40px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-xl flex items-center justify-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-500/10"
+                    className="w-11 h-11 min-w-[44px] min-h-[44px] sm:w-12 sm:h-12 sm:min-w-[48px] sm:min-h-[48px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-xl flex items-center justify-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-500/10"
                   >
                     {social.icon}
                     <span className="sr-only">Visit SEB's Institute on {social.name}</span>
@@ -219,7 +225,7 @@ function Footer() {
             <a 
               href="https://takeielts.britishcouncil.org" 
               target="_blank" 
-              rel="noopener noreferrer" 
+              rel="nofollow noopener noreferrer" 
               className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1"
             >
               <span>British Council IELTS</span>
@@ -228,7 +234,7 @@ function Footer() {
             <a 
               href="https://www.ieltsidp.com" 
               target="_blank" 
-              rel="noopener noreferrer" 
+              rel="nofollow noopener noreferrer" 
               className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1"
             >
               <span>IDP Education</span>
@@ -237,7 +243,7 @@ function Footer() {
             <a 
               href="https://www.cambridgeenglish.org" 
               target="_blank" 
-              rel="noopener noreferrer" 
+              rel="nofollow noopener noreferrer" 
               className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1"
             >
               <span>Cambridge English</span>
@@ -246,7 +252,7 @@ function Footer() {
             <a 
               href="https://www.ielts.org" 
               target="_blank" 
-              rel="noopener noreferrer" 
+              rel="nofollow noopener noreferrer" 
               className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1"
             >
               <span>IELTS.org Official</span>
@@ -254,72 +260,6 @@ function Footer() {
             </a>
           </div>
         </div>
-
-        {/* Social Sharing & Community Referral Bar */}
-        <div className="py-3 border-t border-slate-200/80 dark:border-slate-900/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-          <span className="font-semibold text-slate-700 dark:text-slate-300">
-            Share this platform with classmates &amp; study groups:
-          </span>
-          <div className="flex items-center gap-3">
-            <a
-              href="https://api.whatsapp.com/send?text=Prepare%20for%20IELTS%20Band%208.5%20at%20SEB%27s%20Institute:%20https%3A%2F%2Fsebsinstitute.com%2F"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#25D366] hover:opacity-80 transition-opacity font-bold flex items-center gap-1"
-              aria-label="Share SEB's Institute on WhatsApp"
-            >
-              <span>WhatsApp</span>
-            </a>
-            <span className="text-slate-300 dark:text-slate-700">•</span>
-            <a
-              href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fsebsinstitute.com%2F"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#1877F2] hover:opacity-80 transition-opacity font-bold flex items-center gap-1"
-              aria-label="Share SEB's Institute on Facebook"
-            >
-              <span>Facebook</span>
-            </a>
-            <span className="text-slate-300 dark:text-slate-700">•</span>
-            <a
-              href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fsebsinstitute.com%2F"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#0A66C2] hover:opacity-80 transition-opacity font-bold flex items-center gap-1"
-              aria-label="Share SEB's Institute on LinkedIn"
-            >
-              <span>LinkedIn</span>
-            </a>
-            <span className="text-slate-300 dark:text-slate-700">•</span>
-            <a
-              href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fsebsinstitute.com%2F&text=Master%20IELTS%20Band%208.5%20at%20SEB%27s%20Institute"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-slate-700 dark:text-slate-300 hover:text-white transition-colors font-bold flex items-center gap-1"
-              aria-label="Share SEB's Institute on X"
-            >
-              <span>X (Twitter)</span>
-            </a>
-          </div>
-        </div>
-
-        {/* Internal Navigation Directory for SEO & Crawlers */}
-        <nav aria-label="Footer Navigation" className="pt-4 pb-4 border-t border-slate-200 dark:border-slate-900 flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
-          <Link to="/" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Home</Link>
-          <Link to="/mock-tests" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">IELTS Mock Tests</Link>
-          <Link to="/academic-tests" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Academic Tests</Link>
-          <Link to="/general-training-tests" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">General Training Tests</Link>
-          <Link to="/courses" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">All Courses</Link>
-          <Link to="/pricing" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Pricing & Plans</Link>
-          <Link to="/reviews" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Student Reviews</Link>
-          <Link to="/community" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Community Forum</Link>
-          <Link to="/dashboard/writing" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">AI Writing Evaluator</Link>
-          <Link to="/practice" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Practice Materials</Link>
-          <Link to="/about" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">About Syed Ejaz Bukhari</Link>
-          <Link to="/contact" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Contact Admissions</Link>
-          <Link to="/privacy" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Privacy Policy</Link>
-          <Link to="/terms" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Terms of Service</Link>
-        </nav>
 
         {/* Footer bottom bar with license & trade details */}
         <div className="pt-6 border-t border-slate-200/60 dark:border-slate-900/60 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
@@ -332,7 +272,7 @@ function Footer() {
               <a
                 href="https://wa.me/923176369458"
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="nofollow noopener noreferrer"
                 className="text-emerald-600 dark:text-emerald-500 hover:text-emerald-500 dark:hover:text-emerald-400 font-semibold underline decoration-dotted transition-colors"
               >
                 Tayyab Ashfaq
@@ -352,7 +292,7 @@ function Footer() {
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [logoUrl, setLogoUrl] = useState("/sebs_official_logo_v2_1780389206872.png");
+  const [logoUrl, setLogoUrl] = useState("/sebs_official_logo_315.webp");
   const [logoAlt, setLogoAlt] = useState("SEB's Institute Logo");
 
   // Header Style & Layout States
@@ -375,9 +315,9 @@ function Navbar() {
 
   useEffect(() => {
     const handleStorageChange = () => {
-      fetchSiteSettings().then(settings => {
-        setLogoUrl(settings.site_logo_url);
-        setLogoAlt(settings.site_logo_alt);
+      fetchSiteSettings(true).then(settings => {
+        if (settings?.site_logo_url) setLogoUrl(settings.site_logo_url);
+        if (settings?.site_logo_alt) setLogoAlt(settings.site_logo_alt);
         setHeaderStyle(settings.site_header_style || "classic");
         setIotBannerText(settings.iot_banner_text || "Self-study to boost your IELTS Score to 6.5+");
         setIotBannerSubtext(settings.iot_banner_subtext || "Designed for Learners at IELTS 5.0-5.5");
@@ -390,13 +330,13 @@ function Navbar() {
         
         const favUrl = settings.site_favicon_url;
         if (favUrl) {
-          let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
-          if (!link) {
-            link = document.createElement('link');
-            link.rel = 'icon';
-            document.head.appendChild(link);
-          }
-          link.href = favUrl;
+          const selectors = ["link[rel~='icon']", "link[rel='shortcut icon']", "link[rel='apple-touch-icon']"];
+          selectors.forEach((sel) => {
+            const existing = document.querySelectorAll<HTMLLinkElement>(sel);
+            existing.forEach((el) => {
+              el.href = favUrl;
+            });
+          });
         }
       });
     };
@@ -454,6 +394,7 @@ function Navbar() {
   }, []);
 
   useEffect(() => {
+    if (!showNotifications) return;
     const handleClickOutside = (event: MouseEvent) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
         setShowNotifications(false);
@@ -461,7 +402,7 @@ function Navbar() {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [showNotifications]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -636,7 +577,16 @@ function Navbar() {
             {/* Primary Navigation Links */}
             <div className="flex items-center space-x-6">
               <Link to="/" className="flex items-center space-x-2 shrink-0 pr-2">
-                <img src={logoUrl} alt={logoAlt} className="h-9 w-auto object-contain dark:brightness-200 dark:invert" />
+                <img 
+                  src={logoUrl} 
+                  alt={logoAlt} 
+                  width={110}
+                  height={60}
+                  loading="eager"
+                  decoding="async"
+                  className="h-9 w-auto object-contain dark:brightness-200 dark:invert" 
+                  referrerPolicy="no-referrer"
+                />
                 <span className="font-black text-sm text-slate-900 dark:text-white uppercase tracking-wider hidden xl:inline">SEB's Institute</span>
               </Link>
 
@@ -728,9 +678,10 @@ function Navbar() {
 
               <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="md:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                aria-label="Toggle navigation menu"
+                className="md:hidden min-w-[48px] min-h-[48px] p-3 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors"
               >
-                {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
             </div>
           </div>
@@ -738,13 +689,13 @@ function Navbar() {
 
         {/* Mobile Dropdown */}
         {isOpen && (
-          <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-3">
+          <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-2">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.path}
                 onClick={() => setIsOpen(false)}
-                className="block text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 hover:text-red-600 py-1.5"
+                className="block text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 hover:text-red-600 py-3 px-3 rounded-lg min-h-[48px] flex items-center transition-colors"
               >
                 {link.name}
               </Link>
@@ -770,10 +721,10 @@ function Navbar() {
               setIsOfferBarDismissed(true);
               sessionStorage.setItem("top_offer_bar_dismissed", "true");
             }}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white/10 hover:bg-white/25 flex items-center justify-center text-white/80 hover:text-white transition-all cursor-pointer border-none"
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 flex items-center justify-center text-white/80 hover:text-white transition-all cursor-pointer border-none"
             aria-label="Close promotion banner"
           >
-            <X className="w-2.5 h-2.5" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
@@ -787,6 +738,10 @@ function Navbar() {
               <img 
                 src={logoUrl} 
                 alt={logoAlt} 
+                width={160}
+                height={87}
+                loading="eager"
+                decoding="async"
                 className="relative h-14 w-auto object-contain dark:brightness-200 dark:invert transition-all duration-500 group-hover:scale-[1.04]" 
                 referrerPolicy="no-referrer" 
               />
@@ -981,7 +936,11 @@ function Navbar() {
                 )}
               </Button>
             )}
-            <button onClick={() => setIsOpen(!isOpen)} className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors" aria-label="Menu button">
+            <button 
+              onClick={() => setIsOpen(!isOpen)} 
+              className="min-w-[48px] min-h-[48px] p-3 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center justify-center rounded-xl" 
+              aria-label="Toggle mobile menu"
+            >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
@@ -1004,13 +963,13 @@ function Navbar() {
                   <Link 
                     key={link.name} 
                     to={link.path} 
-                    className={`block px-4 py-4 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${isActive ? 'text-emerald-600 bg-emerald-500/5 pl-6' : 'text-slate-605 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
+                    className={`block px-4 py-3.5 text-sm font-black uppercase tracking-wider rounded-xl transition-all min-h-[48px] flex items-center ${isActive ? 'text-emerald-600 bg-emerald-500/5 pl-6' : 'text-slate-605 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
                     onClick={() => setIsOpen(false)}
                   >
-                    <span className="flex items-center justify-between">
+                    <span className="flex items-center justify-between w-full">
                       <span>{link.name}</span>
                       {link.badge && (
-                        <span className="text-[8px] px-2 py-0.5 rounded font-black bg-emerald-500/10 text-emerald-600">
+                        <span className="text-[10px] px-2 py-0.5 rounded font-black bg-emerald-500/10 text-emerald-600">
                           {link.badge}
                         </span>
                       )}
@@ -1290,74 +1249,83 @@ function AppContent() {
       <Navbar />
       <AnnouncementPopup />
       <main>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/practice" element={<PracticePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/dashboard" element={<UnifiedDashboard />} />
-          <Route path="/dashboard/:tab" element={<UnifiedDashboard />} />
-          <Route path="/dashboard/writing" element={<WritingModule />} />
-          <Route path="/dashboard/courses" element={<StudentCourses isDashboardMode={true} />} />
-          <Route path="/dashboard/courses/:examType/:testType/:testNumber" element={<StudentCourses isDashboardMode={true} />} />
-          <Route path="/dashboard/courses/:courseId" element={<StudentCourses isDashboardMode={true} />} />
-          <Route path="/dashboard/mock-tests" element={<MockTestPage />} />
-          <Route path="/dashboard/mock-tests/:testId" element={<MockTestPage />} />
-          <Route path="/dashboard/mock-test/academic-tests" element={<MockTestPage defaultCategory="Academic" />} />
-          <Route path="/dashboard/mock-test/general-training-tests" element={<MockTestPage defaultCategory="General Training" />} />
-          <Route path="/dashboard/mock-tests/academic-tests" element={<MockTestPage defaultCategory="Academic" />} />
-          <Route path="/dashboard/mock-tests/general-training-tests" element={<MockTestPage defaultCategory="General Training" />} />
-          <Route path="/dashboard/academic-tests" element={<MockTestPage defaultCategory="Academic" />} />
-          <Route path="/dashboard/acdamic-tests" element={<MockTestPage defaultCategory="Academic" />} />
-          <Route path="/dashboard/general-training-tests" element={<MockTestPage defaultCategory="General Training" />} />
-          <Route path="/dashboard/gt-tests" element={<MockTestPage defaultCategory="General Training" />} />
-          <Route path="/dashboard/ielts-mock-test-:year/:month" element={<MockTestPage />} />
-          <Route path="/dashboard/ielts-mock-test-:year/:month/:testName" element={<MockTestPage />} />
-          <Route path="/dashboard/ielts-mock-test-:year/:month/:testName/:testType" element={<MockTestPage />} />
-          <Route path="/mock-tests" element={<MockTestPage />} />
-          <Route path="/mock-tests/:testId" element={<MockTestPage />} />
-          <Route path="/mock-test/academic-tests" element={<MockTestPage defaultCategory="Academic" />} />
-          <Route path="/mock-test/general-training-tests" element={<MockTestPage defaultCategory="General Training" />} />
-          <Route path="/mock-tests/academic-tests" element={<MockTestPage defaultCategory="Academic" />} />
-          <Route path="/mock-tests/general-training-tests" element={<MockTestPage defaultCategory="General Training" />} />
-          <Route path="/academic-tests" element={<MockTestPage defaultCategory="Academic" />} />
-          <Route path="/acdamic-tests" element={<MockTestPage defaultCategory="Academic" />} />
-          <Route path="/academic-mock-tests" element={<MockTestPage defaultCategory="Academic" />} />
-          <Route path="/general-training-tests" element={<MockTestPage defaultCategory="General Training" />} />
-          <Route path="/general-training" element={<MockTestPage defaultCategory="General Training" />} />
-          <Route path="/gt-tests" element={<MockTestPage defaultCategory="General Training" />} />
-          <Route path="/ielts-mock-test-2024/:month" element={<MockTestPage />} />
-          <Route path="/ielts-mock-test-2024/:month/:testName" element={<MockTestPage />} />
-          <Route path="/ielts-mock-test-2024/:month/:testName/:testType" element={<MockTestPage />} />
-          <Route path="/ielts-mock-test-2025/:month" element={<MockTestPage />} />
-          <Route path="/ielts-mock-test-2025/:month/:testName" element={<MockTestPage />} />
-          <Route path="/ielts-mock-test-2025/:month/:testName/:testType" element={<MockTestPage />} />
-          <Route path="/ielts-mock-test-2026/:month" element={<MockTestPage />} />
-          <Route path="/ielts-mock-test-2026/:month/:testName" element={<MockTestPage />} />
-          <Route path="/ielts-mock-test-2026/:month/:testName/:testType" element={<MockTestPage />} />
-          <Route path="/ielts-mock-test-2027/:month" element={<MockTestPage />} />
-          <Route path="/ielts-mock-test-2027/:month/:testName" element={<MockTestPage />} />
-          <Route path="/ielts-mock-test-2027/:month/:testName/:testType" element={<MockTestPage />} />
-          <Route path="/ielts-mock-test-2028/:month" element={<MockTestPage />} />
-          <Route path="/ielts-mock-test-2028/:month/:testName" element={<MockTestPage />} />
-          <Route path="/ielts-mock-test-2028/:month/:testName/:testType" element={<MockTestPage />} />
-          <Route path="/ielts-mock-test-:year/:month" element={<MockTestPage />} />
-          <Route path="/ielts-mock-test-:year/:month/:testName" element={<MockTestPage />} />
-          <Route path="/ielts-mock-test-:year/:month/:testName/:testType" element={<MockTestPage />} />
-          <Route path="/test/:testId" element={<MockTestPage />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/courses" element={<StudentCourses />} />
-          <Route path="/courses/:examType/:testType/:testNumber" element={<StudentCourses />} />
-          <Route path="/courses/:courseId" element={<StudentCourses />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/terms" element={<TermsPage />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
-          <Route path="/pages/:slug" element={<CustomPageView />} />
-          <Route path="/page/:slug" element={<CustomPageView />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+        <Suspense fallback={
+          <div className="min-h-[60vh] flex items-center justify-center py-20">
+            <div className="flex flex-col items-center space-y-3">
+              <div className="w-8 h-8 rounded-full border-3 border-[#00a8cc] border-t-transparent animate-spin" />
+              <span className="text-xs font-semibold text-slate-500 tracking-wider uppercase">Loading page...</span>
+            </div>
+          </div>
+        }>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/practice" element={<PracticePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/dashboard" element={<UnifiedDashboard />} />
+            <Route path="/dashboard/:tab" element={<UnifiedDashboard />} />
+            <Route path="/dashboard/writing" element={<WritingModule />} />
+            <Route path="/dashboard/courses" element={<StudentCourses isDashboardMode={true} />} />
+            <Route path="/dashboard/courses/:examType/:testType/:testNumber" element={<StudentCourses isDashboardMode={true} />} />
+            <Route path="/dashboard/courses/:courseId" element={<StudentCourses isDashboardMode={true} />} />
+            <Route path="/dashboard/mock-tests" element={<MockTestPage />} />
+            <Route path="/dashboard/mock-tests/:testId" element={<MockTestPage />} />
+            <Route path="/dashboard/mock-test/academic-tests" element={<MockTestPage defaultCategory="Academic" />} />
+            <Route path="/dashboard/mock-test/general-training-tests" element={<MockTestPage defaultCategory="General Training" />} />
+            <Route path="/dashboard/mock-tests/academic-tests" element={<MockTestPage defaultCategory="Academic" />} />
+            <Route path="/dashboard/mock-tests/general-training-tests" element={<MockTestPage defaultCategory="General Training" />} />
+            <Route path="/dashboard/academic-tests" element={<MockTestPage defaultCategory="Academic" />} />
+            <Route path="/dashboard/acdamic-tests" element={<MockTestPage defaultCategory="Academic" />} />
+            <Route path="/dashboard/general-training-tests" element={<MockTestPage defaultCategory="General Training" />} />
+            <Route path="/dashboard/gt-tests" element={<MockTestPage defaultCategory="General Training" />} />
+            <Route path="/dashboard/ielts-mock-test-:year/:month" element={<MockTestPage />} />
+            <Route path="/dashboard/ielts-mock-test-:year/:month/:testName" element={<MockTestPage />} />
+            <Route path="/dashboard/ielts-mock-test-:year/:month/:testName/:testType" element={<MockTestPage />} />
+            <Route path="/mock-tests" element={<MockTestPage />} />
+            <Route path="/mock-tests/:testId" element={<MockTestPage />} />
+            <Route path="/mock-test/academic-tests" element={<MockTestPage defaultCategory="Academic" />} />
+            <Route path="/mock-test/general-training-tests" element={<MockTestPage defaultCategory="General Training" />} />
+            <Route path="/mock-tests/academic-tests" element={<MockTestPage defaultCategory="Academic" />} />
+            <Route path="/mock-tests/general-training-tests" element={<MockTestPage defaultCategory="General Training" />} />
+            <Route path="/academic-tests" element={<MockTestPage defaultCategory="Academic" />} />
+            <Route path="/acdamic-tests" element={<MockTestPage defaultCategory="Academic" />} />
+            <Route path="/academic-mock-tests" element={<MockTestPage defaultCategory="Academic" />} />
+            <Route path="/general-training-tests" element={<MockTestPage defaultCategory="General Training" />} />
+            <Route path="/general-training" element={<MockTestPage defaultCategory="General Training" />} />
+            <Route path="/gt-tests" element={<MockTestPage defaultCategory="General Training" />} />
+            <Route path="/ielts-mock-test-2024/:month" element={<MockTestPage />} />
+            <Route path="/ielts-mock-test-2024/:month/:testName" element={<MockTestPage />} />
+            <Route path="/ielts-mock-test-2024/:month/:testName/:testType" element={<MockTestPage />} />
+            <Route path="/ielts-mock-test-2025/:month" element={<MockTestPage />} />
+            <Route path="/ielts-mock-test-2025/:month/:testName" element={<MockTestPage />} />
+            <Route path="/ielts-mock-test-2025/:month/:testName/:testType" element={<MockTestPage />} />
+            <Route path="/ielts-mock-test-2026/:month" element={<MockTestPage />} />
+            <Route path="/ielts-mock-test-2026/:month/:testName" element={<MockTestPage />} />
+            <Route path="/ielts-mock-test-2026/:month/:testName/:testType" element={<MockTestPage />} />
+            <Route path="/ielts-mock-test-2027/:month" element={<MockTestPage />} />
+            <Route path="/ielts-mock-test-2027/:month/:testName" element={<MockTestPage />} />
+            <Route path="/ielts-mock-test-2027/:month/:testName/:testType" element={<MockTestPage />} />
+            <Route path="/ielts-mock-test-2028/:month" element={<MockTestPage />} />
+            <Route path="/ielts-mock-test-2028/:month/:testName" element={<MockTestPage />} />
+            <Route path="/ielts-mock-test-2028/:month/:testName/:testType" element={<MockTestPage />} />
+            <Route path="/ielts-mock-test-:year/:month" element={<MockTestPage />} />
+            <Route path="/ielts-mock-test-:year/:month/:testName" element={<MockTestPage />} />
+            <Route path="/ielts-mock-test-:year/:month/:testName/:testType" element={<MockTestPage />} />
+            <Route path="/test/:testId" element={<MockTestPage />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/courses" element={<StudentCourses />} />
+            <Route path="/courses/:examType/:testType/:testNumber" element={<StudentCourses />} />
+            <Route path="/courses/:courseId" element={<StudentCourses />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/pages/:slug" element={<CustomPageView />} />
+            <Route path="/page/:slug" element={<CustomPageView />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
       </main>
       {!isDashboard && <Footer />}
     </div>

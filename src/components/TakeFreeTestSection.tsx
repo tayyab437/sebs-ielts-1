@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { ArrowLeft, ArrowRight, ArrowUpRight, CheckCircle2, Zap, FileText, Bot, Monitor } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { ArrowUpRight, CheckCircle2, Zap, FileText, Bot, Monitor } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface FeatureTab {
   id: string;
@@ -46,16 +46,7 @@ const featureTabs: FeatureTab[] = [
 ];
 
 export default function TakeFreeTestSection() {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState(0);
-
-  const handlePrev = () => {
-    setActiveTab((prev) => (prev === 0 ? featureTabs.length - 1 : prev - 1));
-  };
-
-  const handleNext = () => {
-    setActiveTab((prev) => (prev === featureTabs.length - 1 ? 0 : prev + 1));
-  };
+  const [activeTab] = useState(0);
 
   const currentFeature = featureTabs[activeTab];
 
@@ -290,54 +281,6 @@ export default function TakeFreeTestSection() {
               <span>Free for all registered students</span>
             </div>
           </div>
-
-        </div>
-
-        {/* Feature Tabs Carousel Slider Row with Left/Right Arrows */}
-        <div className="relative pt-6 max-w-5xl mx-auto flex items-center gap-2 sm:gap-4">
-          
-          {/* Left Arrow Button */}
-          <button
-            onClick={handlePrev}
-            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-cyan-200/80 shadow-md hover:bg-cyan-50 flex items-center justify-center text-[#00a8cc] transition-colors shrink-0 cursor-pointer"
-            aria-label="Previous feature"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-
-          {/* 4 Feature Tabs */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 flex-1">
-            {featureTabs.map((tab, idx) => {
-              const isActive = activeTab === idx;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(idx)}
-                  className={`bg-white rounded-2xl p-3 sm:p-4 border transition-all duration-300 text-center flex flex-col items-center justify-center space-y-2 cursor-pointer ${
-                    isActive
-                      ? "border-2 border-[#00a8cc] shadow-lg ring-2 ring-[#00a8cc]/20 scale-[1.02]"
-                      : "border-slate-200/90 shadow-sm hover:border-cyan-200 hover:shadow-md"
-                  }`}
-                >
-                  <div className="w-10 h-10 rounded-full bg-cyan-50 flex items-center justify-center">
-                    {tab.icon}
-                  </div>
-                  <span className={`text-xs sm:text-sm font-extrabold leading-tight ${isActive ? "text-[#00a8cc]" : "text-slate-700"}`}>
-                    {tab.title}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Right Arrow Button */}
-          <button
-            onClick={handleNext}
-            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-cyan-200/80 shadow-md hover:bg-cyan-50 flex items-center justify-center text-[#00a8cc] transition-colors shrink-0 cursor-pointer"
-            aria-label="Next feature"
-          >
-            <ArrowRight className="w-4 h-4" />
-          </button>
 
         </div>
 

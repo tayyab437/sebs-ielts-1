@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/src/lib/supabaseClient";
 import { safeGetItemAndParse } from "@/src/lib/safeStorage";
-import { fetchSiteSettings, saveSiteSettings } from "@/src/lib/settings";
+import { fetchSiteSettings, saveSiteSettings, updateDocumentFavicon } from "@/src/lib/settings";
 import { flattenQuestionsToIndividual, countTotalQuestions } from "@/src/utils/questionFlattener";
 import { CourseDesignerComponent } from "../../components/course-designer";
 import AdminLiveMeetings from "../../components/admin/AdminLiveMeetings";
@@ -357,11 +357,11 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
 
   // General Settings States
-  const [generalFaviconUrl, setGeneralFaviconUrl] = useState(() => localStorage.getItem("site_favicon_url") || "/sebs_official_logo_v2_1780389206872.png");
+  const [generalFaviconUrl, setGeneralFaviconUrl] = useState(() => localStorage.getItem("site_favicon_url") || "/sebs_official_logo_315.webp");
   const [generalFaviconAlt, setGeneralFaviconAlt] = useState(() => localStorage.getItem("site_favicon_alt") || "SEB's Institute Favicon");
-  const [generalLogoUrl, setGeneralLogoUrl] = useState(() => localStorage.getItem("site_logo_url") || "/sebs_official_logo_v2_1780389206872.png");
+  const [generalLogoUrl, setGeneralLogoUrl] = useState(() => localStorage.getItem("site_logo_url") || "/sebs_official_logo_315.webp");
   const [generalLogoAlt, setGeneralLogoAlt] = useState(() => localStorage.getItem("site_logo_alt") || "SEB's Institute Logo");
-  const [generalHeroImageUrl, setGeneralHeroImageUrl] = useState(() => localStorage.getItem("site_hero_image_url") || "/ielts_prep_banner_1781330535098.jpg");
+  const [generalHeroImageUrl, setGeneralHeroImageUrl] = useState(() => localStorage.getItem("site_hero_image_url") || "/ielts_prep_banner_960.webp");
   const [generalHeroImageAlt, setGeneralHeroImageAlt] = useState(() => localStorage.getItem("site_hero_image_alt") || "SEBS English & IELTS Language Academy learning evaluation interface mockup");
   const [generalAudioUrl, setGeneralAudioUrl] = useState(() => localStorage.getItem("site_bukhari_audio_url") || "");
   const [generalAudioTranscript, setGeneralAudioTranscript] = useState(() => localStorage.getItem("site_bukhari_audio_transcript") || "Welcome to SEB's Institute! I'm Syed Ejaz Bukhari, your principal coach.");
@@ -408,7 +408,7 @@ export default function AdminDashboard() {
   const [metaLinkWriting, setMetaLinkWriting] = useState("https://sebsinstitute.com/dashboard/writing");
 
   useEffect(() => {
-    fetchSiteSettings().then(settings => {
+    fetchSiteSettings(true).then(settings => {
       setGeneralFaviconUrl(settings.site_favicon_url);
       setGeneralFaviconAlt(settings.site_favicon_alt);
       setGeneralLogoUrl(settings.site_logo_url);
@@ -888,13 +888,7 @@ export default function AdminDashboard() {
     localStorage.setItem("iot_banner_link", iotBannerLink);
 
     // Update active document favicon element
-    let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
-    if (!link) {
-      link = document.createElement('link');
-      link.rel = 'icon';
-      document.head.appendChild(link);
-    }
-    link.href = generalFaviconUrl;
+    updateDocumentFavicon(generalFaviconUrl);
 
     window.dispatchEvent(new Event("storage"));
 

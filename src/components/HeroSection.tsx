@@ -41,8 +41,8 @@ export default function HeroSection() {
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
-        {/* Fixed Height Carousel Viewport to PREVENT layout shift during slide changes */}
-        <div className="h-[520px] sm:h-[560px] md:h-[580px] w-full relative flex items-center justify-center overflow-hidden">
+        {/* Responsive Carousel Viewport to PREVENT layout shift during slide changes */}
+        <div className="min-h-[540px] sm:min-h-[560px] md:min-h-[580px] h-auto w-full relative flex items-center justify-center overflow-hidden">
           <AnimatePresence mode="wait">
 
             {/* ==========================================
@@ -51,10 +51,10 @@ export default function HeroSection() {
             {currentSlide === 0 && (
               <motion.div
                 key="slide-0"
-                initial={{ opacity: 0, x: 30 }}
+                initial={false}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -30 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
                 className="w-full h-full flex flex-col justify-between items-center py-2"
               >
                 {/* Header Typography */}
@@ -71,7 +71,7 @@ export default function HeroSection() {
                     {/* EXPLORE IELTS COURSES */}
                     <Link
                       to="/courses"
-                      className="bg-white hover:bg-sky-50 text-[#1e293b] font-extrabold text-xs uppercase tracking-wider border-2 border-[#00a8cc] pl-5 pr-1.5 py-1.5 rounded-full shadow-md hover:shadow-lg transition-all flex items-center gap-2.5 cursor-pointer"
+                      className="bg-white hover:bg-sky-50 text-[#1e293b] font-extrabold text-xs sm:text-sm uppercase tracking-wider border-2 border-[#00a8cc] pl-5 pr-2 py-2 min-h-[44px] sm:min-h-[48px] rounded-full shadow-md hover:shadow-lg transition-all flex items-center gap-2.5 cursor-pointer"
                     >
                       <span>Explore IELTS Courses</span>
                       <div className="w-6 h-6 rounded-full border border-[#00a8cc] flex items-center justify-center text-[#00a8cc]">
@@ -82,7 +82,7 @@ export default function HeroSection() {
                     {/* CONTACT US */}
                     <button
                       onClick={() => setIsContactModalOpen(true)}
-                      className="bg-[#1e293b] hover:bg-slate-800 text-white font-extrabold text-xs uppercase tracking-wider pl-5 pr-1.5 py-1.5 rounded-full shadow-md hover:shadow-lg transition-all flex items-center gap-2.5 cursor-pointer"
+                      className="bg-[#1e293b] hover:bg-slate-800 text-white font-extrabold text-xs sm:text-sm uppercase tracking-wider pl-5 pr-2 py-2 min-h-[44px] sm:min-h-[48px] rounded-full shadow-md hover:shadow-lg transition-all flex items-center gap-2.5 cursor-pointer"
                     >
                       <span>CONTACT US</span>
                       <div className="w-6 h-6 rounded-full bg-[#00a8cc] flex items-center justify-center text-white">
@@ -94,16 +94,23 @@ export default function HeroSection() {
 
                 {/* Main Hero Banner with Laptop Student & Badges */}
                 <div className="relative w-full max-w-4xl mx-auto rounded-3xl overflow-hidden shadow-xl border border-sky-100 group mt-3">
-                  <img
-                    src="/ielts_prep_banner_1781330535098.jpg"
-                    alt="Student practicing IELTS test on laptop"
-                    fetchPriority="high"
-                    loading="eager"
-                    decoding="async"
-                    width={1200}
-                    height={655}
-                    className="w-full h-[250px] sm:h-[290px] md:h-[310px] object-cover object-top filter brightness-[0.94] transition-opacity duration-300"
-                  />
+                  <picture>
+                    <source
+                      type="image/webp"
+                      srcSet="/ielts_prep_banner_640.webp 640w, /ielts_prep_banner_960.webp 960w, /ielts_prep_banner.webp 1200w"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 960px, 1200px"
+                    />
+                    <img
+                      src="/ielts_prep_banner_960.webp"
+                      alt="Student practicing IELTS test on laptop"
+                      fetchPriority="high"
+                      loading="eager"
+                      decoding="async"
+                      width={960}
+                      height={524}
+                      className="w-full h-[250px] sm:h-[290px] md:h-[310px] object-cover object-top filter brightness-[0.94]"
+                    />
+                  </picture>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
 
                   {/* Bottom Left Glass Badge */}
@@ -299,7 +306,7 @@ export default function HeroSection() {
                   <div className="flex justify-center pt-1">
                     <Link
                       to="/mock-tests"
-                      className="bg-[#1e293b] hover:bg-slate-800 text-white font-extrabold text-xs uppercase tracking-wider pl-5 pr-1.5 py-1.5 rounded-full shadow-md hover:shadow-lg transition-all flex items-center gap-2.5 cursor-pointer"
+                      className="bg-[#1e293b] hover:bg-slate-800 text-white font-extrabold text-xs sm:text-sm uppercase tracking-wider pl-5 pr-2 py-2 min-h-[44px] sm:min-h-[48px] rounded-full shadow-md hover:shadow-lg transition-all flex items-center gap-2.5 cursor-pointer"
                     >
                       <span>Take Free IELTS Test</span>
                       <div className="w-6 h-6 rounded-full bg-[#00a8cc] flex items-center justify-center text-white">
@@ -388,7 +395,7 @@ export default function HeroSection() {
         {/* Carousel Slider Controls / Indicators */}
         <div className="flex items-center justify-between pt-4 border-t border-sky-100/80 mt-2">
           {/* Slide Indicator Dots */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             {[0, 1, 2].map((idx) => (
               <button
                 key={idx}
@@ -396,13 +403,17 @@ export default function HeroSection() {
                   setIsAutoPlaying(false);
                   setCurrentSlide(idx);
                 }}
-                className={`h-2.5 rounded-full transition-all duration-300 ${
-                  idx === currentSlide
-                    ? "w-8 bg-[#00a8cc]"
-                    : "w-2.5 bg-slate-300 hover:bg-slate-400"
-                }`}
+                className="p-2 flex items-center justify-center cursor-pointer"
                 aria-label={`Go to slide ${idx + 1}`}
-              />
+              >
+                <span
+                  className={`h-2.5 rounded-full transition-all duration-300 block ${
+                    idx === currentSlide
+                      ? "w-8 bg-[#00a8cc]"
+                      : "w-2.5 bg-slate-300 hover:bg-slate-400"
+                  }`}
+                />
+              </button>
             ))}
           </div>
 
@@ -410,17 +421,17 @@ export default function HeroSection() {
           <div className="flex items-center gap-2">
             <button
               onClick={prevSlide}
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white border border-slate-200 hover:border-sky-300 text-slate-700 hover:text-[#00a8cc] shadow-sm flex items-center justify-center transition-all cursor-pointer"
+              className="w-11 h-11 min-w-[44px] min-h-[44px] sm:w-12 sm:h-12 rounded-full bg-white border border-slate-200 hover:border-sky-300 text-slate-700 hover:text-[#00a8cc] shadow-sm flex items-center justify-center transition-all cursor-pointer"
               aria-label="Previous Slide"
             >
-              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
             <button
               onClick={nextSlide}
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white border border-slate-200 hover:border-sky-300 text-slate-700 hover:text-[#00a8cc] shadow-sm flex items-center justify-center transition-all cursor-pointer"
+              className="w-11 h-11 min-w-[44px] min-h-[44px] sm:w-12 sm:h-12 rounded-full bg-white border border-slate-200 hover:border-sky-300 text-slate-700 hover:text-[#00a8cc] shadow-sm flex items-center justify-center transition-all cursor-pointer"
               aria-label="Next Slide"
             >
-              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+              <ChevronRight className="w-5 h-5" />
             </button>
           </div>
         </div>

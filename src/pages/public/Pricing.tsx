@@ -643,6 +643,10 @@ export default function PricingPage() {
                       <img 
                         src={story.image} 
                         alt={story.name} 
+                        width={56}
+                        height={56}
+                        loading="lazy"
+                        decoding="async"
                         referrerPolicy="no-referrer"
                         className="w-14 h-14 rounded-full object-cover border-2 border-emerald-500/30 p-0.5 group-hover:border-emerald-500/80 transition-colors shadow-sm"
                       />

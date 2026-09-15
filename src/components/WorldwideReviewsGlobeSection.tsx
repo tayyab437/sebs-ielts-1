@@ -85,24 +85,38 @@ export default function WorldwideReviewsGlobeSection() {
 
         .animate-globe-ltr {
           animation: globeSpinLTR 45s linear infinite;
+          will-change: transform;
+          transform: translateZ(0);
         }
         .animate-orbit-nw-se {
           animation: orbitNWtoSE 30s linear infinite;
+          will-change: transform;
+          transform: translateZ(0);
         }
         .animate-counter-nw-se {
           animation: counterNWtoSE 30s linear infinite;
+          will-change: transform;
+          transform: translateZ(0);
         }
         .animate-orbit-w-s {
           animation: orbitWtoS 38s linear infinite;
+          will-change: transform;
+          transform: translateZ(0);
         }
         .animate-counter-w-s {
           animation: counterWtoS 38s linear infinite;
+          will-change: transform;
+          transform: translateZ(0);
         }
         .animate-orbit-equator {
           animation: orbitEquator 28s linear infinite;
+          will-change: transform;
+          transform: translateZ(0);
         }
         .animate-counter-equator {
           animation: counterEquator 28s linear infinite;
+          will-change: transform;
+          transform: translateZ(0);
         }
       `}</style>
 
@@ -149,25 +163,25 @@ export default function WorldwideReviewsGlobeSection() {
                 
                 {/* Orbit Item 1A - Korea */}
                 <div className="absolute -top-4 left-[15%] animate-counter-nw-se flex items-center gap-1 bg-white/90 backdrop-blur-xs p-1 rounded-full shadow-md border border-cyan-100">
-                  <img src={orbitItemsRing1[0].avatar} className="w-7 h-7 rounded-full object-cover" alt="Student" />
-                  <img src={orbitItemsRing1[0].flag} className="w-5 h-3.5 rounded-xs object-cover border" alt="Korea" />
+                  <img src={orbitItemsRing1[0].avatar} width={28} height={28} loading="lazy" decoding="async" className="w-7 h-7 rounded-full object-cover" alt="Student" />
+                  <img src={orbitItemsRing1[0].flag} width={20} height={14} loading="lazy" decoding="async" className="w-5 h-3.5 rounded-xs object-cover border" alt="Korea" />
                 </div>
 
                 {/* Orbit Item 1B - Sri Lanka */}
                 <div className="absolute top-[40%] right-[-10px] animate-counter-nw-se flex items-center gap-1 bg-white/90 backdrop-blur-xs p-1 rounded-full shadow-md border border-cyan-100">
-                  <img src={orbitItemsRing1[1].flag} className="w-5 h-3.5 rounded-xs object-cover border" alt="Sri Lanka" />
-                  <img src={orbitItemsRing1[1].avatar} className="w-7 h-7 rounded-full object-cover" alt="Student" />
+                  <img src={orbitItemsRing1[1].flag} width={20} height={14} loading="lazy" decoding="async" className="w-5 h-3.5 rounded-xs object-cover border" alt="Sri Lanka" />
+                  <img src={orbitItemsRing1[1].avatar} width={28} height={28} loading="lazy" decoding="async" className="w-7 h-7 rounded-full object-cover" alt="Student" />
                 </div>
 
                 {/* Orbit Item 1C - Thailand */}
                 <div className="absolute -bottom-4 left-[45%] animate-counter-nw-se flex items-center gap-1 bg-white/90 backdrop-blur-xs p-1 rounded-full shadow-md border border-cyan-100">
-                  <img src={orbitItemsRing1[2].flag} className="w-5 h-3.5 rounded-xs object-cover border" alt="Thailand" />
-                  <img src={orbitItemsRing1[2].avatar} className="w-7 h-7 rounded-full object-cover" alt="Student" />
+                  <img src={orbitItemsRing1[2].flag} width={20} height={14} loading="lazy" decoding="async" className="w-5 h-3.5 rounded-xs object-cover border" alt="Thailand" />
+                  <img src={orbitItemsRing1[2].avatar} width={28} height={28} loading="lazy" decoding="async" className="w-7 h-7 rounded-full object-cover" alt="Student" />
                 </div>
 
                 {/* Orbit Item 1D - Spain */}
                 <div className="absolute top-[60%] left-[-15px] animate-counter-nw-se flex items-center gap-1 bg-white/90 backdrop-blur-xs p-1 rounded-full shadow-md border border-cyan-100">
-                  <img src={orbitItemsRing1[3].flag} className="w-5 h-3.5 rounded-xs object-cover border" alt="Spain" />
+                  <img src={orbitItemsRing1[3].flag} width={20} height={14} loading="lazy" decoding="async" className="w-5 h-3.5 rounded-xs object-cover border" alt="Spain" />
                 </div>
 
               </div>
@@ -179,24 +193,24 @@ export default function WorldwideReviewsGlobeSection() {
                 
                 {/* Orbit Item 2A - India */}
                 <div className="absolute top-[-10px] right-[25%] animate-counter-w-s flex items-center gap-1 bg-white/90 backdrop-blur-xs p-1 rounded-full shadow-md border border-cyan-100">
-                  <img src={orbitItemsRing2[0].flag} className="w-5 h-3.5 rounded-xs object-cover border" alt="India" />
+                  <img src={orbitItemsRing2[0].flag} width={20} height={14} loading="lazy" decoding="async" className="w-5 h-3.5 rounded-xs object-cover border" alt="India" />
                 </div>
 
                 {/* Orbit Item 2B - Laos */}
                 <div className="absolute bottom-[-10px] right-[15%] animate-counter-w-s flex items-center gap-1 bg-white/90 backdrop-blur-xs p-1 rounded-full shadow-md border border-cyan-100">
-                  <img src={orbitItemsRing2[1].avatar} className="w-7 h-7 rounded-full object-cover" alt="Student" />
-                  <img src={orbitItemsRing2[1].flag} className="w-5 h-3.5 rounded-xs object-cover border" alt="Laos" />
+                  <img src={orbitItemsRing2[1].avatar} width={28} height={28} loading="lazy" decoding="async" className="w-7 h-7 rounded-full object-cover" alt="Student" />
+                  <img src={orbitItemsRing2[1].flag} width={20} height={14} loading="lazy" decoding="async" className="w-5 h-3.5 rounded-xs object-cover border" alt="Laos" />
                 </div>
 
                 {/* Orbit Item 2C - Samoa */}
                 <div className="absolute top-[35%] left-[-20px] animate-counter-w-s flex items-center gap-1 bg-white/90 backdrop-blur-xs p-1 rounded-full shadow-md border border-cyan-100">
-                  <img src={orbitItemsRing2[2].flag} className="w-5 h-3.5 rounded-xs object-cover border" alt="Samoa" />
-                  <img src={orbitItemsRing2[2].avatar} className="w-7 h-7 rounded-full object-cover" alt="Student" />
+                  <img src={orbitItemsRing2[2].flag} width={20} height={14} loading="lazy" decoding="async" className="w-5 h-3.5 rounded-xs object-cover border" alt="Samoa" />
+                  <img src={orbitItemsRing2[2].avatar} width={28} height={28} loading="lazy" decoding="async" className="w-7 h-7 rounded-full object-cover" alt="Student" />
                 </div>
 
                 {/* Orbit Item 2D - Vietnam */}
                 <div className="absolute bottom-[20%] left-[30%] animate-counter-w-s flex items-center gap-1 bg-white/90 backdrop-blur-xs p-1 rounded-full shadow-md border border-cyan-100">
-                  <img src={orbitItemsRing2[3].avatar} className="w-7 h-7 rounded-full object-cover" alt="Student" />
+                  <img src={orbitItemsRing2[3].avatar} width={28} height={28} loading="lazy" decoding="async" className="w-7 h-7 rounded-full object-cover" alt="Student" />
                 </div>
 
               </div>
@@ -206,7 +220,7 @@ export default function WorldwideReviewsGlobeSection() {
             <div className="absolute inset-0 flex items-center justify-center transform rotate-[-8deg]">
               <div className="w-[108%] h-[42%] rounded-[100%] border border-dotted border-[#00a8cc]/25 animate-orbit-equator relative">
                 <div className="absolute top-[10%] left-[10%] animate-counter-equator flex items-center gap-1 bg-white/90 backdrop-blur-xs p-1 rounded-full shadow-xs border border-cyan-100">
-                  <img src="https://flagcdn.com/w40/gb.png" className="w-5 h-3.5 rounded-xs object-cover border" alt="UK" />
+                  <img src="https://flagcdn.com/w40/gb.png" width={20} height={14} loading="lazy" decoding="async" className="w-5 h-3.5 rounded-xs object-cover border" alt="UK" />
                 </div>
                 <div className="absolute bottom-[10%] right-[10%] animate-counter-equator flex items-center gap-1 bg-white/90 backdrop-blur-xs p-1 rounded-full shadow-xs border border-cyan-100">
                   <img
@@ -254,9 +268,9 @@ export default function WorldwideReviewsGlobeSection() {
           <a
             href="https://tiktok.com"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="nofollow noopener noreferrer"
             aria-label="Visit SEB's Institute on TikTok"
-            className="bg-[#202e43] hover:bg-[#152030] text-white font-black text-xs sm:text-sm tracking-wider uppercase pl-6 pr-1.5 py-1.5 rounded-full shadow-lg hover:shadow-xl transition-all flex items-center gap-3 cursor-pointer group"
+            className="bg-[#202e43] hover:bg-[#152030] text-white font-black text-xs sm:text-sm tracking-wider uppercase pl-6 pr-2 py-2 min-h-[44px] sm:min-h-[48px] rounded-full shadow-lg hover:shadow-xl transition-all flex items-center gap-3 cursor-pointer group"
           >
             <span>TIKTOK</span>
             <div className="w-7 h-7 rounded-full bg-[#497cb5] group-hover:bg-[#3b6aa3] flex items-center justify-center text-white transition-colors">
@@ -268,9 +282,9 @@ export default function WorldwideReviewsGlobeSection() {
           <a
             href="https://facebook.com"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="nofollow noopener noreferrer"
             aria-label="Visit SEB's Institute on Facebook"
-            className="bg-[#202e43] hover:bg-[#152030] text-white font-black text-xs sm:text-sm tracking-wider uppercase pl-6 pr-1.5 py-1.5 rounded-full shadow-lg hover:shadow-xl transition-all flex items-center gap-3 cursor-pointer group"
+            className="bg-[#202e43] hover:bg-[#152030] text-white font-black text-xs sm:text-sm tracking-wider uppercase pl-6 pr-2 py-2 min-h-[44px] sm:min-h-[48px] rounded-full shadow-lg hover:shadow-xl transition-all flex items-center gap-3 cursor-pointer group"
           >
             <span>FACEBOOK</span>
             <div className="w-7 h-7 rounded-full bg-[#497cb5] group-hover:bg-[#3b6aa3] flex items-center justify-center text-white transition-colors">
@@ -282,9 +296,9 @@ export default function WorldwideReviewsGlobeSection() {
           <a
             href="https://youtube.com"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="nofollow noopener noreferrer"
             aria-label="Visit SEB's Institute on YouTube"
-            className="bg-[#202e43] hover:bg-[#152030] text-white font-black text-xs sm:text-sm tracking-wider uppercase pl-6 pr-1.5 py-1.5 rounded-full shadow-lg hover:shadow-xl transition-all flex items-center gap-3 cursor-pointer group"
+            className="bg-[#202e43] hover:bg-[#152030] text-white font-black text-xs sm:text-sm tracking-wider uppercase pl-6 pr-2 py-2 min-h-[44px] sm:min-h-[48px] rounded-full shadow-lg hover:shadow-xl transition-all flex items-center gap-3 cursor-pointer group"
           >
             <span>YOUTUBE</span>
             <div className="w-7 h-7 rounded-full bg-[#497cb5] group-hover:bg-[#3b6aa3] flex items-center justify-center text-white transition-colors">

@@ -77,8 +77,12 @@ export default function AboutPage() {
             <div className="lg:col-span-5 space-y-4">
               <div className="w-full h-80 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 relative border border-slate-200 dark:border-slate-700 shadow-md">
                 <img 
-                  src="/ielts_prep_banner_1781330535098.jpg" 
+                  src="/ielts_prep_banner_960.webp" 
                   alt="Syed Ejaz Bukhari & SEB's Institute" 
+                  width={640}
+                  height={320}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end p-5">

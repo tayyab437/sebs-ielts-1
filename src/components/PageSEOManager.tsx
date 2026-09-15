@@ -146,10 +146,43 @@ export function PageSEOManager() {
       setMeta("name", "twitter:description", description);
       setMeta("name", "twitter:url", canonicalUrl);
       setMeta("name", "twitter:image", imageUrl);
+      // Robots Directives (Dynamic per-route: noindex on admin/dashboard, index on public)
+      const isPrivate = path.startsWith("/admin") || path.startsWith("/dashboard");
+      const robotsDirective = isPrivate 
+        ? "noindex, nofollow" 
+        : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1";
+      
+      setMeta("name", "robots", robotsDirective);
+      setMeta("name", "googlebot", robotsDirective);
+      setMeta("name", "bingbot", robotsDirective);
+
+      // International Hreflang Tags Synchronization
+      const hreflangLocales = ["x-default", "en", "en-US", "en-GB", "en-PK", "en-IN", "en-AE", "en-CA", "en-AU"];
+      hreflangLocales.forEach((locale) => {
+        let tag = document.querySelector<HTMLLinkElement>(`link[rel='alternate'][hreflang='${locale}']`);
+        if (!tag) {
+          tag = document.createElement("link");
+          tag.rel = "alternate";
+          tag.setAttribute("hreflang", locale);
+          document.head.appendChild(tag);
+        }
+        tag.href = canonicalUrl;
+      });
+
+      // Update Favicon Tags
+      if (settings.site_favicon_url) {
+        const selectors = ["link[rel~='icon']", "link[rel='shortcut icon']", "link[rel='apple-touch-icon']"];
+        selectors.forEach((sel) => {
+          const existing = document.querySelectorAll<HTMLLinkElement>(sel);
+          existing.forEach((el) => {
+            el.href = settings.site_favicon_url;
+          });
+        });
+      }
     };
 
     const handleSync = () => {
-      fetchSiteSettings().then(updatePageSEO);
+      fetchSiteSettings(true).then(updatePageSEO);
     };
 
     handleSync();

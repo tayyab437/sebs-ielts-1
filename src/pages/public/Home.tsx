@@ -9,7 +9,6 @@ import SixStepsSection from "@/src/components/SixStepsSection";
 import TakeFreeTestSection from "@/src/components/TakeFreeTestSection";
 import FaqSection from "@/src/components/FaqSection";
 import WorldwideReviewsGlobeSection from "@/src/components/WorldwideReviewsGlobeSection";
-import SocialShareBar from "@/src/components/SocialShareBar";
 import SeoOverviewContentSection from "@/src/components/SeoOverviewContentSection";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -519,33 +518,44 @@ export default function HomePage() {
       <HeroSection />
 
       {/* Live Lessons Section (Replicated Exact UI From IELTS Online Tests) */}
-      <LiveLessonsSection />
+      <div className="content-visibility-auto">
+        <LiveLessonsSection />
+      </div>
 
       {/* Mock Test Collection Showcase Section */}
-      <MockTestCollectionSection />
+      <div className="content-visibility-auto">
+        <MockTestCollectionSection />
+      </div>
 
       {/* 2026 Official IELTS Practice Materials Section */}
-      <OfficialPracticeMaterialsSection />
+      <div className="content-visibility-auto">
+        <OfficialPracticeMaterialsSection />
+      </div>
 
       {/* 35,000,000+ Students Trust Us To Learn Mosaic Banner */}
-      <StudentTrustBannerSection />
+      <div className="content-visibility-auto">
+        <StudentTrustBannerSection />
+      </div>
 
       {/* 6 Steps to Achieve Your IELTS Goal Section */}
-      <SixStepsSection />
+      <div className="content-visibility-auto">
+        <SixStepsSection />
+      </div>
 
       {/* Take an IELTS Free Online Test Feature Slider Section */}
-      <TakeFreeTestSection />
+      <div className="content-visibility-auto">
+        <TakeFreeTestSection />
+      </div>
 
       {/* SEO-Rich Educational Overview & Global Testing Standards Section */}
-      <SeoOverviewContentSection />
-
-      {/* Social Media Sharing Plugin & Study Group Recommendation Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <SocialShareBar />
+      <div className="content-visibility-auto">
+        <SeoOverviewContentSection />
       </div>
 
       {/* FAQ Section */}
-      <FaqSection />
+      <div className="content-visibility-auto">
+        <FaqSection />
+      </div>
 
     </div>
   );

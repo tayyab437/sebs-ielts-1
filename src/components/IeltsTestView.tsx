@@ -591,14 +591,18 @@ export default function IeltsTestView({
           onClick={() => setShowExitConfirm(true)}
         >
           <img
-            src={logoUrl || "/sebs_official_logo_v2_1780389206872.png"}
+            src={logoUrl || "/sebs_official_logo_315.webp"}
             alt={logoAlt || "SEB's Institute Logo"}
+            width={110}
+            height={60}
+            loading="eager"
+            decoding="async"
             className="h-8 sm:h-9 w-auto object-contain dark:brightness-200 dark:invert transition-all duration-300"
             referrerPolicy="no-referrer"
             onError={(e) => {
               const target = e.currentTarget;
-              if (!target.src.includes("sebs_official_logo_v2_1780389206872.png")) {
-                target.src = "/sebs_official_logo_v2_1780389206872.png";
+              if (!target.src.includes("sebs_official_logo_315.webp")) {
+                target.src = "/sebs_official_logo_315.webp";
               }
             }}
           />
