@@ -2400,12 +2400,23 @@ Ensure that the output is formatted as a valid JSON object matching the followin
     }
   });
 
+  // Explicit handlers for static images, logos, banners, and fonts with long-lived 1-year caching
+  app.use(express.static(path.join(process.cwd(), "public"), {
+    maxAge: "31536000s",
+    immutable: true,
+    setHeaders: (res, filePath) => {
+      if (filePath.match(/\.(webp|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/)) {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      }
+    }
+  }));
+
   // Explicit handlers for favicon.ico and favicon.png
   app.get("/favicon.ico", (req, res) => {
     const icoPath = path.join(process.cwd(), "public", "favicon.ico");
     if (fs.existsSync(icoPath)) {
       res.setHeader("Content-Type", "image/x-icon");
-      res.setHeader("Cache-Control", "public, max-age=86400");
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
       return res.sendFile(icoPath);
     }
     res.status(404).end();
@@ -2415,7 +2426,7 @@ Ensure that the output is formatted as a valid JSON object matching the followin
     const pngPath = path.join(process.cwd(), "public", "favicon.png");
     if (fs.existsSync(pngPath)) {
       res.setHeader("Content-Type", "image/png");
-      res.setHeader("Cache-Control", "public, max-age=86400");
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
       return res.sendFile(pngPath);
     }
     res.status(404).end();

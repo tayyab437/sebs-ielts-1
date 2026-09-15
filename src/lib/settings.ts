@@ -126,6 +126,10 @@ export function sanitizeAssetUrl(url: string | null | undefined, defaultUrl: str
   if (trimmed.startsWith("/src/assets/images/")) {
     return trimmed.replace("/src/assets/images/", "/");
   }
+  // Automatically route oversized ibb.co logo to the ultra-optimized WebP asset
+  if (trimmed.includes("01-logo-curve63-3.png") || trimmed.includes("gMgHC2YQ")) {
+    return "/sebs_official_logo_315.webp";
+  }
   return trimmed;
 }
 
@@ -151,29 +155,31 @@ export async function fetchSiteSettings(bypassCache = false): Promise<SiteSettin
   activeFetchPromise = (async () => {
     try {
       const res = await fetch("/api/mysql/settings");
-      const contentType = res.headers.get("content-type");
-      if (res.ok && contentType && contentType.includes("application/json")) {
-        const data = await res.json();
-        if (data && Object.keys(data).length > 0) {
-          const sanitizedData = { ...data };
-          if (sanitizedData.site_logo_url) {
-            sanitizedData.site_logo_url = sanitizeAssetUrl(sanitizedData.site_logo_url, defaultSettings.site_logo_url);
+      if (res.ok) {
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await res.json();
+          if (data && typeof data === "object" && Object.keys(data).length > 0) {
+            const sanitizedData = { ...data };
+            if (sanitizedData.site_logo_url) {
+              sanitizedData.site_logo_url = sanitizeAssetUrl(sanitizedData.site_logo_url, defaultSettings.site_logo_url);
+            }
+            if (sanitizedData.site_favicon_url) {
+              sanitizedData.site_favicon_url = sanitizeAssetUrl(sanitizedData.site_favicon_url, defaultSettings.site_favicon_url);
+            }
+            if (sanitizedData.site_hero_image_url) {
+              sanitizedData.site_hero_image_url = sanitizeAssetUrl(sanitizedData.site_hero_image_url, defaultSettings.site_hero_image_url);
+            }
+            cachedSettings = { ...defaultSettings, ...sanitizedData };
+            if (cachedSettings.site_favicon_url) {
+              updateDocumentFavicon(cachedSettings.site_favicon_url);
+            }
+            return cachedSettings;
           }
-          if (sanitizedData.site_favicon_url) {
-            sanitizedData.site_favicon_url = sanitizeAssetUrl(sanitizedData.site_favicon_url, defaultSettings.site_favicon_url);
-          }
-          if (sanitizedData.site_hero_image_url) {
-            sanitizedData.site_hero_image_url = sanitizeAssetUrl(sanitizedData.site_hero_image_url, defaultSettings.site_hero_image_url);
-          }
-          cachedSettings = { ...defaultSettings, ...sanitizedData };
-          if (cachedSettings.site_favicon_url) {
-            updateDocumentFavicon(cachedSettings.site_favicon_url);
-          }
-          return cachedSettings;
         }
       }
-    } catch (err) {
-      console.warn("Soft warning: Site settings could not be fetched from MySQL (falling back to local):", err);
+    } catch (_err) {
+      // Network/initialization transient error during cold start; safely return fallback
     } finally {
       activeFetchPromise = null;
     }
@@ -188,7 +194,7 @@ export async function fetchSiteSettings(bypassCache = false): Promise<SiteSettin
 }
 
 export async function saveSiteSettings(settings: Partial<SiteSettings>): Promise<void> {
-  // First, save locally for offline support
+  // 1. Optimistically store in localStorage for immediate local responsiveness
   Object.keys(settings).forEach((key) => {
     const val = (settings as any)[key];
     if (val !== undefined && val !== null) {
@@ -200,23 +206,31 @@ export async function saveSiteSettings(settings: Partial<SiteSettings>): Promise
     updateDocumentFavicon(settings.site_favicon_url);
   }
 
-  // Clear the cache so future calls fetch fresh data
+  // Clear memory cache so subsequent calls reflect newly saved state
   cachedSettings = null;
   activeFetchPromise = null;
   
-  window.dispatchEvent(new Event("storage")); // Trigger local updates for other tabs
+  // Realtime cross-tab and in-tab synchronization event dispatch
+  window.dispatchEvent(new Event("storage"));
+  window.dispatchEvent(new CustomEvent("site_settings_updated", { detail: settings }));
 
+  // 2. Persist to Hostinger MySQL Database and server storage
   try {
     const res = await fetch("/api/mysql/settings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(settings)
     });
-    if (!res.ok) {
-      console.error("Failed to save settings via MySQL API:", await res.text());
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.settings) {
+        cachedSettings = { ...defaultSettings, ...data.settings };
+      }
+    } else {
+      console.warn("Notice: settings saved locally; backend status:", res.status);
     }
   } catch (err) {
-    console.error("Error saving site settings to MySQL DB:", err);
+    console.warn("Notice: settings saved locally while awaiting server sync:", err);
   }
 }
 

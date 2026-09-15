@@ -15,7 +15,7 @@ export interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageEl
 /**
  * Optimizes Unsplash image URLs with modern WebP formatting, quality & responsive width parameters.
  */
-export function getOptimizedImageUrl(url: string, targetWidth: number = 500, format: "webp" | "avif" | "auto" = "webp"): string {
+export function getOptimizedImageUrl(url: string, targetWidth: number = 400, format: "webp" | "avif" | "auto" = "webp"): string {
   if (!url) return "";
   
   if (url.includes("images.unsplash.com")) {
@@ -26,7 +26,7 @@ export function getOptimizedImageUrl(url: string, targetWidth: number = 500, for
       if (format !== "auto") {
         parsed.searchParams.set("fm", format);
       }
-      parsed.searchParams.set("q", "75");
+      parsed.searchParams.set("q", "70");
       return parsed.toString();
     } catch {
       return url;
@@ -42,7 +42,7 @@ export function getOptimizedImageUrl(url: string, targetWidth: number = 500, for
 export function generateUnsplashSrcSet(url: string): string | undefined {
   if (!url || !url.includes("images.unsplash.com")) return undefined;
   
-  const widths = [360, 500, 750, 1000];
+  const widths = [300, 400, 600, 800];
   return widths
     .map(w => `${getOptimizedImageUrl(url, w, "webp")} ${w}w`)
     .join(", ");

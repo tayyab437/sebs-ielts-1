@@ -97,11 +97,13 @@ export default function HeroSection() {
                   <picture>
                     <source
                       type="image/webp"
-                      srcSet="/ielts_prep_banner_640.webp 640w, /ielts_prep_banner_960.webp 960w, /ielts_prep_banner.webp 1200w"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 960px, 1200px"
+                      srcSet="/ielts_prep_banner_480.webp 480w, /ielts_prep_banner_640.webp 640w, /ielts_prep_banner_960.webp 960w"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 768px, 960px"
                     />
                     <img
                       src="/ielts_prep_banner_960.webp"
+                      srcSet="/ielts_prep_banner_480.webp 480w, /ielts_prep_banner_640.webp 640w, /ielts_prep_banner_960.webp 960w"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 768px, 960px"
                       alt="Student practicing IELTS test on laptop"
                       fetchPriority="high"
                       loading="eager"

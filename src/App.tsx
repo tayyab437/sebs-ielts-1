@@ -47,7 +47,11 @@ function Footer() {
     };
     handleFooterLogoSync();
     window.addEventListener("storage", handleFooterLogoSync);
-    return () => window.removeEventListener("storage", handleFooterLogoSync);
+    window.addEventListener("site_settings_updated", handleFooterLogoSync);
+    return () => {
+      window.removeEventListener("storage", handleFooterLogoSync);
+      window.removeEventListener("site_settings_updated", handleFooterLogoSync);
+    };
   }, []);
 
   const handleNewsletterSubscribe = (e: React.FormEvent) => {
@@ -78,7 +82,9 @@ function Footer() {
           <div className="lg:col-span-2 space-y-5">
             <Link to="/" className="inline-flex items-center space-x-2 group">
               <img 
-                src={logoUrl} 
+                src={logoUrl || "/sebs_official_logo_315.webp"} 
+                srcSet="/sebs_official_logo_160.webp 160w, /sebs_official_logo_315.webp 315w"
+                sizes="(max-width: 640px) 130px, 160px"
                 alt={logoAlt} 
                 width={160}
                 height={87}
@@ -341,8 +347,12 @@ function Navbar() {
       });
     };
     window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("site_settings_updated", handleStorageChange);
     handleStorageChange();
-    return () => window.removeEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("site_settings_updated", handleStorageChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -578,7 +588,9 @@ function Navbar() {
             <div className="flex items-center space-x-6">
               <Link to="/" className="flex items-center space-x-2 shrink-0 pr-2">
                 <img 
-                  src={logoUrl} 
+                  src={logoUrl || "/sebs_official_logo_160.webp"} 
+                  srcSet="/sebs_official_logo_160.webp 160w, /sebs_official_logo_315.webp 315w"
+                  sizes="(max-width: 640px) 110px, 160px"
                   alt={logoAlt} 
                   width={110}
                   height={60}

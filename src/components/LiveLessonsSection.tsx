@@ -25,7 +25,7 @@ const resourcesData: ResourceCardProps[] = [
   {
     category: "Writing Task 1 & 2",
     categoryColor: "bg-[#ff8a00]",
-    imageSrc: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format,compress&fm=webp&w=500&q=75",
+    imageSrc: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format,compress&fm=webp&w=400&q=75",
     title: "Band 9 Writing Essay Templates & Model Answers",
     description: "Master Task 1 graphs, maps, diagrams and Task 2 opinion, discussion, and problem-solution essays with scoring breakdowns.",
     badge: "BAND 8.5+",
@@ -42,7 +42,7 @@ const resourcesData: ResourceCardProps[] = [
   {
     category: "Speaking Simulator",
     categoryColor: "bg-[#e11d48]",
-    imageSrc: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format,compress&fm=webp&w=500&q=75",
+    imageSrc: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format,compress&fm=webp&w=400&q=75",
     title: "Part 1, 2 & 3 Speaking Cue Cards & Fluency Drills",
     description: "Latest 2026 examination cue cards, sample high-band audio recordings, vocabulary boosters, and examiner idioms.",
     badge: "2026 TOPICS",
@@ -59,7 +59,7 @@ const resourcesData: ResourceCardProps[] = [
   {
     category: "Mock Exam Suite",
     categoryColor: "bg-[#00a8cc]",
-    imageSrc: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format,compress&fm=webp&w=500&q=75",
+    imageSrc: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format,compress&fm=webp&w=400&q=75",
     title: "Full-Length Authentic IELTS Practice Mock Tests",
     description: "Timed computerized tests with instant band scoring, detailed answer keys, audio transcripts, and performance analytics.",
     badge: "INSTANT SCORE",
@@ -117,8 +117,9 @@ export default function LiveLessonsSection() {
                 <OptimizedImage
                   src={resource.imageSrc}
                   alt={resource.title}
-                  width={800}
+                  width={380}
                   height={180}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
