@@ -103,20 +103,37 @@ export default function ContactPage() {
                 </a>
 
                 {/* Direct Query Phone */}
-                <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center shrink-0">
+                <a
+                  href="tel:+923176369458"
+                  className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 hover:border-emerald-500 transition-colors group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 dark:bg-slate-700 text-white flex items-center justify-center shrink-0 group-hover:bg-emerald-600 transition-colors">
                     <Phone className="w-5 h-5" />
                   </div>
                   <div>
                     <div className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">Direct Helpline</div>
-                    <div className="text-sm font-bold text-slate-900 dark:text-white">+92 317 6369458</div>
+                    <div className="text-sm font-bold text-slate-900 dark:text-white font-mono">+92 317 6369458</div>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Mon – Sat: 9:00 AM – 9:00 PM PKT</p>
+                  </div>
+                </a>
+
+                {/* Campus Address & Location */}
+                <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 dark:bg-slate-700 text-white flex items-center justify-center shrink-0">
+                    <MapPin className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">Academic Campus Address</div>
+                    <div className="text-sm font-bold text-slate-900 dark:text-white leading-snug">
+                      Executive Sector F-8/3, Blue Area Academic Zone
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Islamabad 44000, Pakistan</p>
                   </div>
                 </div>
 
                 {/* Campus Details */}
                 <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 dark:bg-slate-700 text-white flex items-center justify-center shrink-0">
                     <Globe className="w-5 h-5" />
                   </div>
                   <div>

@@ -134,7 +134,7 @@ function Footer() {
             <h3 className="font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-widest mb-5 relative pl-3 border-l-2 border-emerald-500">
               Academic Tracks
             </h3>
-            <ul className="space-y-3.5 text-xs font-semibold text-slate-600 dark:text-slate-400">
+            <ul className="space-y-1 text-xs font-semibold text-slate-600 dark:text-slate-400">
               {[
                 { title: "Spoken English", tag: "Fluency" },
                 { title: "Writing Skills", tag: "Expert" },
@@ -142,9 +142,12 @@ function Footer() {
                 { title: "PTE Masterclass", tag: "Live" }
               ].map((course, idx) => (
                 <li key={idx}>
-                  <Link to="/courses" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group">
+                  <Link 
+                    to="/courses" 
+                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[44px] py-2.5 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                  >
                     <span className="group-hover:translate-x-1 transition-transform">{course.title}</span>
-                    <span className="text-[8px] uppercase tracking-widest font-black bg-slate-200 dark:bg-slate-900 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-950 text-slate-600 dark:text-slate-500 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors px-1.5 py-0.5 rounded">
+                    <span className="text-[9px] uppercase tracking-widest font-black bg-slate-200 dark:bg-slate-900 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-950 text-slate-600 dark:text-slate-500 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors px-2 py-0.5 rounded">
                       {course.tag}
                     </span>
                   </Link>
@@ -153,31 +156,36 @@ function Footer() {
             </ul>
           </div>
           
-          {/* Admissions Information Column */}
+          {/* Admissions & Campus Information Column */}
           <div>
             <h3 className="font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-widest mb-5 relative pl-3 border-l-2 border-emerald-500">
-              Global Programs
+              Campus & Contact
             </h3>
             <ul className="space-y-4 text-xs font-semibold text-slate-600 dark:text-slate-400">
-              <li className="flex items-start gap-2">
-                <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
-                <div>
-                  <span className="block text-slate-900 dark:text-white">Global Virtual Campus</span>
-                  <p className="text-[10px] text-slate-500 italic font-mono mt-0.5">24/7 Digital Portal</p>
-                </div>
-              </li>
-              <li className="flex items-start gap-2">
+              <li className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
                 <div>
-                  <span className="block text-slate-900 dark:text-white">Online Learning Only</span>
-                  <p className="text-[10px] text-slate-500 italic mt-0.5">No Physical Classes Offered</p>
+                  <span className="block text-slate-900 dark:text-white font-bold">Executive Academic Campus</span>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+                    Executive Sector F-8/3, Blue Area Academic Zone, Islamabad 44000, Pakistan
+                  </p>
                 </div>
               </li>
-              <li className="flex items-start gap-2">
+              <li className="flex items-start gap-2.5">
                 <Phone className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
                 <div>
-                  <span className="block text-slate-900 dark:text-white">Call Admissions Support</span>
-                  <p className="text-[10px] text-slate-500 italic font-mono mt-0.5">Direct Academic Query</p>
+                  <span className="block text-slate-900 dark:text-white font-bold">Admissions Helpline</span>
+                  <a href="tel:+923176369458" className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-mono font-bold block mt-0.5">
+                    +92 317 6369458
+                  </a>
+                  <p className="text-[10px] text-slate-500 italic">Mon – Sat: 9:00 AM – 9:00 PM PKT</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                <div>
+                  <span className="block text-slate-900 dark:text-white font-bold">Global Virtual Campus</span>
+                  <p className="text-[10px] text-slate-500 italic font-mono mt-0.5">24/7 Digital Exam Portal</p>
                 </div>
               </li>
             </ul>

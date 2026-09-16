@@ -28,13 +28,14 @@
     <link rel="alternate" hreflang="en-CA" href="https://sebsinstitute.com/" />
     <link rel="alternate" hreflang="en-AU" href="https://sebsinstitute.com/" />
 
-    <!-- Performance Optimization: Preconnect & Font Loading -->
+    <!-- Performance Optimization: Preconnect & Asynchronous Non-blocking Font Loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://images.unsplash.com" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'" />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'" />
     <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
     </noscript>
 
     <!-- Preload Above-The-Fold Hero Image for High LCP Performance -->
@@ -61,40 +62,92 @@
       "@context": "https://schema.org",
       "@graph": [
         {
-          "@type": "EducationalOrganization",
+          "@type": ["EducationalOrganization", "LanguageSchool", "LocalBusiness"],
           "@id": "https://sebsinstitute.com/#organization",
           "name": "SEB's Institute",
-          "alternateName": "Syed Ejaz Bukhari Institute of English & IELTS",
+          "alternateName": [
+            "Syed Ejaz Bukhari Institute of English & IELTS",
+            "SEBS Language Academy",
+            "SEB's Global Language Institute"
+          ],
           "url": "https://sebsinstitute.com/",
+          "telephone": "+92-317-6369458",
+          "email": "info@sebsinstitute.com",
+          "priceRange": "$$",
           "logo": {
             "@type": "ImageObject",
+            "@id": "https://sebsinstitute.com/#logo",
             "url": "https://sebsinstitute.com/sebs_official_logo_315.webp",
+            "caption": "SEB's Institute Official Crest",
             "width": 315,
             "height": 172
           },
-          "image": "https://sebsinstitute.com/ielts_prep_banner_960.webp",
-          "description": "Premier IELTS Band 8.5+ and spoken English institute founded by Syed Ejaz Bukhari. Authentic mock tests, AI scoring, and live masterclasses.",
+          "image": {
+            "@type": "ImageObject",
+            "@id": "https://sebsinstitute.com/#primaryimage",
+            "url": "https://sebsinstitute.com/ielts_prep_banner_960.webp",
+            "width": 960,
+            "height": 524
+          },
+          "description": "Premier IELTS Band 8.5+ and spoken English institute founded by Syed Ejaz Bukhari. Authentic computer-delivered mock tests, AI band scoring, and live masterclasses.",
           "founder": {
             "@type": "Person",
+            "@id": "https://sebsinstitute.com/#founder",
             "name": "Syed Ejaz Bukhari",
             "jobTitle": "Founder & Master Linguistics Trainer",
-            "description": "Renowned IELTS master trainer with over 15 years experience training thousands of Band 8.5 achievers."
+            "image": "https://sebsinstitute.com/sebs_official_logo_315.webp",
+            "description": "Renowned IELTS master trainer with over 15 years of experience coaching thousands of students to Band 8.5+."
           },
           "address": {
             "@type": "PostalAddress",
+            "streetAddress": "Executive Sector F-8/3, Blue Area Academic Zone",
             "addressLocality": "Islamabad",
-            "addressRegion": "Federal Capital",
+            "addressRegion": "Islamabad Capital Territory",
+            "postalCode": "44000",
             "addressCountry": "PK"
           },
-          "contactPoint": {
-            "@type": "ContactPoint",
-            "contactType": "admissions",
-            "email": "info@sebsinstitute.com",
-            "availableLanguage": ["English", "Urdu"]
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 33.7077,
+            "longitude": 73.0496
           },
+          "hasMap": "https://maps.google.com/?q=33.7077,73.0496",
+          "areaServed": [
+            { "@type": "Country", "name": "Pakistan" },
+            { "@type": "Country", "name": "United Arab Emirates" },
+            { "@type": "Country", "name": "Saudi Arabia" },
+            { "@type": "Country", "name": "United Kingdom" },
+            { "@type": "Country", "name": "Canada" },
+            { "@type": "Country", "name": "Australia" }
+          ],
+          "openingHoursSpecification": [
+            {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+              "opens": "09:00",
+              "closes": "21:00"
+            }
+          ],
+          "contactPoint": [
+            {
+              "@type": "ContactPoint",
+              "contactType": "admissions",
+              "telephone": "+92-317-6369458",
+              "email": "info@sebsinstitute.com",
+              "contactOption": "TollFree",
+              "availableLanguage": ["English", "Urdu"]
+            },
+            {
+              "@type": "ContactPoint",
+              "contactType": "student support",
+              "telephone": "+92-317-6369458",
+              "email": "support@sebsinstitute.com",
+              "availableLanguage": ["English", "Urdu"]
+            }
+          ],
           "sameAs": [
-            "https://www.facebook.com/sebsinstitute",
-            "https://www.youtube.com/@sebsinstitute",
+            "https://www.facebook.com/SEBSInstitute",
+            "https://www.youtube.com/@SEBSinstitute",
             "https://www.instagram.com/sebs_institute/",
             "https://www.linkedin.com/company/sebsinstitute"
           ]
@@ -352,7 +405,7 @@
 
       <footer>
         <p>Copyright &copy; 2026 Syed Ejaz Bukhari &amp; SEB's Institute. All Rights Reserved. &ldquo;We Teach English, Not Pinglish&rdquo;.</p>
-        <p>Contact admissions at <a href="mailto:info@sebsinstitute.com">info@sebsinstitute.com</a> or visit our official campus.</p>
+        <p><strong>Campus Address:</strong> Executive Sector F-8/3, Blue Area Academic Zone, Islamabad 44000, Pakistan | <strong>Helpline:</strong> <a href="tel:+923176369458">+92 317 6369458</a> | <strong>Email:</strong> <a href="mailto:info@sebsinstitute.com">info@sebsinstitute.com</a></p>
       </footer>
     </noscript>
     <script type="module" src="/src/main.tsx"></script>
