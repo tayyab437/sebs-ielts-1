@@ -4,6 +4,7 @@ import { GripVertical, Trash2, Copy, Plus, Table as TableIcon, Image as ImageIco
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import RichTextEditor from "../RichTextEditor";
+import SecureVideoPlayer from "@/src/components/common/SecureVideoPlayer";
 
 function AutoResizeTextarea(props: React.ComponentProps<typeof Textarea>) {
   const ref = React.useRef<HTMLTextAreaElement>(null);
@@ -637,19 +638,11 @@ export function BlockEditor({ block, index, updateBlock, deleteBlock, duplicateB
             </div>
             {block.data.url && (
               <div className="relative group rounded-xl overflow-hidden bg-white dark:bg-slate-950 flex flex-col items-center justify-center border border-slate-205 dark:border-slate-800 p-2.5 max-w-full">
-                {block.data.url.includes('youtube.com') || block.data.url.includes('youtu.be') ? (
-                  <iframe
-                    src={block.data.url.replace('watch?v=', 'embed/')}
-                    className="w-full aspect-video rounded-lg max-h-48"
-                    allowFullScreen
-                  />
-                ) : (
-                  <video 
-                    src={block.data.url} 
-                    className="max-h-48 rounded-lg"
-                    controls
-                  />
-                )}
+                <SecureVideoPlayer
+                  url={block.data.url}
+                  title={block.data.caption || "Video Preview"}
+                  className="w-full aspect-video rounded-lg max-h-56"
+                />
                 {block.data.caption && (
                   <p className="text-xs text-slate-500 font-semibold italic mt-2 text-center">{block.data.caption}</p>
                 )}

@@ -2,13 +2,32 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Link, useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, ArrowUpRight, Sparkles, Phone, MessageCircle, X, ExternalLink, ShieldCheck } from "lucide-react";
+import { fetchSiteSettings, sanitizeAssetUrl } from "@/src/lib/settings";
 import OptimizedImage from "@/src/components/ui/OptimizedImage";
 
 export default function HeroSection() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [heroImageUrl, setHeroImageUrl] = useState(() => sanitizeAssetUrl(localStorage.getItem("site_hero_image_url"), "/ielts_prep_banner_960.webp"));
+  const [heroImageAlt, setHeroImageAlt] = useState(() => localStorage.getItem("site_hero_image_alt") || "Student practicing IELTS test on laptop");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const syncHeroSettings = () => {
+      fetchSiteSettings(true).then((settings) => {
+        if (settings?.site_hero_image_url) setHeroImageUrl(settings.site_hero_image_url);
+        if (settings?.site_hero_image_alt) setHeroImageAlt(settings.site_hero_image_alt);
+      });
+    };
+    syncHeroSettings();
+    window.addEventListener("storage", syncHeroSettings);
+    window.addEventListener("site_settings_updated", syncHeroSettings);
+    return () => {
+      window.removeEventListener("storage", syncHeroSettings);
+      window.removeEventListener("site_settings_updated", syncHeroSettings);
+    };
+  }, []);
 
   // Auto-advance slides every 6.5 seconds
   useEffect(() => {
@@ -94,25 +113,44 @@ export default function HeroSection() {
 
                 {/* Main Hero Banner with Laptop Student & Badges */}
                 <div className="relative w-full max-w-4xl mx-auto rounded-3xl overflow-hidden shadow-xl border border-sky-100 group mt-3">
-                  <picture>
-                    <source
-                      type="image/webp"
-                      srcSet="/ielts_prep_banner_480.webp 480w, /ielts_prep_banner_640.webp 640w, /ielts_prep_banner_960.webp 960w"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 768px, 960px"
-                    />
+                  {heroImageUrl === "/ielts_prep_banner_960.webp" ? (
+                    <picture>
+                      <source
+                        type="image/webp"
+                        srcSet="/ielts_prep_banner_480.webp 480w, /ielts_prep_banner_640.webp 640w, /ielts_prep_banner_960.webp 960w"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 768px, 960px"
+                      />
+                      <img
+                        src="/ielts_prep_banner_960.webp"
+                        srcSet="/ielts_prep_banner_480.webp 480w, /ielts_prep_banner_640.webp 640w, /ielts_prep_banner_960.webp 960w"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 768px, 960px"
+                        alt={heroImageAlt}
+                        fetchPriority="high"
+                        loading="eager"
+                        decoding="async"
+                        width={960}
+                        height={524}
+                        className="w-full h-[250px] sm:h-[290px] md:h-[310px] object-cover object-top filter brightness-[0.94]"
+                      />
+                    </picture>
+                  ) : (
                     <img
-                      src="/ielts_prep_banner_960.webp"
-                      srcSet="/ielts_prep_banner_480.webp 480w, /ielts_prep_banner_640.webp 640w, /ielts_prep_banner_960.webp 960w"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 768px, 960px"
-                      alt="Student practicing IELTS test on laptop"
+                      src={heroImageUrl}
+                      alt={heroImageAlt}
                       fetchPriority="high"
                       loading="eager"
                       decoding="async"
                       width={960}
                       height={524}
                       className="w-full h-[250px] sm:h-[290px] md:h-[310px] object-cover object-top filter brightness-[0.94]"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (target.src !== "/ielts_prep_banner_960.webp") {
+                          target.src = "/ielts_prep_banner_960.webp";
+                        }
+                      }}
                     />
-                  </picture>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
 
                   {/* Bottom Left Glass Badge */}

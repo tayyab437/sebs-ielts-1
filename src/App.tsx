@@ -30,12 +30,12 @@ const NotFoundPage = lazyWithRetry(() => import("./pages/public/NotFound"));
 import { supabase } from "./lib/supabaseClient";
 import { useTheme } from "./components/theme-provider";
 import { MeetingsProvider } from "./context/MeetingsContext";
-import { fetchSiteSettings } from "./lib/settings";
+import { fetchSiteSettings, sanitizeAssetUrl } from "./lib/settings";
 import { PageSEOManager } from "./components/PageSEOManager";
 
 function Footer() {
-  const [logoUrl, setLogoUrl] = useState("/sebs_official_logo_315.webp");
-  const [logoAlt, setLogoAlt] = useState("SEB's Institute Logo");
+  const [logoUrl, setLogoUrl] = useState(() => sanitizeAssetUrl(localStorage.getItem("site_logo_url"), "/sebs_official_logo_315.webp"));
+  const [logoAlt, setLogoAlt] = useState(() => localStorage.getItem("site_logo_alt") || "SEB's Institute Logo");
   const [emailValue, setEmailValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -84,8 +84,8 @@ function Footer() {
             <Link to="/" className="inline-flex items-center space-x-2 group">
               <img 
                 src={logoUrl || "/sebs_official_logo_315.webp"} 
-                srcSet="/sebs_official_logo_160.webp 160w, /sebs_official_logo_315.webp 315w"
-                sizes="(max-width: 640px) 130px, 160px"
+                srcSet={(!logoUrl || logoUrl === "/sebs_official_logo_315.webp" || logoUrl === "/sebs_official_logo_160.webp") ? "/sebs_official_logo_160.webp 160w, /sebs_official_logo_315.webp 315w" : undefined}
+                sizes={(!logoUrl || logoUrl === "/sebs_official_logo_315.webp" || logoUrl === "/sebs_official_logo_160.webp") ? "(max-width: 640px) 130px, 160px" : undefined}
                 alt={logoAlt} 
                 width={160}
                 height={87}
@@ -93,6 +93,12 @@ function Footer() {
                 decoding="async"
                 className="h-14 w-auto object-contain dark:brightness-200 dark:invert transition-transform duration-300 group-hover:scale-105" 
                 referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (target.src !== "/sebs_official_logo_315.webp") {
+                    target.src = "/sebs_official_logo_315.webp";
+                  }
+                }}
               />
               <span className="text-xl font-black italic tracking-tighter text-slate-900 dark:text-white uppercase font-sans">
                 SEB’s <span className="text-emerald-600 dark:text-emerald-400">Institute</span>
@@ -307,8 +313,8 @@ function Footer() {
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [logoUrl, setLogoUrl] = useState("/sebs_official_logo_315.webp");
-  const [logoAlt, setLogoAlt] = useState("SEB's Institute Logo");
+  const [logoUrl, setLogoUrl] = useState(() => sanitizeAssetUrl(localStorage.getItem("site_logo_url"), "/sebs_official_logo_315.webp"));
+  const [logoAlt, setLogoAlt] = useState(() => localStorage.getItem("site_logo_alt") || "SEB's Institute Logo");
 
   // Header Style & Layout States
   const [headerStyle, setHeaderStyle] = useState<"classic" | "iot">(() => (localStorage.getItem("site_header_style") as "classic" | "iot") || "classic");
@@ -598,8 +604,8 @@ function Navbar() {
               <Link to="/" className="flex items-center space-x-2 shrink-0 pr-2">
                 <img 
                   src={logoUrl || "/sebs_official_logo_160.webp"} 
-                  srcSet="/sebs_official_logo_160.webp 160w, /sebs_official_logo_315.webp 315w"
-                  sizes="(max-width: 640px) 110px, 160px"
+                  srcSet={(!logoUrl || logoUrl === "/sebs_official_logo_315.webp" || logoUrl === "/sebs_official_logo_160.webp") ? "/sebs_official_logo_160.webp 160w, /sebs_official_logo_315.webp 315w" : undefined}
+                  sizes={(!logoUrl || logoUrl === "/sebs_official_logo_315.webp" || logoUrl === "/sebs_official_logo_160.webp") ? "(max-width: 640px) 110px, 160px" : undefined}
                   alt={logoAlt} 
                   width={110}
                   height={60}
@@ -607,6 +613,12 @@ function Navbar() {
                   decoding="async"
                   className="h-9 w-auto object-contain dark:brightness-200 dark:invert" 
                   referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (target.src !== "/sebs_official_logo_315.webp") {
+                      target.src = "/sebs_official_logo_315.webp";
+                    }
+                  }}
                 />
                 <span className="font-black text-sm text-slate-900 dark:text-white uppercase tracking-wider hidden xl:inline">SEB's Institute</span>
               </Link>
@@ -757,7 +769,7 @@ function Navbar() {
             <div className="relative">
               <div className="absolute -inset-1 bg-gradient-to-tr from-emerald-500 to-violet-500 rounded-2xl blur opacity-15 group-hover:opacity-30 transition-all duration-300" />
               <img 
-                src={logoUrl} 
+                src={logoUrl || "/sebs_official_logo_315.webp"} 
                 alt={logoAlt} 
                 width={160}
                 height={87}
@@ -765,6 +777,12 @@ function Navbar() {
                 decoding="async"
                 className="relative h-14 w-auto object-contain dark:brightness-200 dark:invert transition-all duration-500 group-hover:scale-[1.04]" 
                 referrerPolicy="no-referrer" 
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (target.src !== "/sebs_official_logo_315.webp") {
+                    target.src = "/sebs_official_logo_315.webp";
+                  }
+                }}
               />
             </div>
             <div className="hidden lg:flex flex-col text-left">

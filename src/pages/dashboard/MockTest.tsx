@@ -3875,11 +3875,13 @@ export default function MockTest({ defaultCategory }: MockTestProps = {}) {
                                         return (
                                           <div className="space-y-8">
                                             <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-white/5">
-                                              <audio
-                                                src={data.audioUrl}
-                                                controls
-                                                className="w-full h-10"
-                                              />
+                                              {data.audioUrl && (
+                                                <audio
+                                                  src={data.audioUrl}
+                                                  controls
+                                                  className="w-full h-10"
+                                                />
+                                              )}
                                             </div>
 
                                             {data.analysis && (

@@ -126,10 +126,6 @@ export function sanitizeAssetUrl(url: string | null | undefined, defaultUrl: str
   if (trimmed.startsWith("/src/assets/images/")) {
     return trimmed.replace("/src/assets/images/", "/");
   }
-  // Automatically route oversized ibb.co logo to the ultra-optimized WebP asset
-  if (trimmed.includes("01-logo-curve63-3.png") || trimmed.includes("gMgHC2YQ")) {
-    return "/sebs_official_logo_315.webp";
-  }
   return trimmed;
 }
 

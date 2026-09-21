@@ -48,6 +48,9 @@ import ReactMarkdown from "react-markdown";
 import { Link, useLocation, useParams, useNavigate } from "react-router-dom";
 import { safeSetItem, safeGetItemAndParse, safeJsonParse } from "@/src/lib/safeStorage";
 import IeltsTestView from "@/src/components/IeltsTestView";
+import { mergeCoursesWithMedia, fetchAllMediaCourses } from "@/src/lib/mediaCourseAdapter";
+import MediaCoursePlayer from "@/src/components/courses/MediaCoursePlayer";
+import SecureVideoPlayer from "@/src/components/common/SecureVideoPlayer";
 
 export const slugifyCourse = (str: string): string => {
   return String(str || "")
@@ -63,6 +66,27 @@ export const getCourseUrlMeta = (course: any) => {
       examType: "ac",
       testType: "reading",
       testNumber: "1",
+    };
+  }
+
+  // Detect Media Courses (Video / Audio Masterclasses created in Media Studio or with media attributes)
+  const isMedia = Boolean(
+    course.isMediaCourse ||
+    course.rawMediaCourse ||
+    course.mediaType ||
+    course.media_type ||
+    course.course_format === "video_masterclass" ||
+    course.course_format === "audio_series" ||
+    course.course_format === "media" ||
+    String(course.id || "").startsWith("media-")
+  );
+
+  if (isMedia) {
+    return {
+      examType: "ac" as const,
+      testType: "media",
+      testNumber: String(course.id || "1"),
+      isMedia: true,
     };
   }
 
@@ -303,7 +327,15 @@ function StudentCoursesInner({
   
   // Visibility & Category Filtering Logic
   const catalogCourses = (courses || []).filter(c => c.show_in_catalog !== false);
+  const mediaCourses = (courses || []).filter(c => c.isMediaCourse || c.course_format?.includes('video') || c.course_format?.includes('audio') || c.mediaType);
   const syllabusCourses = (courses || []).filter(c => {
+    if (c.isMediaCourse) {
+      if (filterType === "media") return true;
+      if (filterType && filterType !== "courses") {
+        return c.type?.toLowerCase() === filterType.toLowerCase() || c.category?.toLowerCase().includes(filterType.toLowerCase());
+      }
+      return c.show_in_syllabus !== false;
+    }
     const isPracticeView = c.show_in_practice !== false;
     const format = c.course_format?.toLowerCase() || "";
     const type = c.type?.toLowerCase() || "";
@@ -320,6 +352,7 @@ function StudentCoursesInner({
     
     // If a filterType is provided (e.g. "reading"), only show those syllabus courses
     if (filterType && filterType !== "courses") {
+      if (filterType === "media") return false;
       if (isPracticeContent) return false;
       return type === filterType.toLowerCase() && c.show_in_syllabus !== false;
     }
@@ -327,6 +360,16 @@ function StudentCoursesInner({
     return !isPracticeContent && c.show_in_syllabus !== false;
   });
   const practiceCourses = (courses || []).filter(c => {
+    if (c.isMediaCourse) {
+      if (filterType === "media") return true;
+      if (filterType && filterType !== "courses") {
+        const tf = filterType.toLowerCase();
+        const cat = (c.category || "").toLowerCase();
+        const cType = (c.course_type || "").toLowerCase();
+        return cat.includes(tf) || cType.includes(tf) || (c.mediaType === "audio" && tf === "listening") || (c.mediaType === "video" && (tf === "speaking" || tf === "listening"));
+      }
+      return c.show_in_practice !== false;
+    }
     const isPracticeView = c.show_in_practice !== false;
     const cType = c.course_type?.toLowerCase() || "";
     const format = c.course_format?.toLowerCase() || "";
@@ -385,29 +428,41 @@ function StudentCoursesInner({
   const FIVE_MINUTES_MS = 5 * 60 * 1000;
 
   const [activeCourseId, setActiveCourseId] = useState<string | null>(() => {
+    // Only initialize active course from URL if a specific course route was requested
     if (routeCourseId) return routeCourseId;
-    const savedId = localStorage.getItem("active_course_id");
-    const savedTime = localStorage.getItem("active_course_timestamp");
-    if (savedId && savedTime) {
-      const elapsed = Date.now() - Number(savedTime);
-      if (elapsed <= FIVE_MINUTES_MS) {
-        return savedId;
-      } else {
-        localStorage.removeItem("active_course_id");
-        localStorage.removeItem("active_course_timestamp");
-        return null;
-      }
+    const parsed = parseCoursePath(window.location.pathname);
+    if (parsed) {
+      if (parsed.isCourseIdRoute && parsed.courseId) return parsed.courseId;
     }
-    if (savedId) {
-      localStorage.removeItem("active_course_id");
-      localStorage.removeItem("active_course_timestamp");
-    }
+    // Never auto-launch a course from stale localStorage when browsing the root courses catalog
     return null;
   });
   const [activeCourse, setActiveCourse] = useState<any | null>(null);
 
   const updateCourseUrl = (course: any) => {
     if (!course) return;
+    const isMedia = Boolean(
+      course.isMediaCourse ||
+      course.rawMediaCourse ||
+      course.mediaType ||
+      course.media_type ||
+      course.course_format === "video_masterclass" ||
+      course.course_format === "audio_series" ||
+      course.course_format === "media" ||
+      String(course.id || "").startsWith("media-")
+    );
+
+    if (isMedia) {
+      const targetUrl = isDashboardMode
+        ? `/dashboard/courses/${course.id}`
+        : `/courses/${course.id}`;
+
+      if (location.pathname !== targetUrl) {
+        navigate(targetUrl);
+      }
+      return;
+    }
+
     const { examType, testType, testNumber } = getCourseUrlMeta(course);
     const targetUrl = isDashboardMode
       ? `/dashboard/courses/${examType}/${testType}/${testNumber}`
@@ -431,7 +486,28 @@ function StudentCoursesInner({
 
     if (parsed && courses.length > 0) {
       if (parsed.isCourseSkillRoute && parsed.examType && parsed.testType && parsed.testNumber) {
+        if (parsed.testType === "media") {
+          const foundMedia = courses.find((c) => 
+            String(c.id).toLowerCase() === String(parsed.testNumber).toLowerCase() ||
+            (c.slug && String(c.slug).toLowerCase() === String(parsed.testNumber).toLowerCase()) ||
+            (c.rawMediaCourse?.id && String(c.rawMediaCourse.id).toLowerCase() === String(parsed.testNumber).toLowerCase())
+          );
+          if (foundMedia) {
+            if (activeCourseId !== foundMedia.id) {
+              setActiveCourseId(foundMedia.id);
+              setActiveCourse(foundMedia);
+              safeSetItem("active_course_id", foundMedia.id);
+              safeSetItem("active_course_timestamp", Date.now().toString());
+            }
+          }
+          return;
+        }
+
         const found = courses.find((c) => {
+          // Never match a media course as an IELTS practice test
+          if (c.isMediaCourse || c.rawMediaCourse || c.mediaType || String(c.id || "").startsWith("media-")) {
+            return false;
+          }
           const meta = getCourseUrlMeta(c);
           const metaNum = String(meta.testNumber).toLowerCase();
           const targetNum = String(parsed.testNumber).toLowerCase();
@@ -443,6 +519,9 @@ function StudentCoursesInner({
 
           return matchesExam && matchesSkill && matchesNum;
         }) || courses.find((c) => {
+          if (c.isMediaCourse || c.rawMediaCourse || c.mediaType || String(c.id || "").startsWith("media-")) {
+            return false;
+          }
           // Fallback: match skill and number even if exam classification was ambiguous
           const meta = getCourseUrlMeta(c);
           const metaNum = String(meta.testNumber).toLowerCase();
@@ -459,7 +538,12 @@ function StudentCoursesInner({
           }
         }
       } else if (parsed.isCourseIdRoute && parsed.courseId) {
-        const found = courses.find((c) => String(c.id).toLowerCase() === String(parsed.courseId).toLowerCase());
+        const found = courses.find((c) => 
+          String(c.id).toLowerCase() === String(parsed.courseId).toLowerCase() ||
+          (c.slug && String(c.slug).toLowerCase() === String(parsed.courseId).toLowerCase()) ||
+          (c.rawMediaCourse?.id && String(c.rawMediaCourse.id).toLowerCase() === String(parsed.courseId).toLowerCase()) ||
+          (c.rawMediaCourse?.slug && String(c.rawMediaCourse.slug).toLowerCase() === String(parsed.courseId).toLowerCase())
+        );
         if (found) {
           if (activeCourseId !== found.id) {
             setActiveCourseId(found.id);
@@ -470,7 +554,11 @@ function StudentCoursesInner({
         }
       }
     } else if (!parsed && routeCourseId && courses.length > 0) {
-      const found = courses.find((c) => String(c.id).toLowerCase() === String(routeCourseId).toLowerCase());
+      const found = courses.find((c) => 
+        String(c.id).toLowerCase() === String(routeCourseId).toLowerCase() ||
+        (c.slug && String(c.slug).toLowerCase() === String(routeCourseId).toLowerCase()) ||
+        (c.rawMediaCourse?.id && String(c.rawMediaCourse.id).toLowerCase() === String(routeCourseId).toLowerCase())
+      );
       if (found && activeCourseId !== found.id) {
         setActiveCourseId(found.id);
         setActiveCourse(found);
@@ -482,6 +570,8 @@ function StudentCoursesInner({
         setActiveCourseId(null);
         setActiveCourse(null);
       }
+      localStorage.removeItem("active_course_id");
+      localStorage.removeItem("active_course_timestamp");
     }
   }, [location.pathname, routeCourseId, routeExamType, routeTestType, routeTestNumber, courses]);
   
@@ -874,12 +964,24 @@ function StudentCoursesInner({
           
           {/* Skill Badge */}
           <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-10">
-            <Badge className="bg-white/20 backdrop-blur-md border-white/30 text-white font-black text-[9px] uppercase tracking-wider px-3 py-1">
-              {course.course_type || "Reading"}
-            </Badge>
+            {course.isMediaCourse ? (
+              <Badge className="bg-gradient-to-r from-violet-600 to-indigo-600 border-none text-white font-black text-[9px] uppercase tracking-wider px-3 py-1 shadow-lg flex items-center gap-1.5">
+                {course.mediaType === "audio" ? <Volume2 className="w-3 h-3" /> : <Video className="w-3 h-3" />}
+                {course.mediaType === "audio" ? "Audio Podcast" : "Video Masterclass"}
+              </Badge>
+            ) : (
+              <Badge className="bg-white/20 backdrop-blur-md border-white/30 text-white font-black text-[9px] uppercase tracking-wider px-3 py-1">
+                {course.course_type || "Reading"}
+              </Badge>
+            )}
             {course.test_number && (
               <Badge className="bg-indigo-600 border-none text-white font-black text-[9px] uppercase tracking-wider px-3 py-1 shadow-md">
                 Test #{course.test_number}
+              </Badge>
+            )}
+            {course.isMediaCourse && (course.total_episodes || lessons.length > 0) && (
+              <Badge className="bg-black/60 backdrop-blur-md border border-white/20 text-white font-black text-[9px] uppercase tracking-wider px-2.5 py-1">
+                {course.total_episodes || lessons.length} Lessons
               </Badge>
             )}
           </div>
@@ -940,10 +1042,20 @@ function StudentCoursesInner({
 
         <CardContent className={`${isCompact ? 'p-5' : 'p-7'} flex-1 flex flex-col space-y-5`}>
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
                <span className="text-[10px] font-black tracking-widest text-primary uppercase">{course.type || "Academic"}</span>
                <span className="w-1 h-1 rounded-full bg-slate-300" />
-               <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">Target 7.5+</span>
+               <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                 {course.isMediaCourse && course.instructor ? `Instructor: ${course.instructor}` : "Target 7.5+"}
+               </span>
+               {course.isMediaCourse && course.total_duration && (
+                 <>
+                   <span className="w-1 h-1 rounded-full bg-slate-300" />
+                   <span className="text-[10px] font-black tracking-widest text-indigo-500 uppercase flex items-center gap-1">
+                     <Clock className="w-3 h-3 inline" /> {course.total_duration}
+                   </span>
+                 </>
+               )}
             </div>
             <h4 className={`${isCompact ? 'text-lg' : 'text-xl'} font-bold text-slate-900 dark:text-white leading-snug tracking-tight group-hover:text-primary transition-colors`}>{course.title}</h4>
             {!isCompact && <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed font-medium">{course.description}</p>}
@@ -981,8 +1093,17 @@ function StudentCoursesInner({
                   setCourseToStart(course);
                 }}
               >
-                {isDashboardMode && progress > 0 ? "Continue" : "Start Track"}
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                {course.isMediaCourse ? (
+                  <>
+                    {course.mediaType === "audio" ? <Volume2 className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current" />}
+                    {isDashboardMode && progress > 0 ? "Resume Episode" : course.mediaType === "audio" ? "Listen Series" : "Watch Masterclass"}
+                  </>
+                ) : (
+                  <>
+                    {isDashboardMode && progress > 0 ? "Continue" : "Start Track"}
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  </>
+                )}
               </Button>
             ) : (
               <Button 
@@ -1304,7 +1425,21 @@ function StudentCoursesInner({
     }
     loadLearningData();
 
+    const handleDataUpdate = () => {
+      loadLearningData();
+    };
+
+    window.addEventListener("mock_media_courses_updated", handleDataUpdate);
+    window.addEventListener("media_courses_changed", handleDataUpdate);
+    window.addEventListener("mock_courses_updated", handleDataUpdate);
+    window.addEventListener("storage", handleDataUpdate);
+
     return () => {
+      window.removeEventListener("mock_media_courses_updated", handleDataUpdate);
+      window.removeEventListener("media_courses_changed", handleDataUpdate);
+      window.removeEventListener("mock_courses_updated", handleDataUpdate);
+      window.removeEventListener("storage", handleDataUpdate);
+
       // Cleanup any active recordings in Courses on unmount
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         try { mediaRecorderRef.current.stop(); } catch(e) {}
@@ -1503,7 +1638,15 @@ function StudentCoursesInner({
           safeSetItem('mock_quizzes', JSON.stringify(localQ));
         }
 
-        setCourses(sortCoursesList(localC));
+        let finalLocalCourses = localC || [];
+        try {
+          const mediaCourses = await fetchAllMediaCourses();
+          finalLocalCourses = mergeCoursesWithMedia(finalLocalCourses, mediaCourses);
+        } catch (mErr) {
+          console.warn("Could not fetch media courses for local dev catalog:", mErr);
+        }
+
+        setCourses(sortCoursesList(finalLocalCourses));
         setQuizzes(localQ);
         
         const savedCompleted = localStorage.getItem("completed_lessons");
@@ -1537,7 +1680,10 @@ function StudentCoursesInner({
             const stateId = state.activeCourseId;
             const stateTime = state.activeCourseTimestamp || localStorage.getItem("active_course_timestamp");
             
-            if (stateId && stateTime) {
+            const parsedOnLoad = parseCoursePath(window.location.pathname);
+            const isCatalogRoot = !parsedOnLoad && !routeCourseId && (window.location.pathname === "/courses" || window.location.pathname === "/dashboard/courses");
+
+            if (stateId && stateTime && !isCatalogRoot) {
               const elapsed = Date.now() - Number(stateTime);
               if (elapsed <= FIVE_MINUTES_MS) {
                 setActiveCourseId(stateId);
@@ -1548,7 +1694,7 @@ function StudentCoursesInner({
                 localStorage.removeItem("active_course_id");
                 localStorage.removeItem("active_course_timestamp");
               }
-            } else {
+            } else if (isCatalogRoot) {
               setActiveCourseId(null);
               localStorage.removeItem("active_course_id");
               localStorage.removeItem("active_course_timestamp");
@@ -1574,13 +1720,20 @@ function StudentCoursesInner({
         if (quizzesError) throw quizzesError;
 
         // Parse JSON columns in Supabase mode
-        const parsedCourses = (coursesData || []).map(course => {
+        let parsedCourses = (coursesData || []).map(course => {
           let mods = course.modules;
           if (typeof mods === 'string') {
             try { mods = JSON.parse(mods); } catch { mods = []; }
           }
           return { ...course, modules: mods || [] };
         });
+
+        try {
+          const mediaCourses = await fetchAllMediaCourses();
+          parsedCourses = mergeCoursesWithMedia(parsedCourses, mediaCourses);
+        } catch (mErr) {
+          console.warn("Could not fetch media courses for remote catalog:", mErr);
+        }
 
         const parsedQuizzes = (quizzesData || []).map(qz => {
           let qs = qz.questions;
@@ -1832,28 +1985,24 @@ function StudentCoursesInner({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] font-black uppercase text-indigo-500 tracking-wider">Audio Playback Channel</p>
-                  <audio controls src={b.url} className="w-full mt-2 rounded-lg" controlsList="nodownload" />
+                  {b.url ? (
+                    <audio controls src={b.url} className="w-full mt-2 rounded-lg" controlsList="nodownload" />
+                  ) : (
+                    <p className="text-xs text-slate-400 italic mt-2">No audio stream available</p>
+                  )}
                 </div>
               </div>
             );
           }
 
           if (b.type === "video") {
-            const embedUrl = getEmbedUrl(b.url || "");
-            const isYoutube = embedUrl.includes("youtube.com") || embedUrl.includes("vimeo.com");
             return (
-              <div key={idx} className="my-6 bg-slate-900 rounded-3xl overflow-hidden shadow-lg border border-slate-200/5 dark:border-white/5 max-w-2xl mx-auto aspect-video relative">
-                {isYoutube ? (
-                  <iframe
-                    src={embedUrl}
-                    title="IELTS Video Tutorial"
-                    className="absolute top-0 left-0 w-full h-full border-none rounded-3xl"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                ) : (
-                  <video src={b.url} controls className="absolute top-0 left-0 w-full h-full object-contain rounded-3xl" />
-                )}
+              <div key={idx} className="my-6 max-w-3xl mx-auto">
+                <SecureVideoPlayer
+                  url={b.url || ""}
+                  title="IELTS Video Tutorial"
+                  className="rounded-3xl"
+                />
               </div>
             );
           }
@@ -2799,6 +2948,27 @@ function StudentCoursesInner({
   }
 
   if (activeCourse && activeCourseId && checkCourseAccess(userPlan, activeCourse.access_tier || "Free Trial")) {
+    const isMedia = Boolean(
+      activeCourse.isMediaCourse ||
+      activeCourse.rawMediaCourse ||
+      activeCourse.mediaType ||
+      activeCourse.media_type ||
+      activeCourse.course_format === "video_masterclass" ||
+      activeCourse.course_format === "audio_series" ||
+      activeCourse.course_format === "media" ||
+      String(activeCourse.id || "").startsWith("media-")
+    );
+
+    // Specialized rich player for Video & Audio Media Courses
+    if (isMedia) {
+      return (
+        <MediaCoursePlayer
+          course={activeCourse}
+          onExit={confirmExit}
+        />
+      );
+    }
+
     // Build comprehensive normalized sections with full questions extracted across all structures
     const courseSections = normalizeCourseToSections(activeCourse, quizzes || []);
 
@@ -3191,6 +3361,27 @@ function StudentCoursesInner({
 
                 {isDashboardMode ? (
                   <div className="space-y-16">
+                    {/* Media Masterclasses & Podcasts */}
+                    {mediaCourses.length > 0 && (!filterType || filterType === "courses" || filterType === "media") && (
+                      <div className="space-y-8">
+                         <div className="flex items-center justify-between">
+                           <div>
+                             <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                               <Video className="w-5 h-5 text-indigo-500" />
+                               Media Masterclasses & Podcasts
+                             </h3>
+                             <p className="text-slate-500 text-xs font-semibold mt-0.5">Interactive video tracks and audio lessons with checkpoint quizzes</p>
+                           </div>
+                           <Badge className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-[10px] font-black uppercase">
+                             {mediaCourses.length} Tracks
+                           </Badge>
+                         </div>
+                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                           {mediaCourses.map(c => <CourseCard key={c.id} course={c} isCompact />)}
+                         </div>
+                      </div>
+                    )}
+
                     {/* Academic Syllabus */}
                     {syllabusCourses.length > 0 && (
                       <div className="space-y-8">
@@ -4081,7 +4272,7 @@ function StudentCoursesInner({
                                                         </Button>
                                                      </div>
                                                      <div className="bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-100 dark:border-white/5">
-                                                        <audio controls src={voiceAudioUrlMap[q.id] || ""} className="w-full h-8" />
+                                                        {voiceAudioUrlMap[q.id] && <audio controls src={voiceAudioUrlMap[q.id]} className="w-full h-8" />}
                                                      </div>
                                                    </div>
                                                  )}
@@ -4664,7 +4855,7 @@ function StudentCoursesInner({
                                                              </Button>
                                                           </div>
                                                           <div className="bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-100 dark:border-white/5">
-                                                             <audio controls src={voiceAudioUrlMap[q.id] || ""} className="w-full h-8" />
+                                                             {voiceAudioUrlMap[q.id] && <audio controls src={voiceAudioUrlMap[q.id]} className="w-full h-8" />}
                                                           </div>
                                                         </div>
                                                       )}
@@ -4881,15 +5072,11 @@ function StudentCoursesInner({
                       {displayType === 'VIDEO' && (
                         <div className="space-y-4">
                           {displayContent ? (
-                            <div className="w-full aspect-video rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 bg-black">
-                              <iframe 
-                                src={getEmbedUrl(displayContent)} 
-                                className="w-full h-full"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                title={currentLesson.title}
-                              />
-                            </div>
+                            <SecureVideoPlayer
+                              url={displayContent}
+                              title={currentLesson.title || "IELTS Masterclass Video Lesson"}
+                              className="border-4 border-white dark:border-slate-800 shadow-2xl"
+                            />
                           ) : (
                             <div className="min-h-[300px] rounded-3xl bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-8 text-center border-2 border-dashed">
                               <Video className="w-12 h-12 text-slate-300" />
@@ -4923,7 +5110,7 @@ function StudentCoursesInner({
                                   <Badge className="bg-purple-500/10 text-purple-600 dark:text-purple-300 border-none font-black text-[9px] uppercase tracking-wider py-1">Lecture Lesson Playback</Badge>
                                 </div>
                                 <p className="text-xs text-slate-500 font-semibold italic">Listen closely to the native pronunciation model before testing yourself.</p>
-                                <audio controls src={displayAudioUrl} className="w-full mt-3 rounded-lg" controlsList="nodownload" />
+                                {displayAudioUrl && <audio controls src={displayAudioUrl} className="w-full mt-3 rounded-lg" controlsList="nodownload" />}
                               </div>
                             )}
                           </div>

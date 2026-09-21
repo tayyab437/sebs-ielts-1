@@ -9,6 +9,9 @@ import AICourseCreator from "../../components/admin/AICourseCreator";
 import CourseVisualizer from "../../components/admin/CourseVisualizer";
 import AdminClassroomManager from "../../components/admin/AdminClassroomManager";
 import AdminCustomPagesManager from "../../components/admin/AdminCustomPagesManager";
+import MediaCoursesManager from "../../components/admin/MediaCoursesManager";
+import { mergeCoursesWithMedia, fetchAllMediaCourses } from "@/src/lib/mediaCourseAdapter";
+import SecureVideoPlayer from "@/src/components/common/SecureVideoPlayer";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -1314,6 +1317,20 @@ export default function AdminDashboard() {
       }
     }
     initAdmin();
+
+    const handleDataUpdate = () => {
+      fetchData();
+    };
+
+    window.addEventListener("mock_media_courses_updated", handleDataUpdate);
+    window.addEventListener("media_courses_changed", handleDataUpdate);
+    window.addEventListener("mock_courses_updated", handleDataUpdate);
+
+    return () => {
+      window.removeEventListener("mock_media_courses_updated", handleDataUpdate);
+      window.removeEventListener("media_courses_changed", handleDataUpdate);
+      window.removeEventListener("mock_courses_updated", handleDataUpdate);
+    };
   }, []);
 
   const fetchData = async () => {
@@ -1530,7 +1547,15 @@ export default function AdminDashboard() {
           };
         });
 
-        const sortedLocalCourses = [...parsedLocalCourses].sort((a, b) => {
+        let finalAdminLocalCourses = parsedLocalCourses;
+        try {
+          const mediaCourses = await fetchAllMediaCourses();
+          finalAdminLocalCourses = mergeCoursesWithMedia(finalAdminLocalCourses, mediaCourses);
+        } catch (e) {
+          console.warn("Could not fetch media courses for local admin:", e);
+        }
+
+        const sortedLocalCourses = [...finalAdminLocalCourses].sort((a, b) => {
           const getTestNum = (testNum: any): number => {
             if (testNum === undefined || testNum === null) return Infinity;
             const str = String(testNum).trim();
@@ -1543,7 +1568,7 @@ export default function AdminDashboard() {
           const aVal = getTestNum(a.test_number);
           const bVal = getTestNum(b.test_number);
           if (aVal !== bVal) return aVal - bVal;
-          return String(a.name || "").localeCompare(String(b.name || ""));
+          return String(a.name || a.title || "").localeCompare(String(b.name || b.title || ""));
         });
 
         setCourses(sortedLocalCourses);
@@ -1863,7 +1888,15 @@ export default function AdminDashboard() {
         };
       });
 
-      const sortedCourses = [...parsedCourses].sort((a, b) => {
+      let finalAdminCourses = parsedCourses;
+      try {
+        const mediaCourses = await fetchAllMediaCourses();
+        finalAdminCourses = mergeCoursesWithMedia(finalAdminCourses, mediaCourses);
+      } catch (e) {
+        console.warn("Could not fetch media courses for admin dashboard:", e);
+      }
+
+      const sortedCourses = [...finalAdminCourses].sort((a, b) => {
         const getTestNum = (testNum: any): number => {
           if (testNum === undefined || testNum === null) return Infinity;
           const str = String(testNum).trim();
@@ -1876,7 +1909,7 @@ export default function AdminDashboard() {
         const aVal = getTestNum(a.test_number);
         const bVal = getTestNum(b.test_number);
         if (aVal !== bVal) return aVal - bVal;
-        return String(a.name || "").localeCompare(String(b.name || ""));
+        return String(a.name || a.title || "").localeCompare(String(b.name || b.title || ""));
       });
 
       setCourses(sortedCourses);
@@ -2838,6 +2871,11 @@ export default function AdminDashboard() {
                     value: "courses",
                     label: "Curriculum Suite",
                     icon: <BookOpen className="w-4 h-4" />,
+                  },
+                  {
+                    value: "media-courses",
+                    label: "Media Courses",
+                    icon: <Film className="w-4 h-4 text-purple-500" />,
                   },
                   {
                     value: "course-designer",
@@ -4449,13 +4487,10 @@ export default function AdminDashboard() {
                                                             lesson.content,
                                                           ).includes("http") ? (
                                                             <div className="w-full aspect-video rounded-xl overflow-hidden shadow-md border-2 border-white dark:border-slate-800">
-                                                              <iframe
-                                                                src={getEmbedUrl(
-                                                                  lesson.content,
-                                                                )}
-                                                                className="w-full h-full"
-                                                                allowFullScreen
+                                                              <SecureVideoPlayer
+                                                                url={lesson.content}
                                                                 title="Lesson Video Preview"
+                                                                className="w-full h-full rounded-none border-none shadow-none"
                                                               />
                                                             </div>
                                                           ) : (
@@ -5315,6 +5350,12 @@ export default function AdminDashboard() {
                 <TabsContent value="course-visualizer" className="mt-0 space-y-6 overflow-hidden">
                   <div className="h-[calc(100vh-140px)] w-full overflow-y-auto overflow-x-hidden custom-scrollbar rounded-3xl -mx-6 px-6 pb-20">
                      <CourseVisualizer />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="media-courses" className="mt-0 space-y-6 overflow-hidden">
+                  <div className="h-[calc(100vh-140px)] w-full overflow-y-auto overflow-x-hidden custom-scrollbar rounded-3xl sm:-mx-6 sm:px-6 px-1 pb-20">
+                     <MediaCoursesManager />
                   </div>
                 </TabsContent>
 
@@ -8462,7 +8503,7 @@ export default function AdminDashboard() {
                                       <Mic className="w-5 h-5 text-rose-500" />
                                       <h5 className="font-black uppercase text-xs tracking-wider italic">Audio Response Recording</h5>
                                     </div>
-                                    <audio src={quizDetails.results[0].data?.audioUrl} controls className="w-full h-10" />
+                                    {quizDetails.results[0].data?.audioUrl && <audio src={quizDetails.results[0].data?.audioUrl} controls className="w-full h-10" />}
                                     
                                     <div className="pt-4 border-t border-slate-200 dark:border-white/5">
                                       <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Transcript</p>

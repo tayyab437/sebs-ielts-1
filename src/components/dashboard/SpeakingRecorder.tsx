@@ -335,9 +335,11 @@ export function SpeakingRecorder({ onComplete, prompt }: SpeakingRecorderProps) 
                 )}
               </div>
               
-              <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-white/5 mb-6">
-                <audio src={audioUrl} controls className="w-full h-10" />
-              </div>
+              {audioUrl && (
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-white/5 mb-6">
+                  <audio src={audioUrl} controls className="w-full h-10" />
+                </div>
+              )}
               
               {!analysisResult ? (
                 <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-white/5">

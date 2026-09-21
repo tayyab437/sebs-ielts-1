@@ -10,6 +10,15 @@ import Stripe from "stripe";
 import mysql from "mysql2/promise";
 import crypto from "crypto";
 
+// Process safety guards to prevent unhandled rejections from crashing the server
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception thrown:", err);
+});
+
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET || "sebs-institute-super-secret-key-1780389";
@@ -371,7 +380,7 @@ async function startServer() {
   // Enable Gzip/Deflate compression for optimal transfer speeds
   app.use(compression());
 
-  const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+  const PORT = 3000;
 
   // Canonical Domain Redirect (www.sebsinstitute.com -> sebsinstitute.com)
   app.use((req, res, next) => {
@@ -1299,6 +1308,148 @@ async function startServer() {
       try {
         const [rows]: any = await mysqlPool.execute(
           "SELECT id FROM resources WHERE name = 'SITE_MOCK_TESTS' AND type = 'MOCK_TESTS' LIMIT 1"
+        );
+        if (rows && rows.length > 0) {
+          await mysqlPool.execute("UPDATE resources SET url = ? WHERE id = ?", [JSON.stringify(filtered), rows[0].id]);
+        }
+      } catch (dbErr) {}
+
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Media Courses Persistent API Endpoints
+  const MEDIA_COURSES_FILE_PATH = path.join(process.cwd(), "site_media_courses.json");
+
+  const readServerMediaCoursesFile = (): any[] => {
+    try {
+      if (fs.existsSync(MEDIA_COURSES_FILE_PATH)) {
+        const raw = fs.readFileSync(MEDIA_COURSES_FILE_PATH, "utf-8");
+        return JSON.parse(raw || "[]");
+      }
+    } catch (e) {
+      console.warn("Could not read site_media_courses.json:", e);
+    }
+    return [];
+  };
+
+  const writeServerMediaCoursesFile = (mediaCoursesArr: any[]) => {
+    try {
+      fs.writeFileSync(MEDIA_COURSES_FILE_PATH, JSON.stringify(mediaCoursesArr, null, 2), "utf-8");
+    } catch (e) {
+      console.error("Could not write site_media_courses.json:", e);
+    }
+  };
+
+  app.get("/api/media_courses", async (req, res) => {
+    try {
+      const fileData = readServerMediaCoursesFile();
+      let mysqlData: any[] = [];
+
+      try {
+        const [rows]: any = await mysqlPool.execute(
+          "SELECT * FROM resources WHERE name = 'SITE_MEDIA_COURSES' AND type = 'MEDIA_COURSES' LIMIT 1"
+        );
+        if (rows && rows.length > 0 && rows[0].url) {
+          mysqlData = JSON.parse(rows[0].url);
+        }
+      } catch (dbErr) {}
+
+      const mergedMap = new Map();
+      fileData.forEach((item: any) => { if (item && item.id) mergedMap.set(item.id, item); });
+      mysqlData.forEach((item: any) => { if (item && item.id) mergedMap.set(item.id, item); });
+
+      return res.json(Array.from(mergedMap.values()));
+    } catch (err: any) {
+      console.error("Media courses GET error:", err);
+      res.json(readServerMediaCoursesFile());
+    }
+  });
+
+  app.post("/api/media_courses/sync", async (req, res) => {
+    try {
+      const { courses: incomingCourses } = req.body;
+      if (!Array.isArray(incomingCourses)) {
+        return res.status(400).json({ error: "courses must be an array" });
+      }
+
+      writeServerMediaCoursesFile(incomingCourses);
+
+      try {
+        const [rows]: any = await mysqlPool.execute(
+          "SELECT id FROM resources WHERE name = 'SITE_MEDIA_COURSES' AND type = 'MEDIA_COURSES' LIMIT 1"
+        );
+        if (rows && rows.length > 0) {
+          await mysqlPool.execute(
+            "UPDATE resources SET url = ? WHERE id = ?",
+            [JSON.stringify(incomingCourses), rows[0].id]
+          );
+        } else {
+          await mysqlPool.execute(
+            "INSERT INTO resources (id, name, type, url) VALUES (?, 'SITE_MEDIA_COURSES', 'MEDIA_COURSES', ?)",
+            [crypto.randomUUID(), JSON.stringify(incomingCourses)]
+          );
+        }
+      } catch (dbErr) {
+        console.warn("MySQL media courses sync save failed, using local file:", dbErr);
+      }
+
+      res.json({ success: true, count: incomingCourses.length });
+    } catch (err: any) {
+      console.error("Media courses sync error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/media_courses", async (req, res) => {
+    try {
+      const incoming = req.body;
+      const currentList = readServerMediaCoursesFile();
+      const existingIdx = currentList.findIndex((item: any) => item.id === incoming.id);
+      let updatedList = [...currentList];
+      if (existingIdx !== -1) {
+        updatedList[existingIdx] = incoming;
+      } else {
+        updatedList.unshift(incoming);
+      }
+
+      writeServerMediaCoursesFile(updatedList);
+
+      try {
+        const [rows]: any = await mysqlPool.execute(
+          "SELECT id FROM resources WHERE name = 'SITE_MEDIA_COURSES' AND type = 'MEDIA_COURSES' LIMIT 1"
+        );
+        if (rows && rows.length > 0) {
+          await mysqlPool.execute(
+            "UPDATE resources SET url = ? WHERE id = ?",
+            [JSON.stringify(updatedList), rows[0].id]
+          );
+        } else {
+          await mysqlPool.execute(
+            "INSERT INTO resources (id, name, type, url) VALUES (?, 'SITE_MEDIA_COURSES', 'MEDIA_COURSES', ?)",
+            [crypto.randomUUID(), JSON.stringify(updatedList)]
+          );
+        }
+      } catch (dbErr) {}
+
+      res.json({ success: true, course: incoming });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.delete("/api/media_courses/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const currentList = readServerMediaCoursesFile();
+      const filtered = currentList.filter((item: any) => item.id !== id);
+      writeServerMediaCoursesFile(filtered);
+
+      try {
+        const [rows]: any = await mysqlPool.execute(
+          "SELECT id FROM resources WHERE name = 'SITE_MEDIA_COURSES' AND type = 'MEDIA_COURSES' LIMIT 1"
         );
         if (rows && rows.length > 0) {
           await mysqlPool.execute("UPDATE resources SET url = ? WHERE id = ?", [JSON.stringify(filtered), rows[0].id]);

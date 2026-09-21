@@ -1,5 +1,6 @@
 import React from "react";
 import { BlockData, BlockType } from "./types";
+import SecureVideoPlayer from "@/src/components/common/SecureVideoPlayer";
 
 interface BlockRendererProps {
   block: BlockData;
@@ -383,21 +384,11 @@ export function BlockRenderer({ block }: BlockRendererProps) {
       return (
         <div className="my-5 space-y-2">
           {block.data.url && (
-            block.data.url.includes('youtube.com') || block.data.url.includes('youtu.be') ? (
-              <div className="relative aspect-video rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
-                <iframe
-                  src={block.data.url.replace('watch?v=', 'embed/')}
-                  className="absolute inset-0 w-full h-full"
-                  allowFullScreen
-                />
-              </div>
-            ) : (
-              <video 
-                src={block.data.url} 
-                className="w-full rounded-2xl border border-slate-100 dark:border-slate-800"
-                controls
-              />
-            )
+            <SecureVideoPlayer
+              url={block.data.url}
+              title={block.data.caption || "Lesson Video"}
+              className="border border-slate-100 dark:border-slate-800"
+            />
           )}
           {block.data.caption && (
             <p className="text-center text-xs text-slate-500 font-semibold italic mt-1.5">

@@ -45,6 +45,7 @@ import { Link, useParams, useSearchParams, useNavigate, useLocation } from "reac
 import { toast } from "sonner";
 import { CreditCard, Shield, Star, Zap } from "lucide-react";
 import { safeSetItem, compressImage, safeGetItemAndParse } from "@/src/lib/safeStorage";
+import { mergeCoursesWithMedia, fetchAllMediaCourses } from "@/src/lib/mediaCourseAdapter";
 import StudentCourses from "../public/Courses";
 import WritingModule from "./WritingModule";
 import StudentClassroomHub from "../../components/dashboard/StudentClassroomHub";
@@ -594,27 +595,48 @@ export default function StudentDashboard() {
         ];
       }
 
+      let finalCourses = localC;
+
       if (supabase) {
         try {
           const { data, error } = await supabase
             .from("courses")
             .select("*");
           if (data && data.length > 0) {
-            const parsed = data.map((c: any) => ({
+            finalCourses = data.map((c: any) => ({
               ...c,
               modules: typeof c.modules === "string" ? JSON.parse(c.modules) : c.modules
             }));
-            setCoursesList(parsed);
-            return;
           }
         } catch (e) {
           console.warn("Could not load courses from Supabase, using local database:", e);
         }
       }
-      setCoursesList(localC);
+
+      try {
+        const mediaCourses = await fetchAllMediaCourses();
+        finalCourses = mergeCoursesWithMedia(finalCourses, mediaCourses);
+      } catch (e) {
+        console.warn("Could not load media courses in student dashboard:", e);
+      }
+
+      setCoursesList(finalCourses);
     };
 
     loadCoursesList();
+    
+    const handleSync = () => {
+      loadCoursesList();
+    };
+    window.addEventListener("mock_media_courses_updated", handleSync);
+    window.addEventListener("media_courses_changed", handleSync);
+    window.addEventListener("mock_courses_updated", handleSync);
+
+    return () => {
+      window.removeEventListener("mock_media_courses_updated", handleSync);
+      window.removeEventListener("media_courses_changed", handleSync);
+      window.removeEventListener("mock_courses_updated", handleSync);
+    };
   }, [userProfile]);
 
   const enrolledCoursesChartData = useMemo(() => {

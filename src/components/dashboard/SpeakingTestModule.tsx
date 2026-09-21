@@ -976,7 +976,7 @@ export function SpeakingTestModule({
                       {formatTimerStr(recordingTimer)}
                     </span>
                   </div>
-                  <audio src={audioUrl} controls className="w-full h-11" />
+                  {audioUrl ? <audio src={audioUrl} controls className="w-full h-11" /> : <p className="text-xs text-slate-400 italic">No audio recorded</p>}
                 </div>
 
                 {/* Live Speech Transcript */}

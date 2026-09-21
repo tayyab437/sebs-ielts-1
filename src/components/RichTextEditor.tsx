@@ -214,8 +214,12 @@ export default function RichTextEditor({ value, onChange, placeholder = "Start t
     if (url) {
       let htmlToInsert = "";
       if (url.includes("youtube.com") || url.includes("youtu.be")) {
-        const embedUrl = url.replace("watch?v=", "embed/");
-        htmlToInsert = `<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; margin: 12px 0;"><iframe src="${embedUrl}" style="position: absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius: 8px;" allowfullscreen></iframe></div>`;
+        const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
+        const ytId = match && match[1] ? match[1] : "";
+        const embedUrl = ytId
+          ? `https://www.youtube-nocookie.com/embed/${ytId}?modestbranding=1&rel=0&iv_load_policy=3&showinfo=0`
+          : url.replace("watch?v=", "embed/");
+        htmlToInsert = `<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; margin: 12px 0; border-radius: 12px; background: #000;"><iframe src="${embedUrl}" style="position: absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius: 12px;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
       } else {
         htmlToInsert = `<video src="${url}" controls style="max-width:100%; border-radius:8px; margin: 12px 0;"></video>`;
       }

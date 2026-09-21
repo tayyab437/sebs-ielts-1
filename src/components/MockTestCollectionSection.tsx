@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { ArrowUpRight, VolumeX, Volume2, Play } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { fetchSiteSettings } from "@/src/lib/settings";
+import SecureVideoPlayer from "@/src/components/common/SecureVideoPlayer";
 
 const FALLBACK_YOUTUBE_EMBED = "https://www.youtube-nocookie.com/embed/yY-7o-q9M7U?autoplay=1&mute=1&loop=1&playlist=yY-7o-q9M7U&controls=1&modestbranding=1&rel=0";
 
@@ -142,12 +143,10 @@ export default function MockTestCollectionSection() {
               </div>
             </div>
           ) : parsed.type === "iframe" || videoError ? (
-            <iframe
-              src={parsed.type === "iframe" ? parsed.embedUrl : FALLBACK_YOUTUBE_EMBED}
-              title="IELTS Prep Video Showcase"
-              className="w-full h-full border-0 rounded-[28px]"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
+            <SecureVideoPlayer
+              url={rawVideoUrl}
+              title="SEBS Official Masterclass Showcase"
+              className="w-full h-full rounded-[28px] border-none shadow-none"
             />
           ) : (
             <>
