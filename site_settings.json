@@ -1,9 +1,9 @@
 {
-  "site_favicon_url": "/favicon.png",
+  "site_favicon_url": "https://i.ibb.co/gMgHC2YQ/01-logo-curve63-3.png",
   "site_favicon_alt": "SEB's Institute Favicon",
-  "site_logo_url": "/sebs_official_logo_315.webp",
+  "site_logo_url": "https://i.ibb.co/gMgHC2YQ/01-logo-curve63-3.png",
   "site_logo_alt": "SEB's Institute Logo",
-  "site_hero_image_url": "/ielts_prep_banner_960.webp",
+  "site_hero_image_url": "https://i.ibb.co/gMgHC2YQ/01-logo-curve63-3.png",
   "site_hero_image_alt": "SEBS English & IELTS Language Academy learning evaluation interface mockup",
   "site_bukhari_audio_url": "",
   "site_bukhari_audio_transcript": "Welcome to SEB's Institute! I'm Syed Ejaz Bukhari, your principal coach.",
@@ -46,5 +46,53 @@
   "top_offer_bar_active": false,
   "top_offer_bar_text": "Special Live Batches with Syed Ejaz Bukhari now recruiting • Special Live IELTS Batches — Prepare for Band 8.5+",
   "top_offer_bar_link_text": "Claim Seats",
-  "top_offer_bar_link": "/courses"
+  "top_offer_bar_link": "/courses",
+  "carousel_slides": [
+    {
+      "id": "default-slide-0",
+      "type": "image",
+      "mediaUrl": "/ielts_prep_banner_960.webp",
+      "mediaAlt": "Student practicing IELTS test on laptop",
+      "heading": "THE #1 GLOBAL| IELTS ONLINE STUDY PLATFORM",
+      "subheading": "Master IELTS Band 8.5 & spoken English with Syed Ejaz Bukhari. Achieve your dream band score with one click!",
+      "buttonText": "Explore IELTS Courses",
+      "buttonLink": "/courses",
+      "linkUrl": "/courses",
+      "badgeLeft": "Take a Free Online Test, Get Your Score The Best!",
+      "badgeRightTitle": "80.000.000+",
+      "badgeRightSubtitle": "test attempts",
+      "customComponent": "none"
+    },
+    {
+      "id": "default-slide-1",
+      "type": "image",
+      "mediaUrl": "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80",
+      "mediaAlt": "SEB's Institute British Council and IDP Platinum Partner",
+      "heading": "Proud to be PLATINUM PARTNER of the BRITISH COUNCIL and IDP| for many years",
+      "subheading": "The credibility and quality of the IELTS Online Tests are globally recognized",
+      "buttonText": "Explore Partner Syllabus",
+      "buttonLink": "/courses",
+      "linkUrl": "/courses",
+      "badgeLeft": "British Council Platinum Partner",
+      "badgeRightTitle": "Platinum",
+      "badgeRightSubtitle": "IDP Excellence 2025",
+      "customComponent": "none"
+    },
+    {
+      "id": "default-slide-2",
+      "type": "image",
+      "mediaUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80",
+      "mediaAlt": "Specialized IELTS Band Booster Courses",
+      "heading": "BREAKTHROUGH your band score with our SPECIALIZED| IELTS courses",
+      "subheading": "Ready to boost your IELTS score?",
+      "buttonText": "Take Free IELTS Test",
+      "buttonLink": "/mock-tests",
+      "linkUrl": "/mock-tests",
+      "badgeLeft": "1v1 Coaching & MasterClass",
+      "badgeRightTitle": "Band 8.5+",
+      "badgeRightSubtitle": "Target Achievement",
+      "customComponent": "none"
+    }
+  ],
+  "carousel_timer": 6.5
 }

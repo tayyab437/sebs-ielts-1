@@ -25,6 +25,7 @@ const CustomPageView = lazyWithRetry(() => import("./pages/public/CustomPageView
 const AboutPage = lazyWithRetry(() => import("./pages/public/About"));
 const ContactPage = lazyWithRetry(() => import("./pages/public/Contact"));
 const PracticePage = lazyWithRetry(() => import("./pages/public/Practice"));
+const BooksPage = lazyWithRetry(() => import("./pages/public/Books"));
 const NotFoundPage = lazyWithRetry(() => import("./pages/public/NotFound"));
 
 import { supabase } from "./lib/supabaseClient";
@@ -1301,6 +1302,8 @@ function AppContent() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/practice" element={<PracticePage />} />
+            <Route path="/books" element={<BooksPage />} />
+            <Route path="/dashboard/books" element={<BooksPage isDashboardMode={true} />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/dashboard" element={<UnifiedDashboard />} />

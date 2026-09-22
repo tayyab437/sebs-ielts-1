@@ -39,7 +39,9 @@ import {
   Film,
   Image as ImageIcon,
   Award,
-  Users
+  Users,
+  ArrowRight,
+  ClipboardCheck
 } from "lucide-react";
 import { Link, useParams, useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
@@ -1539,7 +1541,59 @@ export default function StudentDashboard() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-2 flex">
       
       {/* Scrollable Sidebar Navigation */}
-      <aside className="hidden lg:flex flex-col w-72 h-[calc(100vh-80px)] sticky top-20 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-r border-slate-200 dark:border-white/10 overflow-y-auto p-6 space-y-8 no-scrollbar">
+      <aside className="hidden lg:flex flex-col w-72 h-[calc(100vh-80px)] sticky top-20 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-r border-slate-200 dark:border-white/10 overflow-y-auto p-6 space-y-6 no-scrollbar">
+        {/* Explore & Practice Quick Action Box */}
+        <div 
+          id="sidebar-explore-practice-container"
+          className="rounded-3xl p-4 bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 shadow-sm space-y-3.5"
+        >
+          {/* Header */}
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-100/80 dark:border-indigo-900/30 shrink-0 shadow-xs">
+              <BookOpen className="w-4.5 h-4.5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+                Explore & Practice
+              </h4>
+              <p className="text-[11px] font-medium text-slate-400 dark:text-slate-400 leading-tight mt-0.5">
+                Learn more or test your knowledge.
+              </p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-2 pt-0.5">
+            {/* Explore Books Button */}
+            <button
+              type="button"
+              id="sidebar-btn-explore-books"
+              onClick={() => setActiveTab("resources")}
+              className="w-full rounded-2xl py-3 px-4 flex items-center justify-between bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 hover:shadow-blue-500/30 active:scale-[0.98] transition-all group cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5">
+                <BookOpen className="w-4 h-4 text-white shrink-0" />
+                <span className="text-xs font-bold tracking-wide">Explore Books</span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform shrink-0" />
+            </button>
+
+            {/* Practice Tests Button */}
+            <button
+              type="button"
+              id="sidebar-btn-practice-tests"
+              onClick={() => navigate("/mock-tests")}
+              className="w-full rounded-2xl py-3 px-4 flex items-center justify-between bg-gradient-to-r from-indigo-500 via-purple-600 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold text-xs shadow-md shadow-purple-500/20 hover:shadow-purple-500/30 active:scale-[0.98] transition-all group cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5">
+                <ClipboardCheck className="w-4 h-4 text-white shrink-0" />
+                <span className="text-xs font-bold tracking-wide">Practice Tests</span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform shrink-0" />
+            </button>
+          </div>
+        </div>
+
         <div className="space-y-3">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4">Navigation</p>
           <div className="space-y-1">

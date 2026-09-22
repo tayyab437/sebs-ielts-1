@@ -1,5 +1,24 @@
 import { supabase } from "./supabaseClient";
 
+export interface CarouselSlide {
+  id: string;
+  type: "image" | "video";
+  mediaUrl: string;
+  mediaAlt?: string;
+  heading?: string;
+  subheading?: string;
+  linkUrl?: string; // Direct link for the carousel slide
+  openInNewTab?: boolean;
+  buttonText?: string;
+  buttonLink?: string;
+  secondaryButtonText?: string;
+  secondaryButtonLink?: string;
+  badgeLeft?: string;
+  badgeRightTitle?: string;
+  badgeRightSubtitle?: string;
+  customComponent?: "slide-1-certificates" | "slide-2-course-cards" | "none";
+}
+
 export interface SiteSettings {
   site_favicon_url: string;
   site_favicon_alt: string;
@@ -7,9 +26,13 @@ export interface SiteSettings {
   site_logo_alt: string;
   site_hero_image_url: string;
   site_hero_image_alt: string;
+  courses_banner_image_url?: string;
+  courses_banner_image_alt?: string;
   site_bukhari_audio_url: string;
   site_bukhari_audio_transcript: string;
   site_header_style?: "classic" | "iot";
+  carousel_timer?: number; // In seconds (default 6.5)
+  carousel_slides?: CarouselSlide[];
   top_offer_bar_active?: boolean;
   top_offer_bar_text?: string;
   top_offer_bar_link_text?: string;
@@ -53,16 +76,67 @@ export interface SiteSettings {
   meta_link_writing?: string;
 }
 
+export const defaultCarouselSlides: CarouselSlide[] = [
+  {
+    id: "default-slide-0",
+    type: "image",
+    mediaUrl: "/ielts_prep_banner_960.webp",
+    mediaAlt: "Student practicing IELTS test on laptop",
+    heading: "THE #1 GLOBAL| IELTS ONLINE STUDY PLATFORM",
+    subheading: "Master IELTS Band 8.5 & spoken English with Syed Ejaz Bukhari. Achieve your dream band score with one click!",
+    buttonText: "Explore IELTS Courses",
+    buttonLink: "/courses",
+    secondaryButtonText: "CONTACT US",
+    secondaryButtonLink: "#contact",
+    badgeLeft: "Take a Free Online Test, Get Your Score The Best!",
+    badgeRightTitle: "80.000.000+",
+    badgeRightSubtitle: "test attempts",
+    customComponent: "none",
+  },
+  {
+    id: "default-slide-1",
+    type: "image",
+    mediaUrl: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80",
+    mediaAlt: "SEB's Institute British Council and IDP Platinum Partner",
+    heading: "Proud to be PLATINUM PARTNER of the BRITISH COUNCIL and IDP| for many years",
+    subheading: "The credibility and quality of the IELTS Online Tests are globally recognized",
+    buttonText: "Explore Partner Syllabus",
+    buttonLink: "/courses",
+    badgeLeft: "British Council Platinum Partner",
+    badgeRightTitle: "Platinum",
+    badgeRightSubtitle: "IDP Excellence 2025",
+    customComponent: "none",
+  },
+  {
+    id: "default-slide-2",
+    type: "image",
+    mediaUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80",
+    mediaAlt: "Specialized IELTS Band Booster Courses",
+    heading: "BREAKTHROUGH your band score with our SPECIALIZED| IELTS courses",
+    subheading: "Ready to boost your IELTS score?",
+    buttonText: "Take Free IELTS Test",
+    buttonLink: "/mock-tests",
+    badgeLeft: "1v1 Coaching & MasterClass",
+    badgeRightTitle: "Band 8.5+",
+    badgeRightSubtitle: "Target Achievement",
+    customComponent: "none",
+  }
+];
+
 export const defaultSettings: SiteSettings = {
   site_favicon_url: "/sebs_official_logo_315.webp",
   site_favicon_alt: "SEB's Institute Favicon",
   site_logo_url: "/sebs_official_logo_315.webp",
   site_logo_alt: "SEB's Institute Logo",
-  site_hero_image_url: "/ielts_prep_banner_960.webp",
-  site_hero_image_alt: "SEBS English & IELTS Language Academy learning evaluation interface mockup",
+  site_hero_image_url: "/level_up_skills_banner.jpg",
+  site_hero_image_alt: "Level Up Your Skills with Syed Ejaz Bukhari - SEB's Institute Course MasterClasses",
+  courses_banner_image_url: "/level_up_skills_banner.jpg",
+  courses_banner_image_alt: "Level Up Your Skills with Syed Ejaz Bukhari - SEB's Institute Course MasterClasses",
   site_bukhari_audio_url: "",
   site_bukhari_audio_transcript: "Welcome to SEB's Institute! I'm Syed Ejaz Bukhari, your principal coach.",
   site_header_style: "classic",
+  carousel_timer: 6.5,
+  carousel_slides: defaultCarouselSlides,
   iot_banner_text: "Self-study to boost your IELTS Score to 6.5+",
   iot_banner_subtext: "Designed for Learners at IELTS 5.0-5.5",
   iot_banner_button_text: "Learn more",
@@ -166,6 +240,16 @@ export async function fetchSiteSettings(bypassCache = false): Promise<SiteSettin
             if (sanitizedData.site_hero_image_url) {
               sanitizedData.site_hero_image_url = sanitizeAssetUrl(sanitizedData.site_hero_image_url, defaultSettings.site_hero_image_url);
             }
+            if (sanitizedData.carousel_slides && typeof sanitizedData.carousel_slides === "string") {
+              try {
+                sanitizedData.carousel_slides = JSON.parse(sanitizedData.carousel_slides);
+              } catch (e) {
+                sanitizedData.carousel_slides = defaultCarouselSlides;
+              }
+            }
+            if (sanitizedData.carousel_timer) {
+              sanitizedData.carousel_timer = Number(sanitizedData.carousel_timer) || defaultSettings.carousel_timer;
+            }
             cachedSettings = { ...defaultSettings, ...sanitizedData };
             if (cachedSettings.site_favicon_url) {
               updateDocumentFavicon(cachedSettings.site_favicon_url);
@@ -191,12 +275,20 @@ export async function fetchSiteSettings(bypassCache = false): Promise<SiteSettin
 
 export async function saveSiteSettings(settings: Partial<SiteSettings>): Promise<void> {
   // 1. Optimistically store in localStorage for immediate local responsiveness
-  Object.keys(settings).forEach((key) => {
-    const val = (settings as any)[key];
-    if (val !== undefined && val !== null) {
-      localStorage.setItem(key, String(val));
-    }
-  });
+  try {
+    Object.keys(settings).forEach((key) => {
+      const val = (settings as any)[key];
+      if (val !== undefined && val !== null) {
+        if (typeof val === "object") {
+          localStorage.setItem(key, JSON.stringify(val));
+        } else {
+          localStorage.setItem(key, String(val));
+        }
+      }
+    });
+  } catch (storageErr) {
+    console.warn("Could not save to localStorage (storage restriction or quota exceeded):", storageErr);
+  }
   
   if (settings.site_favicon_url) {
     updateDocumentFavicon(settings.site_favicon_url);
@@ -207,8 +299,12 @@ export async function saveSiteSettings(settings: Partial<SiteSettings>): Promise
   activeFetchPromise = null;
   
   // Realtime cross-tab and in-tab synchronization event dispatch
-  window.dispatchEvent(new Event("storage"));
-  window.dispatchEvent(new CustomEvent("site_settings_updated", { detail: settings }));
+  try {
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new CustomEvent("site_settings_updated", { detail: settings }));
+  } catch (eventErr) {
+    console.warn("Event dispatch notice:", eventErr);
+  }
 
   // 2. Persist to Hostinger MySQL Database and server storage
   try {
@@ -231,6 +327,20 @@ export async function saveSiteSettings(settings: Partial<SiteSettings>): Promise
 }
 
 function getLocalSettings(): SiteSettings {
+  let parsedSlides: CarouselSlide[] = defaultCarouselSlides;
+  const rawSlides = localStorage.getItem("carousel_slides");
+  if (rawSlides) {
+    try {
+      const p = JSON.parse(rawSlides);
+      if (Array.isArray(p) && p.length > 0) {
+        parsedSlides = p;
+      }
+    } catch (e) {}
+  }
+
+  const rawTimer = localStorage.getItem("carousel_timer");
+  const parsedTimer = rawTimer ? Number(rawTimer) || 6.5 : 6.5;
+
   return {
     site_favicon_url: sanitizeAssetUrl(localStorage.getItem("site_favicon_url"), defaultSettings.site_favicon_url),
     site_favicon_alt: localStorage.getItem("site_favicon_alt") || defaultSettings.site_favicon_alt,
@@ -241,6 +351,8 @@ function getLocalSettings(): SiteSettings {
     site_bukhari_audio_url: localStorage.getItem("site_bukhari_audio_url") || defaultSettings.site_bukhari_audio_url,
     site_bukhari_audio_transcript: localStorage.getItem("site_bukhari_audio_transcript") || defaultSettings.site_bukhari_audio_transcript,
     site_header_style: (localStorage.getItem("site_header_style") as "classic" | "iot") || "classic",
+    carousel_timer: parsedTimer,
+    carousel_slides: parsedSlides,
     top_offer_bar_active: localStorage.getItem("top_offer_bar_active") === null ? true : localStorage.getItem("top_offer_bar_active") === "true",
     top_offer_bar_text: localStorage.getItem("top_offer_bar_text") || "Special Live Batches with Syed Ejaz Bukhari now recruiting • Genuine IELTS Band 8.5+ Syllabus",
     top_offer_bar_link_text: localStorage.getItem("top_offer_bar_link_text") || "Claim Seats",

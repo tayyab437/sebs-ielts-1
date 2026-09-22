@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SpeakingRecorder } from "@/src/components/dashboard/SpeakingRecorder";
+import CourseCompletionCelebrationModal from "@/src/components/courses/CourseCompletionCelebrationModal";
 import { 
   BookOpen, 
   Video, 
@@ -41,7 +42,11 @@ import {
   Crown,
   ShieldAlert,
   Gem,
-  CreditCard
+  CreditCard,
+  LayoutGrid,
+  Headphones,
+  Briefcase,
+  Film
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import ReactMarkdown from "react-markdown";
@@ -51,6 +56,7 @@ import IeltsTestView from "@/src/components/IeltsTestView";
 import { mergeCoursesWithMedia, fetchAllMediaCourses } from "@/src/lib/mediaCourseAdapter";
 import MediaCoursePlayer from "@/src/components/courses/MediaCoursePlayer";
 import SecureVideoPlayer from "@/src/components/common/SecureVideoPlayer";
+import { fetchSiteSettings } from "@/src/lib/settings";
 
 export const slugifyCourse = (str: string): string => {
   return String(str || "")
@@ -303,6 +309,113 @@ function StudentCoursesInner({
   const [userPlan, setUserPlan] = useState<string>(() => {
     return propUserPlan || localStorage.getItem('override_student_plan') || "Free Trial";
   });
+
+  // Dynamic Course Hero Banner Image & Alt synced from General Settings
+  const [courseBannerUrl, setCourseBannerUrl] = useState<string>(() => {
+    return localStorage.getItem("courses_banner_image_url") || localStorage.getItem("site_hero_image_url") || "/level_up_skills_banner.jpg";
+  });
+  const [courseBannerAlt, setCourseBannerAlt] = useState<string>(() => {
+    return localStorage.getItem("courses_banner_image_alt") || localStorage.getItem("site_hero_image_alt") || "Level Up Your Skills with Syed Ejaz Bukhari - SEB's Institute Course MasterClasses";
+  });
+
+  // Filter state for Skills, Media Courses, Academic and General Training
+  const [activeSkillFilter, setActiveSkillFilter] = useState<string>(() => {
+    return initialFilter || (location.state as { activeType?: string })?.activeType || "all";
+  });
+
+  // Match helper for skills, media courses, academic, and general training
+  const isMatchForFilter = (course: any, filter: string) => {
+    if (!filter || filter === "all" || filter === "courses") return true;
+
+    const title = (course.title || "").toLowerCase();
+    const desc = (course.description || "").toLowerCase();
+    const cat = (course.category || "").toLowerCase();
+    const cType = (course.course_type || "").toLowerCase();
+    const format = (course.course_format || "").toLowerCase();
+    const tagsStr = (course.tags || []).map((t: string) => t.toLowerCase()).join(" ");
+    const examType = (course.exam_type || course.examType || "").toLowerCase();
+    const mediaType = (course.mediaType || "").toLowerCase();
+    const isMedia = Boolean(course.isMediaCourse || format.includes("video") || format.includes("audio") || course.mediaType || course.video_url);
+
+    if (filter === "listening") {
+      return cat.includes("listening") || cType.includes("listening") || format.includes("listening") || tagsStr.includes("listening") || title.includes("listening") || mediaType === "audio";
+    }
+    if (filter === "reading") {
+      return cat.includes("reading") || cType.includes("reading") || format.includes("reading") || tagsStr.includes("reading") || title.includes("reading");
+    }
+    if (filter === "writing") {
+      return cat.includes("writing") || cType.includes("writing") || format.includes("writing") || tagsStr.includes("writing") || title.includes("writing");
+    }
+    if (filter === "speaking") {
+      return cat.includes("speaking") || cType.includes("speaking") || format.includes("speaking") || tagsStr.includes("speaking") || title.includes("speaking");
+    }
+    if (filter === "media") {
+      return isMedia;
+    }
+    if (filter === "academic" || filter === "ac") {
+      const isGt = title.includes("general") || title.includes("gt") || cat.includes("general") || cat.includes("gt") || tagsStr.includes("general") || tagsStr.includes("gt") || examType.includes("general") || examType === "gt";
+      return !isGt || examType.includes("academic") || examType === "ac" || title.includes("academic") || cat.includes("academic") || tagsStr.includes("academic");
+    }
+    if (filter === "general_training" || filter === "gt") {
+      return examType.includes("general") || examType === "gt" || title.includes("general") || title.includes("gt") || cat.includes("general") || cat.includes("gt") || tagsStr.includes("general") || tagsStr.includes("gt");
+    }
+    return true;
+  };
+
+  const filterPills = [
+    { id: "all", label: "All Skills", icon: LayoutGrid },
+    { id: "listening", label: "Listening", icon: Headphones },
+    { id: "reading", label: "Reading", icon: BookOpen },
+    { id: "writing", label: "Writing", icon: PenTool },
+    { id: "speaking", label: "Speaking", icon: Mic },
+    { id: "media", label: "Media Courses", icon: Film },
+    { id: "academic", label: "Academic (AC)", icon: GraduationCap },
+    { id: "general_training", label: "General Training", icon: Briefcase },
+  ];
+
+  useEffect(() => {
+    const syncBannerSettings = () => {
+      fetchSiteSettings().then((settings) => {
+        if (settings) {
+          const heroUrl = settings.courses_banner_image_url || settings.site_hero_image_url || localStorage.getItem("site_hero_image_url");
+          if (heroUrl) {
+            setCourseBannerUrl(heroUrl);
+          }
+          const heroAlt = settings.courses_banner_image_alt || settings.site_hero_image_alt || localStorage.getItem("site_hero_image_alt");
+          if (heroAlt) {
+            setCourseBannerAlt(heroAlt);
+          }
+        }
+      }).catch(err => {
+        console.warn("Notice: Courses banner site settings sync:", err);
+      });
+    };
+
+    syncBannerSettings();
+
+    const handleSettingsUpdate = (e?: any) => {
+      if (e?.detail?.courses_banner_image_url || e?.detail?.site_hero_image_url) {
+        setCourseBannerUrl(e.detail.courses_banner_image_url || e.detail.site_hero_image_url);
+      } else {
+        const stored = localStorage.getItem("courses_banner_image_url") || localStorage.getItem("site_hero_image_url");
+        if (stored) setCourseBannerUrl(stored);
+      }
+      if (e?.detail?.courses_banner_image_alt || e?.detail?.site_hero_image_alt) {
+        setCourseBannerAlt(e.detail.courses_banner_image_alt || e.detail.site_hero_image_alt);
+      } else {
+        const storedAlt = localStorage.getItem("courses_banner_image_alt") || localStorage.getItem("site_hero_image_alt");
+        if (storedAlt) setCourseBannerAlt(storedAlt);
+      }
+    };
+
+    window.addEventListener("storage", handleSettingsUpdate);
+    window.addEventListener("site_settings_updated", handleSettingsUpdate);
+
+    return () => {
+      window.removeEventListener("storage", handleSettingsUpdate);
+      window.removeEventListener("site_settings_updated", handleSettingsUpdate);
+    };
+  }, []);
 
   useEffect(() => {
     if (propUserPlan) {
@@ -1165,6 +1278,7 @@ function StudentCoursesInner({
     const saved = localStorage.getItem("completed_lessons");
     return saved ? JSON.parse(saved) : [];
   });
+  const [isCelebrationModalOpen, setIsCelebrationModalOpen] = useState(false);
 
   useEffect(() => {
     safeSetItem("completed_lessons", JSON.stringify(completedLessons));
@@ -2891,6 +3005,15 @@ function StudentCoursesInner({
         read: false
       }
     }));
+
+    // Check if all lessons in active course are completed
+    const allCourseLessons = (activeCourse?.modules || []).flatMap((m: any) => m.lessons || []);
+    const isAllCompleted = allCourseLessons.length > 0 && allCourseLessons.every((l: any) => newCompleted.includes(l.id));
+    if (isAllCompleted) {
+      setTimeout(() => {
+        setIsCelebrationModalOpen(true);
+      }, 350);
+    }
   };
 
   // Determine lesson icon representation
@@ -3227,17 +3350,52 @@ function StudentCoursesInner({
               exit={{ opacity: 0, y: -15 }}
               className="space-y-12"
             >
-              {/* Cover Banner / Personal Header */}
+              {/* Cover Banner: Level Up Your Skills with Syed Ejaz Bukhari */}
               {!isDashboardMode ? (
-                <div className="relative rounded-[2.5rem] bg-gradient-to-br from-primary via-indigo-950 to-slate-950 text-white p-8 sm:p-12 overflow-hidden shadow-2xl mb-8">
-                  <div className="absolute inset-x-0 bottom-0 top-1/2 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-indigo-400/20 via-transparent to-transparent opacity-80" />
-                  <div className="relative max-w-2xl space-y-4">
-                    <h1 className="text-3xl sm:text-5xl font-black tracking-tighter leading-tight font-sans">
-                      Break Through Your <span className="underline decoration-indigo-400 decoration-4">IELTS Band Score</span> With Specialized IELTS Courses
-                    </h1>
-                    <p className="text-slate-300 text-xs sm:text-sm leading-relaxed max-w-lg italic font-semibold">
-                      Access official IELTS preparation modules and expert-guided training curriculum.
-                    </p>
+                <div className="space-y-6">
+                  <div className="relative w-full rounded-2xl sm:rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-950">
+                    <img
+                      id="courses-hero-banner-image"
+                      src={courseBannerUrl || "/level_up_skills_banner.jpg"}
+                      alt={courseBannerAlt || "Level Up Your Skills with Syed Ejaz Bukhari - SEB's Institute Course MasterClasses"}
+                      fetchPriority="high"
+                      loading="eager"
+                      decoding="async"
+                      referrerPolicy="no-referrer"
+                      className="w-full h-auto aspect-video max-h-[500px] object-cover object-center"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (!target.src.includes("level_up_skills_banner.jpg") && !target.src.includes("level_up_skills_banner_1790064305498.jpg")) {
+                          target.src = "/level_up_skills_banner.jpg";
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {/* Filter Pills Bar (All Skills, Listening, Reading, Writing, Speaking, Media Courses, Academic, General Training) */}
+                  <div className="w-full flex items-center justify-start sm:justify-center overflow-x-auto py-2 no-scrollbar">
+                    <div className="flex items-center gap-2.5 sm:gap-3 flex-nowrap sm:flex-wrap justify-start sm:justify-center min-w-max sm:min-w-0 px-1">
+                      {filterPills.map((pill) => {
+                        const Icon = pill.icon;
+                        const isActive = activeSkillFilter === pill.id;
+                        return (
+                          <button
+                            key={pill.id}
+                            type="button"
+                            id={`filter-pill-${pill.id}`}
+                            onClick={() => setActiveSkillFilter(pill.id)}
+                            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 whitespace-nowrap shadow-sm active:scale-95 cursor-pointer ${
+                              isActive
+                                ? "bg-[#1e293b] text-white dark:bg-white dark:text-slate-900 shadow-slate-900/20 font-bold"
+                                : "bg-white dark:bg-slate-900/90 text-slate-600 dark:text-slate-300 border border-slate-200/90 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                            }`}
+                          >
+                            <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white dark:text-slate-900" : "text-slate-400 dark:text-slate-400"}`} />
+                            <span>{pill.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -3541,11 +3699,37 @@ function StudentCoursesInner({
                     )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {catalogCourses.map((course) => (
-                      <CourseCard key={course.id} course={course} />
-                    ))}
-                  </div>
+                  (() => {
+                    const displayedCatalogCourses = catalogCourses.filter(course => isMatchForFilter(course, activeSkillFilter));
+                    if (displayedCatalogCourses.length === 0) {
+                      return (
+                        <div className="col-span-full py-16 text-center space-y-4 bg-white dark:bg-slate-900/40 rounded-3xl border border-dashed border-slate-200 dark:border-white/10 p-8">
+                          <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
+                            <BookOpen className="w-6 h-6" />
+                          </div>
+                          <div className="space-y-1">
+                            <h4 className="font-bold text-base text-slate-800 dark:text-white">No courses match this filter</h4>
+                            <p className="text-xs text-slate-400">Try selecting another filter or choose "All Skills" to view all available courses.</p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setActiveSkillFilter("all")}
+                            className="rounded-full text-xs font-bold"
+                          >
+                            View All Skills & Courses
+                          </Button>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {displayedCatalogCourses.map((course) => (
+                          <CourseCard key={course.id} course={course} />
+                        ))}
+                      </div>
+                    );
+                  })()
                 )}
                 {/* OLD GRID REMOVED */}
               </section>
@@ -5873,6 +6057,16 @@ function StudentCoursesInner({
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Course Completion Celebration & Certificate Modal */}
+        <CourseCompletionCelebrationModal
+          isOpen={isCelebrationModalOpen}
+          onClose={() => setIsCelebrationModalOpen(false)}
+          courseTitle={activeCourse?.title || "IELTS Master Course"}
+          courseId={activeCourse?.id}
+          totalLectures={(activeCourse?.modules || []).flatMap((m: any) => m.lessons || []).length || 1}
+          category={activeCourse?.category || "IELTS"}
+        />
       </div>
     </div>
   );

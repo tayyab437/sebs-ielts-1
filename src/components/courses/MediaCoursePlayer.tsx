@@ -56,9 +56,10 @@ import {
   Save,
   Filter,
   Tag,
-  Copy
+  Copy,
+  ClipboardCheck
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -67,6 +68,7 @@ import { toast } from "sonner";
 import { MediaCourse, MediaEpisode, MediaQuestion } from "@/src/types/mediaCourse";
 import { safeSetItem, safeGetItemAndParse } from "@/src/lib/safeStorage";
 import { SecureVideoPlayer, getStoredResolution } from "@/src/components/common/SecureVideoPlayer";
+import CourseCompletionCelebrationModal from "@/src/components/courses/CourseCompletionCelebrationModal";
 
 interface MediaCoursePlayerProps {
   course: any; // MediaCourse or adapted Course
@@ -126,6 +128,7 @@ export default function MediaCoursePlayer({
   initialModuleIdx = 0,
   initialEpisodeIdx = 0
 }: MediaCoursePlayerProps) {
+  const navigate = useNavigate();
   const rawCourse: MediaCourse = course?.rawMediaCourse || course || {};
 
   type FlatEpisode = MediaEpisode & {
@@ -233,6 +236,7 @@ export default function MediaCoursePlayer({
   const [completedEpisodeIds, setCompletedEpisodeIds] = useState<string[]>(() => {
     return safeGetItemAndParse<string[]>("completed_media_episodes", []);
   });
+  const [isCelebrationModalOpen, setIsCelebrationModalOpen] = useState(false);
 
   // Personal Notes for current episode
   const [notes, setNotes] = useState<PersonalNote[]>(() => {
@@ -490,8 +494,9 @@ export default function MediaCoursePlayer({
 
   // Mark Episode Complete
   const handleCompleteEpisode = () => {
+    let updated = completedEpisodeIds;
     if (!completedEpisodeIds.includes(currentEpisode.id)) {
-      const updated = [...completedEpisodeIds, currentEpisode.id];
+      updated = [...completedEpisodeIds, currentEpisode.id];
       setCompletedEpisodeIds(updated);
       safeSetItem("completed_media_episodes", JSON.stringify(updated));
 
@@ -505,7 +510,13 @@ export default function MediaCoursePlayer({
       });
     }
 
-    if (autoPlayNext && currentFlatIndex < flattenedEpisodes.length - 1) {
+    // Check if all episodes in this course are now completed
+    const isAllCompleted = flattenedEpisodes.length > 0 && flattenedEpisodes.every((ep) => updated.includes(ep.id));
+    if (isAllCompleted) {
+      setTimeout(() => {
+        setIsCelebrationModalOpen(true);
+      }, 350);
+    } else if (autoPlayNext && currentFlatIndex < flattenedEpisodes.length - 1) {
       setCurrentFlatIndex((prev) => prev + 1);
     }
   };
@@ -1051,6 +1062,47 @@ export default function MediaCoursePlayer({
 
             <div className="border-b border-slate-100 dark:border-white/5 pt-2" />
           </section>
+
+          {/* MOBILE EXPLORE & PRACTICE QUICK ACTION BOX */}
+          <div className="lg:hidden bg-white dark:bg-[#161b22] rounded-2xl p-4 border border-slate-200/80 dark:border-white/5 flex flex-col gap-3 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100/80 dark:border-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                <BookOpen className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white tracking-tight leading-snug">Explore & Practice</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Learn more or test your knowledge.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                type="button"
+                id="media-mobile-explore-books-btn"
+                onClick={() => navigate("/books")}
+                className="w-full py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-blue-600 via-sky-500 to-blue-500 hover:from-blue-700 hover:via-sky-600 hover:to-blue-600 text-white font-bold text-xs flex items-center justify-between shadow-sm shadow-blue-500/20 active:scale-[0.99] transition-all cursor-pointer group"
+              >
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-3.5 h-3.5 opacity-95 shrink-0" />
+                  <span>Explore Books</span>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 opacity-95 group-hover:translate-x-0.5 transition-transform shrink-0" />
+              </button>
+
+              <button
+                type="button"
+                id="media-mobile-practice-tests-btn"
+                onClick={() => navigate("/courses")}
+                className="w-full py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-500 to-indigo-500 hover:from-indigo-700 hover:via-purple-600 hover:to-indigo-600 text-white font-bold text-xs flex items-center justify-between shadow-sm shadow-indigo-500/20 active:scale-[0.99] transition-all cursor-pointer group"
+              >
+                <div className="flex items-center gap-2">
+                  <ClipboardCheck className="w-3.5 h-3.5 opacity-95 shrink-0" />
+                  <span>Practice Tests</span>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 opacity-95 group-hover:translate-x-0.5 transition-transform shrink-0" />
+              </button>
+            </div>
+          </div>
 
           {/* MOBILE CURRICULUM DRAWER / QUICK-PEEK (lg:hidden) */}
           <div className="lg:hidden bg-white dark:bg-[#161b22] rounded-2xl p-3.5 border border-slate-200/80 dark:border-white/5 flex flex-col gap-2.5 shadow-sm">
@@ -2292,6 +2344,53 @@ export default function MediaCoursePlayer({
 
         {/* RIGHT COLUMN (40% WIDTH ON DESKTOP): DEDICATED STICKY COURSE CURRICULUM PANEL */}
         <aside className="hidden lg:flex lg:w-[40%] flex-col gap-4 sticky top-6 shrink-0">
+          {/* Explore & Practice Quick Action Box */}
+          <div className="bg-white dark:bg-[#161b22] rounded-2xl shadow-sm border border-slate-200/80 dark:border-white/5 p-4 sm:p-5 flex flex-col gap-3.5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100/80 dark:border-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 shadow-xs">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight leading-snug">
+                  Explore & Practice
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  Learn more or test your knowledge.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2.5 pt-1">
+              {/* Button 1: Explore Books */}
+              <button
+                type="button"
+                id="media-explore-books-btn"
+                onClick={() => navigate("/books")}
+                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 via-sky-500 to-blue-500 hover:from-blue-700 hover:via-sky-600 hover:to-blue-600 text-white font-bold text-xs sm:text-sm flex items-center justify-between shadow-md shadow-blue-500/25 dark:shadow-blue-500/15 active:scale-[0.99] transition-all duration-200 cursor-pointer group"
+              >
+                <div className="flex items-center gap-3">
+                  <BookOpen className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white opacity-95 shrink-0" />
+                  <span>Explore Books</span>
+                </div>
+                <ArrowRight className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white opacity-95 transition-transform group-hover:translate-x-1 shrink-0" />
+              </button>
+
+              {/* Button 2: Practice Tests */}
+              <button
+                type="button"
+                id="media-practice-tests-btn"
+                onClick={() => navigate("/courses")}
+                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-500 to-indigo-500 hover:from-indigo-700 hover:via-purple-600 hover:to-indigo-600 text-white font-bold text-xs sm:text-sm flex items-center justify-between shadow-md shadow-indigo-500/25 dark:shadow-indigo-500/15 active:scale-[0.99] transition-all duration-200 cursor-pointer group"
+              >
+                <div className="flex items-center gap-3">
+                  <ClipboardCheck className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white opacity-95 shrink-0" />
+                  <span>Practice Tests</span>
+                </div>
+                <ArrowRight className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white opacity-95 transition-transform group-hover:translate-x-1 shrink-0" />
+              </button>
+            </div>
+          </div>
+
           <div className="bg-white dark:bg-[#161b22] rounded-2xl shadow-sm border border-slate-200/80 dark:border-white/5 overflow-hidden flex flex-col">
             
             {/* Sidebar Header */}
@@ -2302,29 +2401,43 @@ export default function MediaCoursePlayer({
                   <p className="text-xs text-slate-500">Spoken English • {flattenedEpisodes.length} Lessons</p>
                 </div>
 
-                {/* Circular Progress Badge */}
-                <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                    <path
-                      className="text-slate-100 dark:text-white/10"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3.5"
-                    />
-                    <path
-                      className="text-rose-600 transition-all duration-500"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeDasharray={`${progressPercent}, 100`}
-                      strokeLinecap="round"
-                      strokeWidth="3.5"
-                    />
-                  </svg>
-                  <span className="absolute font-mono font-bold text-[11px] text-slate-900 dark:text-white">
-                    {progressPercent}%
-                  </span>
+                <div className="flex items-center gap-2">
+                  {progressPercent === 100 && (
+                    <button
+                      type="button"
+                      onClick={() => setIsCelebrationModalOpen(true)}
+                      className="px-2.5 py-1 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-400 font-bold text-xs flex items-center gap-1 border border-amber-500/30 transition-all cursor-pointer shadow-xs"
+                      title="Request Certificate"
+                    >
+                      <Award className="w-3.5 h-3.5 text-amber-500" />
+                      <span className="hidden sm:inline">Certificate</span>
+                    </button>
+                  )}
+
+                  {/* Circular Progress Badge */}
+                  <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+                    <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                      <path
+                        className="text-slate-100 dark:text-white/10"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3.5"
+                      />
+                      <path
+                        className="text-rose-600 transition-all duration-500"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeDasharray={`${progressPercent}, 100`}
+                        strokeLinecap="round"
+                        strokeWidth="3.5"
+                      />
+                    </svg>
+                    <span className="absolute font-mono font-bold text-[11px] text-slate-900 dark:text-white">
+                      {progressPercent}%
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -2620,16 +2733,40 @@ export default function MediaCoursePlayer({
               </div>
             </button>
           ) : (
-            <button
-              onClick={handleCompleteEpisode}
-              className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm cursor-pointer"
-            >
-              <CheckCircle className="w-4 h-4" />
-              <span>Complete Course</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleCompleteEpisode}
+                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm cursor-pointer"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>Complete Course</span>
+              </button>
+              {completedCount === totalCount && (
+                <button
+                  type="button"
+                  id="media-bar-request-cert-btn"
+                  onClick={() => setIsCelebrationModalOpen(true)}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-bold text-xs shadow-sm shadow-amber-500/20 active:scale-95 transition-all cursor-pointer"
+                >
+                  <Award className="w-4 h-4" />
+                  <span>Request Certificate</span>
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
+
+      {/* Course Completion Celebration & Certificate Modal */}
+      <CourseCompletionCelebrationModal
+        isOpen={isCelebrationModalOpen}
+        onClose={() => setIsCelebrationModalOpen(false)}
+        courseTitle={rawCourse.title || "IELTS Master Course"}
+        courseId={rawCourse.id}
+        totalLectures={flattenedEpisodes.length}
+        category={rawCourse.category || "IELTS"}
+      />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import AICourseCreator from "../../components/admin/AICourseCreator";
 import CourseVisualizer from "../../components/admin/CourseVisualizer";
 import AdminClassroomManager from "../../components/admin/AdminClassroomManager";
 import AdminCustomPagesManager from "../../components/admin/AdminCustomPagesManager";
+import CarouselManager from "../../components/admin/CarouselManager";
 import MediaCoursesManager from "../../components/admin/MediaCoursesManager";
 import { mergeCoursesWithMedia, fetchAllMediaCourses } from "@/src/lib/mediaCourseAdapter";
 import SecureVideoPlayer from "@/src/components/common/SecureVideoPlayer";
@@ -364,8 +365,8 @@ export default function AdminDashboard() {
   const [generalFaviconAlt, setGeneralFaviconAlt] = useState(() => localStorage.getItem("site_favicon_alt") || "SEB's Institute Favicon");
   const [generalLogoUrl, setGeneralLogoUrl] = useState(() => localStorage.getItem("site_logo_url") || "/sebs_official_logo_315.webp");
   const [generalLogoAlt, setGeneralLogoAlt] = useState(() => localStorage.getItem("site_logo_alt") || "SEB's Institute Logo");
-  const [generalHeroImageUrl, setGeneralHeroImageUrl] = useState(() => localStorage.getItem("site_hero_image_url") || "/ielts_prep_banner_960.webp");
-  const [generalHeroImageAlt, setGeneralHeroImageAlt] = useState(() => localStorage.getItem("site_hero_image_alt") || "SEBS English & IELTS Language Academy learning evaluation interface mockup");
+  const [generalHeroImageUrl, setGeneralHeroImageUrl] = useState(() => localStorage.getItem("site_hero_image_url") || "/level_up_skills_banner.jpg");
+  const [generalHeroImageAlt, setGeneralHeroImageAlt] = useState(() => localStorage.getItem("site_hero_image_alt") || "Level Up Your Skills with Syed Ejaz Bukhari - SEB's Institute Course MasterClasses");
   const [generalAudioUrl, setGeneralAudioUrl] = useState(() => localStorage.getItem("site_bukhari_audio_url") || "");
   const [generalAudioTranscript, setGeneralAudioTranscript] = useState(() => localStorage.getItem("site_bukhari_audio_transcript") || "Welcome to SEB's Institute! I'm Syed Ejaz Bukhari, your principal coach.");
   const [mockTestPromoVideoUrl, setMockTestPromoVideoUrl] = useState(() => localStorage.getItem("mock_test_promo_video_url") || "/SEBS_promo.mp4");
@@ -824,6 +825,8 @@ export default function AdminDashboard() {
       site_logo_alt: generalLogoAlt,
       site_hero_image_url: generalHeroImageUrl,
       site_hero_image_alt: generalHeroImageAlt,
+      courses_banner_image_url: generalHeroImageUrl,
+      courses_banner_image_alt: generalHeroImageAlt,
       site_bukhari_audio_url: generalAudioUrl,
       site_bukhari_audio_transcript: generalAudioTranscript,
       mock_test_promo_video_url: mockTestPromoVideoUrl,
@@ -9104,19 +9107,46 @@ export default function AdminDashboard() {
 
                                   {/* Hero Image Settings Section */}
                                   <div className="space-y-4 p-5 rounded-2xl bg-white dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
-                                    <h3 className="text-xs font-black uppercase tracking-widest italic text-primary">
-                                      3. Hero Section Image Architecture
-                                    </h3>
+                                    <div className="flex items-center justify-between">
+                                      <h3 className="text-xs font-black uppercase tracking-widest italic text-primary">
+                                        3. Hero Section & Courses Banner Image Architecture
+                                      </h3>
+                                      <Badge variant="outline" className="text-[10px] font-bold text-sky-600 bg-sky-50 dark:bg-sky-950/40">
+                                        Live on Courses Banner
+                                      </Badge>
+                                    </div>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                      Configure the promotional banner image displayed across site headers and on the Courses page banner. Enter any image URL or upload an image file.
+                                    </p>
                                     <div className="grid grid-cols-1 gap-4">
                                       <div className="space-y-2">
-                                        <Label htmlFor="hero-image-url" className="text-xs font-bold text-slate-705 dark:text-slate-300">Hero Image Source URL</Label>
-                                        <Input
-                                          id="hero-image-url"
-                                          placeholder="/src/assets/images/... or https://..."
-                                          value={generalHeroImageUrl}
-                                          onChange={(e) => setGeneralHeroImageUrl(e.target.value)}
-                                          className="rounded-xl border h-10 font-bold text-xs"
-                                        />
+                                        <Label htmlFor="hero-image-url" className="text-xs font-bold text-slate-705 dark:text-slate-300">
+                                          Hero / Course Banner Image URL
+                                        </Label>
+                                        <div className="flex gap-2">
+                                          <Input
+                                            id="hero-image-url"
+                                            placeholder="https://... or /level_up_skills_banner.jpg"
+                                            value={generalHeroImageUrl}
+                                            onChange={(e) => setGeneralHeroImageUrl(e.target.value)}
+                                            className="rounded-xl border h-10 font-bold text-xs flex-1"
+                                          />
+                                          {generalHeroImageUrl && generalHeroImageUrl !== "/level_up_skills_banner.jpg" && (
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() => setGeneralHeroImageUrl("/level_up_skills_banner.jpg")}
+                                              className="text-[10px] font-bold h-10 px-3 whitespace-nowrap"
+                                              title="Reset to default Level Up Your Skills banner"
+                                            >
+                                              Reset
+                                            </Button>
+                                          )}
+                                        </div>
+                                        <span className="text-[10px] text-slate-400">
+                                          This image URL is rendered live on the Courses page hero section banner.
+                                        </span>
                                       </div>
 
                                       <div className="space-y-2">
@@ -9134,11 +9164,29 @@ export default function AdminDashboard() {
                                         </div>
                                       </div>
 
+                                      {/* Mini In-card Preview */}
+                                      {generalHeroImageUrl && (
+                                        <div className="space-y-1.5 pt-1">
+                                          <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Current Hero Image Preview</Label>
+                                          <div className="relative rounded-xl overflow-hidden aspect-video max-h-48 border border-slate-200 dark:border-white/10 bg-slate-950">
+                                            <img
+                                              src={generalHeroImageUrl}
+                                              alt={generalHeroImageAlt || "Hero banner preview"}
+                                              className="w-full h-full object-cover"
+                                              referrerPolicy="no-referrer"
+                                              onError={(e) => {
+                                                (e.target as HTMLImageElement).src = "/level_up_skills_banner.jpg";
+                                              }}
+                                            />
+                                          </div>
+                                        </div>
+                                      )}
+
                                       <div className="space-y-2">
                                         <Label htmlFor="hero-image-alt" className="text-xs font-bold text-slate-705 dark:text-slate-300">Hero Image Alternate Text (Alt)</Label>
                                         <Input
                                           id="hero-image-alt"
-                                          placeholder="E.g., SEBS English & IELTS Language Academy mock feedback panel"
+                                          placeholder="E.g., Level Up Your Skills with Syed Ejaz Bukhari"
                                           value={generalHeroImageAlt}
                                           onChange={(e) => setGeneralHeroImageAlt(e.target.value)}
                                           className="rounded-xl border h-10 font-bold text-xs"
@@ -10754,6 +10802,49 @@ export default function AdminDashboard() {
                               >
                                 <div className="border-t border-slate-100 dark:border-white/5 p-6 bg-slate-50/20 dark:bg-slate-900/10 text-left">
                                   <AdminCustomPagesManager />
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+
+                        {/* Homepage Carousel Configuration Section */}
+                        <div className="border border-slate-100 dark:border-white/5 rounded-2xl overflow-hidden bg-white dark:bg-white/[0.01] hover:border-slate-200 dark:hover:border-white/10 transition-all duration-300">
+                          <button
+                            type="button"
+                            onClick={() => setActiveGeneralSection(activeGeneralSection === "carousel" ? null : "carousel")}
+                            className="w-full flex items-center justify-between p-5 text-left transition-colors cursor-pointer hover:bg-slate-50/50 dark:hover:bg-white/[0.02]"
+                          >
+                            <div className="flex items-center gap-3.5">
+                              <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold shrink-0">
+                                <Sliders className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <span className="font-extrabold text-base text-slate-900 dark:text-white">Homepage Carousel & Slider Settings</span>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold font-sans mt-0.5">
+                                  Add or remove hero slides, adjust auto-rotation timers, link promotional buttons, and upload background images or videos.
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-slate-400 font-bold shrink-0">
+                              {activeGeneralSection === "carousel" ? (
+                                <ChevronUp className="w-5 h-5 text-blue-500" />
+                              ) : (
+                                <ChevronDown className="w-5 h-5" />
+                              )}
+                            </div>
+                          </button>
+
+                          <AnimatePresence initial={false}>
+                            {activeGeneralSection === "carousel" && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2, ease: "easeInOut" }}
+                              >
+                                <div className="border-t border-slate-100 dark:border-white/5 p-6 bg-slate-50/20 dark:bg-slate-900/10 text-left">
+                                  <CarouselManager />
                                 </div>
                               </motion.div>
                             )}
