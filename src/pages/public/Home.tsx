@@ -129,9 +129,9 @@ export default function HomePage() {
       badge: "OFFICIAL RECOGNITION",
       title: "Proud Platinum Partner of British Council and IDP",
       subtitle: "The credibility and academic quality of IELTS Online Tests are globally recognized by hundreds of universities and testing centers.",
-      ctaPrimary: "Verify Partner Credentials",
+      ctaPrimary: "Explore Official Courses",
       ctaSecondary: "View Success Stories",
-      ctaPrimaryLink: "/about",
+      ctaPrimaryLink: "/courses",
       ctaSecondaryLink: "#testimonials",
       bgGradient: "from-indigo-950 via-slate-900 to-slate-950",
       accentColor: "amber"

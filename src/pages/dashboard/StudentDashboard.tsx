@@ -39,9 +39,7 @@ import {
   Film,
   Image as ImageIcon,
   Award,
-  Users,
-  ArrowRight,
-  ClipboardCheck
+  Users
 } from "lucide-react";
 import { Link, useParams, useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
@@ -51,6 +49,7 @@ import { mergeCoursesWithMedia, fetchAllMediaCourses } from "@/src/lib/mediaCour
 import StudentCourses from "../public/Courses";
 import WritingModule from "./WritingModule";
 import StudentClassroomHub from "../../components/dashboard/StudentClassroomHub";
+import StudentCertificatesTab from "../../components/dashboard/StudentCertificatesTab";
 import AIConversationCoach from "../../components/dashboard/AIConversationCoach";
 import GoogleMeetManager from "../../components/dashboard/GoogleMeetManager";
 import EmbeddedCallManager from "../../components/dashboard/EmbeddedCallManager";
@@ -159,7 +158,7 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   
   // Responsive navigation and active sub-view toggling
-  const [activeTab, setActiveTab] = useState<"overview" | "settings" | "resources" | "courses" | "writing" | "speaking" | "listening" | "reading" | "writing-simulator" | "speaking-simulator" | "ai-conversation" | "google-meet" | "embedded-calling" | "classrooms">(() => {
+  const [activeTab, setActiveTab] = useState<"overview" | "settings" | "resources" | "courses" | "certificate" | "writing" | "speaking" | "listening" | "reading" | "writing-simulator" | "speaking-simulator" | "ai-conversation" | "google-meet" | "embedded-calling" | "classrooms">(() => {
     // Priority 1: Route Params (/dashboard/:tab)
     if (routeTab) return routeTab as any;
 
@@ -1541,59 +1540,7 @@ export default function StudentDashboard() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-2 flex">
       
       {/* Scrollable Sidebar Navigation */}
-      <aside className="hidden lg:flex flex-col w-72 h-[calc(100vh-80px)] sticky top-20 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-r border-slate-200 dark:border-white/10 overflow-y-auto p-6 space-y-6 no-scrollbar">
-        {/* Explore & Practice Quick Action Box */}
-        <div 
-          id="sidebar-explore-practice-container"
-          className="rounded-3xl p-4 bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 shadow-sm space-y-3.5"
-        >
-          {/* Header */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-100/80 dark:border-indigo-900/30 shrink-0 shadow-xs">
-              <BookOpen className="w-4.5 h-4.5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-                Explore & Practice
-              </h4>
-              <p className="text-[11px] font-medium text-slate-400 dark:text-slate-400 leading-tight mt-0.5">
-                Learn more or test your knowledge.
-              </p>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="space-y-2 pt-0.5">
-            {/* Explore Books Button */}
-            <button
-              type="button"
-              id="sidebar-btn-explore-books"
-              onClick={() => setActiveTab("resources")}
-              className="w-full rounded-2xl py-3 px-4 flex items-center justify-between bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 hover:shadow-blue-500/30 active:scale-[0.98] transition-all group cursor-pointer"
-            >
-              <div className="flex items-center gap-2.5">
-                <BookOpen className="w-4 h-4 text-white shrink-0" />
-                <span className="text-xs font-bold tracking-wide">Explore Books</span>
-              </div>
-              <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform shrink-0" />
-            </button>
-
-            {/* Practice Tests Button */}
-            <button
-              type="button"
-              id="sidebar-btn-practice-tests"
-              onClick={() => navigate("/mock-tests")}
-              className="w-full rounded-2xl py-3 px-4 flex items-center justify-between bg-gradient-to-r from-indigo-500 via-purple-600 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold text-xs shadow-md shadow-purple-500/20 hover:shadow-purple-500/30 active:scale-[0.98] transition-all group cursor-pointer"
-            >
-              <div className="flex items-center gap-2.5">
-                <ClipboardCheck className="w-4 h-4 text-white shrink-0" />
-                <span className="text-xs font-bold tracking-wide">Practice Tests</span>
-              </div>
-              <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform shrink-0" />
-            </button>
-          </div>
-        </div>
-
+      <aside className="hidden lg:flex flex-col w-72 h-[calc(100vh-80px)] sticky top-20 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-r border-slate-200 dark:border-white/10 overflow-y-auto p-6 space-y-8 no-scrollbar">
         <div className="space-y-3">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4">Navigation</p>
           <div className="space-y-1">
@@ -1601,6 +1548,7 @@ export default function StudentDashboard() {
               { id: "overview", name: "Overview", icon: <Layout className="w-4 h-4" /> },
               { id: "classrooms", name: "Classroom Hub", icon: <Users className="w-4 h-4" /> },
               { id: "courses", name: "Courses", icon: <BookOpen className="w-4 h-4" /> },
+              { id: "certificate", name: "Certificates", icon: <Award className="w-4 h-4" /> },
               { id: "resources", name: "Resources", icon: <FileText className="w-4 h-4" /> },
             ].map((item) => (
               <button
@@ -1722,6 +1670,7 @@ export default function StudentDashboard() {
               { id: "overview", name: "Overview", icon: <Layout className="w-4 h-4" /> },
               { id: "classrooms", name: "Classes", icon: <Users className="w-4 h-4" /> },
               { id: "courses", name: "Courses", icon: <BookOpen className="w-4 h-4" /> },
+              { id: "certificate", name: "Certificates", icon: <Award className="w-4 h-4" /> },
               { id: "ai-conversation", name: "AI Coach", icon: <Sparkles className="w-4 h-4 text-emerald-500 animate-pulse" /> },
               { id: "writing", name: "Writing", icon: <PenTool className="w-4 h-4" /> },
               { id: "speaking", name: "Speaking", icon: <Mic className="w-4 h-4" /> },
@@ -1764,7 +1713,7 @@ export default function StudentDashboard() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="space-y-1 flex-1">
               <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tighter flex flex-wrap items-center gap-x-3">
-                {activeTab === "overview" ? `Welcome back, ${firstName || user.name}!` : activeTab === "resources" ? "Resource Library" : activeTab === "courses" ? "My Courses" : activeTab === "ai-conversation" ? "AI Conversation Coach" : activeTab === "google-meet" ? "Google Meet Workspace" : activeTab === "embedded-calling" ? "Virtual Live Calling" : activeTab === "classrooms" ? "Classroom Hub" : "Profile Settings"}
+                {activeTab === "overview" ? `Welcome back, ${firstName || user.name}!` : activeTab === "certificate" ? "My Certificates & Credentials" : activeTab === "resources" ? "Resource Library" : activeTab === "courses" ? "My Courses" : activeTab === "ai-conversation" ? "AI Conversation Coach" : activeTab === "google-meet" ? "Google Meet Workspace" : activeTab === "embedded-calling" ? "Virtual Live Calling" : activeTab === "classrooms" ? "Classroom Hub" : "Profile Settings"}
                 {activeTab === "overview" && (
                   <Badge className={`font-black text-[9px] uppercase tracking-wider border-none ${examType === 'Academic' ? 'bg-indigo-500 text-white' : 'bg-emerald-500 text-white'}`}>
                     {examType} Preparation
@@ -1772,7 +1721,7 @@ export default function StudentDashboard() {
                 )}
               </h1>
               <p className="text-sm text-slate-500 font-medium italic">
-                {activeTab === "overview" ? "Your AI Study Curator has updated your learning path." : activeTab === "resources" ? "Browse, filter, and access candidate reference resources uploaded by administrators." : activeTab === "courses" ? "Browse and participate in the official learning tracks." : activeTab === "ai-conversation" ? "Practice real-time spoken English conversation with our responsive AI avatar Clara." : activeTab === "google-meet" ? "Spawn and coordinate live video interaction session codes powered by Google Meet." : activeTab === "embedded-calling" ? "Connect with voice & video features directly in our built-in classroom portal." : activeTab === "classrooms" ? "Access your enrolled cohorts to mark attendance and track history." : "Personalize candidate identity details and target exam metrics."}
+                {activeTab === "overview" ? "Your AI Study Curator has updated your learning path." : activeTab === "certificate" ? "View, download, and verify your official course completion certificates and achievements." : activeTab === "resources" ? "Browse, filter, and access candidate reference resources uploaded by administrators." : activeTab === "courses" ? "Browse and participate in the official learning tracks." : activeTab === "ai-conversation" ? "Practice real-time spoken English conversation with our responsive AI avatar Clara." : activeTab === "google-meet" ? "Spawn and coordinate live video interaction session codes powered by Google Meet." : activeTab === "embedded-calling" ? "Connect with voice & video features directly in our built-in classroom portal." : activeTab === "classrooms" ? "Access your enrolled cohorts to mark attendance and track history." : "Personalize candidate identity details and target exam metrics."}
               </p>
 
               {activeTab === "overview" && (
@@ -2261,6 +2210,20 @@ export default function StudentDashboard() {
                className="animate-in fade-in duration-300"
              >
                 <StudentClassroomHub />
+             </motion.div>
+          ) : activeTab === "certificate" ? (
+             <motion.div
+               key={activeTab}
+               initial={{ opacity: 0, y: 15 }}
+               animate={{ opacity: 1, y: 0 }}
+               transition={{ duration: 0.2 }}
+               className="animate-in fade-in duration-300"
+             >
+                <StudentCertificatesTab 
+                  userProfile={userProfile} 
+                  coursesList={coursesList} 
+                  completedLessons={completedLessons} 
+                />
              </motion.div>
           ) : (
             <>

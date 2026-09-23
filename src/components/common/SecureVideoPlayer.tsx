@@ -153,6 +153,16 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
   const [duration, setDuration] = useState<number>(parsedInitDuration || 0);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
+  const volumeRef = useRef(1);
+  const isMutedRef = useRef(false);
+
+  useEffect(() => {
+    volumeRef.current = volume;
+  }, [volume]);
+
+  useEffect(() => {
+    isMutedRef.current = isMuted;
+  }, [isMuted]);
 
   // Initialize playback rate from storage or prop to ensure cross-video consistency
   const [playbackRate, setPlaybackRate] = useState<number>(() => {
@@ -228,11 +238,10 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
   const vqQuery = selectedOpt.ytQuality !== "default" ? `&vq=${selectedOpt.ytQuality}` : "";
 
   // Masked URL generation for YouTube iframe:
-  // Using standard youtube.com embed with enablejsapi=1 & vq quality parameter so YouTube loads at selected quality
+  // Using youtube-nocookie embed with enablejsapi=1, autoplay=1, mute=1 to eliminate YouTube's center play button overlay
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
   const maskedEmbedUrl = isYouTube
-    ? `https://www.youtube.com/embed/${youtubeId}?enablejsapi=1&autoplay=${
-        autoPlay ? 1 : 0
-      }&controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&fs=0&playsinline=1${vqQuery}`
+    ? `https://www.youtube-nocookie.com/embed/${youtubeId}?enablejsapi=1&autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&widget_referrer=${encodeURIComponent(origin)}&origin=${encodeURIComponent(origin)}${vqQuery}`
     : url;
 
   // PostMessage sender for YouTube iframe API commands
@@ -327,6 +336,10 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
                 }
                 if (typeof e.target.setPlaybackQualityRange === "function") {
                   e.target.setPlaybackQualityRange(opt.ytQuality, opt.ytQuality);
+                }
+                if (typeof e.target.unMute === "function" && volumeRef.current > 0) {
+                  e.target.unMute();
+                  e.target.setVolume(volumeRef.current * 100);
                 }
                 if (typeof e.target.getAvailableQualityLevels === "function") {
                   const levels = e.target.getAvailableQualityLevels();
@@ -531,6 +544,7 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
         setIsPlaying(false);
         if (onPauseRef.current) onPauseRef.current();
       } else {
+        sendYouTubeCommand("unMute");
         sendYouTubeCommand("playVideo");
         setIsPlaying(true);
         if (onPlayRef.current) onPlayRef.current();
@@ -775,12 +789,12 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
       )}
       {/* 1. Underlying Video / Embedded Frame */}
       {isYouTube ? (
-        <div className="absolute inset-0 w-full h-full pointer-events-auto overflow-hidden">
+        <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden select-none bg-black">
           <iframe
             ref={iframeRef}
             src={maskedEmbedUrl}
             title={title}
-            className="w-full h-full border-0 scale-[1.01] pointer-events-auto"
+            className="w-full h-full border-0 scale-[1.03] pointer-events-none"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             tabIndex={-1}
             onContextMenu={handleContextMenu}

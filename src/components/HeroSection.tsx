@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Link, useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, ArrowUpRight, Phone, MessageCircle, X, ExternalLink, ShieldCheck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ChevronLeft, ChevronRight, Phone, MessageCircle, X, ExternalLink } from "lucide-react";
 import { fetchSiteSettings, defaultCarouselSlides, CarouselSlide } from "@/src/lib/settings";
-import OptimizedImage from "@/src/components/ui/OptimizedImage";
 
 export default function HeroSection() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -102,31 +101,26 @@ export default function HeroSection() {
     return url;
   };
 
-  const renderHeading = (text?: string) => {
-    if (!text) return null;
-    if (text.includes("|")) {
-      const parts = text.split("|");
-      return (
-        <>
-          {parts[0]}
-          <span className="text-[#00a8cc] font-black border-r-2 border-[#00a8cc] pr-1 mr-1 inline-block animate-pulse">
-            |
-          </span>
-          {parts.slice(1).join("|")}
-        </>
-      );
+  const handleSlideClick = () => {
+    const targetUrl = activeSlide.linkUrl || activeSlide.buttonLink;
+    if (!targetUrl) return;
+    if (activeSlide.openInNewTab || targetUrl.startsWith("http")) {
+      window.open(targetUrl, "_blank", "noopener,noreferrer");
+    } else {
+      navigate(targetUrl);
     }
-    return text;
   };
+
+  const hasInteractiveLink = Boolean(activeSlide.linkUrl || activeSlide.buttonLink);
 
   return (
     <section 
-      className="relative w-full h-[520px] sm:h-[580px] md:h-[640px] lg:h-[700px] overflow-hidden text-white font-sans bg-slate-950 select-none group border-b border-slate-900"
+      className="relative w-full min-h-[220px] xs:min-h-[280px] sm:min-h-[380px] md:h-[520px] lg:h-[620px] overflow-hidden text-white font-sans bg-slate-950 select-none group border-b border-slate-900 flex items-center justify-center"
       onMouseEnter={() => setIsAutoPlaying(false)}
       onMouseLeave={() => setIsAutoPlaying(true)}
       aria-label="Hero Carousel Banner"
     >
-      {/* Dynamic Full-Bleed Slide Background & Content */}
+      {/* Dynamic Full-Bleed Slide Background & Media */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeSlide.id || `slide-${safeCurrentSlide}`}
@@ -134,7 +128,10 @@ export default function HeroSection() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.45, ease: "easeInOut" }}
-          className="absolute inset-0 w-full h-full"
+          onClick={handleSlideClick}
+          className={`absolute inset-0 w-full h-full flex items-center justify-center ${
+            hasInteractiveLink ? "cursor-pointer" : ""
+          }`}
         >
           {/* Full-Cover Background Media Layer */}
           <div className="absolute inset-0 w-full h-full overflow-hidden">
@@ -174,27 +171,6 @@ export default function HeroSection() {
               />
             )}
           </div>
-
-          {/* Foreground Hero Content Layer */}
-          <div className="relative z-20 h-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-center text-center py-10 sm:py-16">
-            <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
-              
-              {/* Slide Heading */}
-              {activeSlide.heading && (
-                <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-white uppercase leading-[1.12] drop-shadow-xl max-w-4xl mx-auto">
-                  {renderHeading(activeSlide.heading)}
-                </h1>
-              )}
-
-              {/* Subheading */}
-              {activeSlide.subheading && (
-                <p className="text-sm sm:text-base md:text-lg text-slate-200 font-medium max-w-2xl mx-auto drop-shadow-md leading-relaxed">
-                  {activeSlide.subheading}
-                </p>
-              )}
-
-            </div>
-          </div>
         </motion.div>
       </AnimatePresence>
 
@@ -204,25 +180,25 @@ export default function HeroSection() {
           <button
             type="button"
             onClick={prevSlide}
-            className="absolute left-3 sm:left-6 md:left-8 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-black/40 hover:bg-black/75 text-white backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-2xl hover:scale-110 cursor-pointer"
+            className="absolute left-1.5 xs:left-3 sm:left-6 md:left-8 top-1/2 -translate-y-1/2 z-30 w-8 h-8 xs:w-9 xs:h-9 sm:w-12 sm:h-12 rounded-full bg-black/40 hover:bg-black/80 text-white backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl hover:scale-110 active:scale-95 cursor-pointer"
             aria-label="Previous Slide"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6" />
           </button>
           <button
             type="button"
             onClick={nextSlide}
-            className="absolute right-3 sm:right-6 md:right-8 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-black/40 hover:bg-black/75 text-white backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-2xl hover:scale-110 cursor-pointer"
+            className="absolute right-1.5 xs:right-3 sm:right-6 md:right-8 top-1/2 -translate-y-1/2 z-30 w-8 h-8 xs:w-9 xs:h-9 sm:w-12 sm:h-12 rounded-full bg-black/40 hover:bg-black/80 text-white backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl hover:scale-110 active:scale-95 cursor-pointer"
             aria-label="Next Slide"
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6" />
           </button>
         </>
       )}
 
       {/* Floating Bottom Slide Indicators */}
       {slides.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-2xl">
+        <div className="absolute bottom-2.5 sm:bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 sm:gap-2 bg-black/50 backdrop-blur-md px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-white/20 shadow-2xl">
           {slides.map((_, idx) => (
             <button
               key={idx}
@@ -231,14 +207,14 @@ export default function HeroSection() {
                 setIsAutoPlaying(false);
                 setCurrentSlide(idx);
               }}
-              className="p-1 flex items-center justify-center cursor-pointer"
+              className="p-0.5 sm:p-1 flex items-center justify-center cursor-pointer"
               aria-label={`Go to slide ${idx + 1}`}
             >
               <span
-                className={`h-2 rounded-full transition-all duration-300 block ${
+                className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 block ${
                   idx === safeCurrentSlide
-                    ? "w-8 bg-[#00a8cc] shadow-md shadow-cyan-400/60"
-                    : "w-2 bg-white/40 hover:bg-white/80"
+                    ? "w-6 sm:w-8 bg-[#00a8cc] shadow-md shadow-cyan-400/60"
+                    : "w-1.5 sm:w-2 bg-white/40 hover:bg-white/80"
                 }`}
               />
             </button>
@@ -249,13 +225,13 @@ export default function HeroSection() {
       {/* Contact Options Dialog (WhatsApp & Direct Call) */}
       <AnimatePresence>
         {isContactModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.2 }}
-              className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100 relative"
+              className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100 dark:border-slate-800 relative"
             >
               <div className="p-6 bg-gradient-to-r from-sky-500 to-[#00a8cc] text-white relative">
                 <button
@@ -270,10 +246,10 @@ export default function HeroSection() {
 
               <div className="p-6 space-y-4">
                 <a
-                  href="https://wa.me/971500000000"
+                  href="https://wa.me/923304541573"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-4 rounded-2xl bg-emerald-50 border border-emerald-200/80 hover:bg-emerald-100/70 transition-all text-emerald-950 font-bold group"
+                  className="flex items-center justify-between p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900 hover:bg-emerald-100/70 transition-all text-emerald-950 dark:text-emerald-300 font-bold group"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
@@ -281,15 +257,15 @@ export default function HeroSection() {
                     </div>
                     <div>
                       <div className="text-sm font-black">Chat on WhatsApp</div>
-                      <div className="text-xs text-emerald-700 font-normal">Instant counselor chat</div>
+                      <div className="text-xs text-emerald-700 dark:text-emerald-400 font-normal">+92 330 4541573</div>
                     </div>
                   </div>
                   <ExternalLink className="w-5 h-5 text-emerald-600 group-hover:translate-x-1 transition-transform" />
                 </a>
 
                 <a
-                  href="tel:+971500000000"
-                  className="flex items-center justify-between p-4 rounded-2xl bg-sky-50 border border-sky-200/80 hover:bg-sky-100/70 transition-all text-sky-950 font-bold group"
+                  href="tel:+923304541573"
+                  className="flex items-center justify-between p-4 rounded-2xl bg-sky-50 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-900 hover:bg-sky-100/70 transition-all text-sky-950 dark:text-sky-300 font-bold group"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-md shadow-sky-600/20">
@@ -297,7 +273,7 @@ export default function HeroSection() {
                     </div>
                     <div>
                       <div className="text-sm font-black">Direct Phone Call</div>
-                      <div className="text-xs text-sky-700 font-normal">Speak directly with advisor</div>
+                      <div className="text-xs text-sky-700 dark:text-sky-400 font-normal">+92 330 4541573</div>
                     </div>
                   </div>
                   <ExternalLink className="w-5 h-5 text-sky-600 group-hover:translate-x-1 transition-transform" />

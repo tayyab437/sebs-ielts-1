@@ -13,50 +13,7 @@ export interface CustomPage {
   updated_at: string;
 }
 
-export const defaultCustomPages: CustomPage[] = [
-  {
-    id: "about-us",
-    title: "About SEB's Institute",
-    slug: "about-us",
-    content_type: "rich_text",
-    content: `
-      <h2>Welcome to SEB's Institute</h2>
-      <p>Founded and led by <strong>Syed Ejaz Bukhari</strong>, SEB's Institute is a world-class English language training academy specializing in <strong>IELTS Academic, General Training, Spoken English Mastery</strong>, and advanced communication skills.</p>
-      <h3>Our Core Pillars</h3>
-      <ul>
-        <li><strong>Structural Fluency:</strong> Mastering sentence patterns, grammar precision, and articulation.</li>
-        <li><strong>Authentic Testing Simulators:</strong> Real exam interface practice based on official British Council & IDP standards.</li>
-        <li><strong>Personalized Feedback:</strong> AI-powered writing evaluation and direct mentorship from expert coaches.</li>
-      </ul>
-      <p>Join thousands of successful scholars who have achieved Band 7.5+ and transformed their global academic and career opportunities.</p>
-    `,
-    meta_title: "About SEB's Institute | Syed Ejaz Bukhari",
-    meta_description: "Learn about SEB's Institute, premier IELTS coaching academy led by Syed Ejaz Bukhari.",
-    is_published: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: "faq",
-    title: "Frequently Asked Questions (FAQ)",
-    slug: "faq",
-    content_type: "rich_text",
-    content: `
-      <h2>Frequently Asked Questions</h2>
-      <h3>1. What courses are offered at SEB's Institute?</h3>
-      <p>We offer specialized training in IELTS Academic, IELTS General Training, Spoken English Fluency, PTE Academic, and AI-driven Writing Evaluation.</p>
-      <h3>2. Are live online classes available?</h3>
-      <p>Yes! We offer live interactive classes with Syed Ejaz Bukhari and certified faculty, alongside 24/7 access to our mock test practice portal.</p>
-      <h3>3. How do AI mock tests work?</h3>
-      <p>Students can take full-length Listening, Reading, Writing, and Speaking practice tests under timed exam conditions with instant AI band scores and detailed analytical feedback.</p>
-    `,
-    meta_title: "FAQ & Student Support | SEB's Institute",
-    meta_description: "Find answers to common questions about IELTS classes, live schedules, mock test access, and fees.",
-    is_published: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  }
-];
+export const defaultCustomPages: CustomPage[] = [];
 
 const STORAGE_KEY = "sebs_custom_pages";
 
@@ -65,8 +22,13 @@ export async function fetchCustomPages(): Promise<CustomPage[]> {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+      if (Array.isArray(parsed)) {
+        // Filter out any legacy default pages that the user removed
+        const filtered = parsed.filter((p: CustomPage) => p.id !== "about-us" && p.slug !== "about-us" && p.id !== "faq" && p.slug !== "faq");
+        if (filtered.length !== parsed.length) {
+          saveAllCustomPages(filtered);
+        }
+        return filtered;
       }
     }
   } catch (err) {

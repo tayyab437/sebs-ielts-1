@@ -1,8 +1,9 @@
 import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "motion/react";
-import { Home, BookOpen, GraduationCap, Trophy, LayoutDashboard, User, LogIn, Menu, X, ArrowRight, ShieldCheck, Globe, Users, Star, BarChart3, Clock, Sparkles, Sun, Moon, Bell, Facebook, Youtube, Instagram, Linkedin, Send, Mail, Phone, MapPin, Megaphone, Search, ExternalLink } from "lucide-react";
+import { Home, BookOpen, GraduationCap, Trophy, LayoutDashboard, User, LogIn, Menu, X, ArrowRight, ShieldCheck, Globe, Users, Star, BarChart3, Clock, Sparkles, Bell, Facebook, Youtube, Instagram, Linkedin, Send, Mail, Phone, MapPin, Megaphone, Search, ExternalLink, FileText, HelpCircle, ArrowUpRight, FolderOpen, Compass } from "lucide-react";
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { fetchCustomPages, CustomPage } from "./lib/customPages";
 
 // Home is eagerly loaded for instant initial render
 import { Toaster, toast } from "sonner";
@@ -22,14 +23,11 @@ const PricingPage = lazyWithRetry(() => import("./pages/public/Pricing"));
 const TermsPage = lazyWithRetry(() => import("./pages/public/Terms"));
 const PrivacyPage = lazyWithRetry(() => import("./pages/public/Privacy"));
 const CustomPageView = lazyWithRetry(() => import("./pages/public/CustomPageView"));
-const AboutPage = lazyWithRetry(() => import("./pages/public/About"));
 const ContactPage = lazyWithRetry(() => import("./pages/public/Contact"));
-const PracticePage = lazyWithRetry(() => import("./pages/public/Practice"));
 const BooksPage = lazyWithRetry(() => import("./pages/public/Books"));
 const NotFoundPage = lazyWithRetry(() => import("./pages/public/NotFound"));
 
 import { supabase } from "./lib/supabaseClient";
-import { useTheme } from "./components/theme-provider";
 import { MeetingsProvider } from "./context/MeetingsContext";
 import { fetchSiteSettings, sanitizeAssetUrl } from "./lib/settings";
 import { PageSEOManager } from "./components/PageSEOManager";
@@ -39,6 +37,17 @@ function Footer() {
   const [logoAlt, setLogoAlt] = useState(() => localStorage.getItem("site_logo_alt") || "SEB's Institute Logo");
   const [emailValue, setEmailValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [customPages, setCustomPages] = useState<CustomPage[]>([]);
+
+  useEffect(() => {
+    fetchCustomPages().then(pages => {
+      if (pages && Array.isArray(pages)) {
+        setCustomPages(pages.filter(p => p.is_published && p.slug !== "about-us" && p.slug !== "faq" && p.id !== "about-us" && p.id !== "faq"));
+      }
+    }).catch(err => {
+      console.warn("Failed loading custom pages for footer", err);
+    });
+  }, []);
 
   useEffect(() => {
     const handleFooterLogoSync = () => {
@@ -78,10 +87,11 @@ function Footer() {
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-emerald-500/10 dark:bg-emerald-700/5 rounded-full blur-[100px] pointer-events-none -z-10" />
       <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-emerald-500/10 dark:bg-emerald-700/5 rounded-full blur-[100px] pointer-events-none -z-10" />
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 mb-12">
-          {/* Brand Presentation Column */}
-          <div className="lg:col-span-2 space-y-5">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 space-y-12">
+        {/* Main Footer 5-Column Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-8">
+          {/* Column 1: Brand Presentation & Socials (lg:col-span-4) */}
+          <div className="lg:col-span-4 space-y-5">
             <Link to="/" className="inline-flex items-center space-x-2 group">
               <img 
                 src={logoUrl || "/sebs_official_logo_315.webp"} 
@@ -136,8 +146,8 @@ function Footer() {
             </div>
           </div>
           
-          {/* Courses Category Grid */}
-          <div>
+          {/* Column 2: Academic Tracks (lg:col-span-2) */}
+          <div className="lg:col-span-2">
             <h3 className="font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-widest mb-5 relative pl-3 border-l-2 border-emerald-500">
               Academic Tracks
             </h3>
@@ -151,7 +161,7 @@ function Footer() {
                 <li key={idx}>
                   <Link 
                     to="/courses" 
-                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[44px] py-2.5 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[40px] py-2 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
                   >
                     <span className="group-hover:translate-x-1 transition-transform">{course.title}</span>
                     <span className="text-[9px] uppercase tracking-widest font-black bg-slate-200 dark:bg-slate-900 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-950 text-slate-600 dark:text-slate-500 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors px-2 py-0.5 rounded">
@@ -162,50 +172,106 @@ function Footer() {
               ))}
             </ul>
           </div>
-          
-          {/* Admissions & Campus Information Column */}
-          <div>
+
+          {/* Column 3: Institute Directory & Resources (lg:col-span-2) */}
+          <div className="lg:col-span-2">
             <h3 className="font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-widest mb-5 relative pl-3 border-l-2 border-emerald-500">
-              Campus & Contact
+              Resources & Info
+            </h3>
+            <ul className="space-y-1 text-xs font-semibold text-slate-600 dark:text-slate-400">
+              <li>
+                <Link 
+                  to="/contact" 
+                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[38px] py-1.5 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                >
+                  <span className="group-hover:translate-x-1 transition-transform">Contact Us</span>
+                  <span className="text-[8px] uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400 font-mono">Live</span>
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/books" 
+                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[38px] py-1.5 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                >
+                  <span className="group-hover:translate-x-1 transition-transform">Books</span>
+                  <span className="text-[8px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">PDFs</span>
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/terms" 
+                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[38px] py-1.5 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                >
+                  <span className="group-hover:translate-x-1 transition-transform">Terms & Policies</span>
+                  <span className="text-[8px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">Rules</span>
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/privacy" 
+                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[38px] py-1.5 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                >
+                  <span className="group-hover:translate-x-1 transition-transform">Privacy Policy</span>
+                  <span className="text-[8px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">GDPR</span>
+                </Link>
+              </li>
+              {customPages.map((cp) => (
+                <li key={cp.id}>
+                  <Link 
+                    to={`/pages/${cp.slug}`} 
+                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[38px] py-1.5 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                  >
+                    <span className="group-hover:translate-x-1 transition-transform truncate pr-1">{cp.title}</span>
+                    <span className="text-[8px] uppercase tracking-wider font-bold text-amber-600 dark:text-amber-400 shrink-0">Custom</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          
+          {/* Column 4: Admissions & Contact Helpline (lg:col-span-2) */}
+          <div className="lg:col-span-2">
+            <h3 className="font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-widest mb-5 relative pl-3 border-l-2 border-emerald-500">
+              Admissions & Contact
             </h3>
             <ul className="space-y-4 text-xs font-semibold text-slate-600 dark:text-slate-400">
               <li className="flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
-                <div>
-                  <span className="block text-slate-900 dark:text-white font-bold">Executive Academic Campus</span>
-                  <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
-                    Executive Sector F-8/3, Blue Area Academic Zone, Islamabad 44000, Pakistan
-                  </p>
-                </div>
-              </li>
-              <li className="flex items-start gap-2.5">
                 <Phone className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
                 <div>
-                  <span className="block text-slate-900 dark:text-white font-bold">Admissions Helpline</span>
-                  <a href="tel:+923176369458" className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-mono font-bold block mt-0.5">
-                    +92 317 6369458
+                  <span className="block text-slate-900 dark:text-white font-bold">Helpline Desk</span>
+                  <a href="tel:+923304541573" className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-mono font-bold block mt-0.5">
+                    +92 330 4541573
                   </a>
-                  <p className="text-[10px] text-slate-500 italic">Mon – Sat: 9:00 AM – 9:00 PM PKT</p>
+                  <p className="text-[10px] text-slate-500 italic">Mon – Sat: 9 AM – 9 PM</p>
                 </div>
               </li>
               <li className="flex items-start gap-2.5">
                 <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
                 <div>
-                  <span className="block text-slate-900 dark:text-white font-bold">Global Virtual Campus</span>
+                  <span className="block text-slate-900 dark:text-white font-bold">Virtual Campus</span>
                   <p className="text-[10px] text-slate-500 italic font-mono mt-0.5">24/7 Digital Exam Portal</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <Mail className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                <div>
+                  <span className="block text-slate-900 dark:text-white font-bold">Admissions Desk</span>
+                  <a href="mailto:sebs.info@gmail.com" className="text-[10px] text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 font-mono mt-0.5 block hover:underline">
+                    sebs.info@gmail.com
+                  </a>
                 </div>
               </li>
             </ul>
           </div>
           
-          {/* Newsletter / Insights Column */}
-          <div>
+          {/* Column 5: Newsletter / Fluency Keys (lg:col-span-2) */}
+          <div className="lg:col-span-2">
             <h3 className="font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-widest mb-5 relative pl-3 border-l-2 border-emerald-500">
               Fluency Keys
             </h3>
             <div className="space-y-4">
               <p className="text-[11px] font-medium leading-relaxed text-slate-600 dark:text-slate-400">
-                Receive Syed Ejaz Bukhari's weekly proprietary language heuristics directly in your inbox to crack your scores.
+                Receive Syed Ejaz Bukhari's weekly language heuristics directly in your inbox.
               </p>
               
               <form onSubmit={handleNewsletterSubscribe} className="space-y-2">
@@ -232,7 +298,7 @@ function Footer() {
               {/* Privacy protection highlight */}
               <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
                 <ShieldCheck className="w-3.5 h-3.5 text-slate-400 dark:text-slate-600" />
-                <span>Zero spam. Secure privacy protection.</span>
+                <span>Zero spam. Secure privacy.</span>
               </div>
             </div>
           </div>
@@ -434,12 +500,6 @@ function Navbar() {
 
   const handleMarkAllAsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  };
-
-  const { theme, setTheme } = useTheme();
-
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
   };
 
   useEffect(() => {
@@ -667,16 +727,6 @@ function Navbar() {
 
             {/* Actions */}
             <div className="flex items-center space-x-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleTheme}
-                aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-                className="rounded-xl w-9 h-9 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
-              </Button>
-
               {user ? (
                 <div className="flex items-center space-x-2">
                   {user.email === "ac.repair.in.dubai3@gmail.com" && (
@@ -816,17 +866,6 @@ function Navbar() {
                 );
               })}
             </div>
-
-            {/* Premium Theme Switcher with Hover Spins */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              className="rounded-xl text-muted-foreground hover:bg-slate-100 dark:hover:bg-white/5 w-10 h-10 flex items-center justify-center transition-all duration-500 hover:rotate-45"
-              aria-label="Toggle theme"
-            >
-              {theme === "dark" ? <Sun className="w-5 h-5 text-amber-500 animate-pulse" /> : <Moon className="w-5 h-5 text-slate-700 dark:text-slate-200" />}
-            </Button>
 
             {/* Notifications Indicator Portal */}
             {user && (
@@ -1017,29 +1056,6 @@ function Navbar() {
                   </Link>
                 );
               })}
-
-              {/* Mobile Appearance Toggle Section */}
-              <div className="flex items-center justify-between px-4 py-4 border-t border-slate-100 dark:border-white/5 mt-3 pt-4">
-                <span className="text-xs font-black uppercase tracking-widest text-slate-500">Appearance</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={toggleTheme}
-                  className="rounded-xl flex items-center gap-2 font-black text-[10px] uppercase border-slate-200 dark:border-white/10 bg-transparent px-4 py-2 hover:bg-slate-100 dark:hover:bg-white/5 shadow-none"
-                >
-                  {theme === "dark" ? (
-                    <>
-                      <Sun className="w-4 h-4 text-amber-500 animate-pulse" />
-                      <span>Light</span>
-                    </>
-                  ) : (
-                    <>
-                      <Moon className="w-4 h-4 text-slate-700 dark:text-slate-300" />
-                      <span>Dark</span>
-                    </>
-                  )}
-                </Button>
-              </div>
 
               <div className="pt-4 flex flex-col space-y-2.5 border-t border-slate-100 dark:border-white/5 mt-3">
                 {user ? (
@@ -1299,9 +1315,7 @@ function AppContent() {
         }>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
-            <Route path="/practice" element={<PracticePage />} />
             <Route path="/books" element={<BooksPage />} />
             <Route path="/dashboard/books" element={<BooksPage isDashboardMode={true} />} />
             <Route path="/login" element={<LoginPage />} />

@@ -238,6 +238,26 @@ export default function MediaCoursePlayer({
   });
   const [isCelebrationModalOpen, setIsCelebrationModalOpen] = useState(false);
 
+  // Check if certificate is already claimed for this course
+  const isCertAlreadyClaimed = React.useMemo(() => {
+    try {
+      const certs = safeGetItemAndParse<any[]>("student_certificates", []);
+      if (!Array.isArray(certs)) return false;
+      const cId = rawCourse?.id;
+      const cTitle = rawCourse?.title;
+      return certs.some(
+        c => (cId && c.courseId === cId) ||
+             (c.courseTitle && cTitle && c.courseTitle.toLowerCase().trim() === cTitle.toLowerCase().trim()) ||
+             (c.courseTitle && cTitle && (c.courseTitle.toLowerCase().includes(cTitle.toLowerCase()) || cTitle.toLowerCase().includes(c.courseTitle.toLowerCase()))) ||
+             (cId === "ielts-prep" && c.courseTitle && c.courseTitle.toLowerCase().includes("ielts")) ||
+             (cId === "basic-english" && c.courseTitle && c.courseTitle.toLowerCase().includes("basic")) ||
+             (cId === "spoken-english" && c.courseTitle && c.courseTitle.toLowerCase().includes("spoken"))
+      );
+    } catch {
+      return false;
+    }
+  }, [rawCourse, isCelebrationModalOpen]);
+
   // Personal Notes for current episode
   const [notes, setNotes] = useState<PersonalNote[]>(() => {
     return safeGetItemAndParse<PersonalNote[]>(`media_notes_${currentEpisode?.id}`, [
@@ -2402,18 +2422,6 @@ export default function MediaCoursePlayer({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {progressPercent === 100 && (
-                    <button
-                      type="button"
-                      onClick={() => setIsCelebrationModalOpen(true)}
-                      className="px-2.5 py-1 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-400 font-bold text-xs flex items-center gap-1 border border-amber-500/30 transition-all cursor-pointer shadow-xs"
-                      title="Request Certificate"
-                    >
-                      <Award className="w-3.5 h-3.5 text-amber-500" />
-                      <span className="hidden sm:inline">Certificate</span>
-                    </button>
-                  )}
-
                   {/* Circular Progress Badge */}
                   <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
                     <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
@@ -2606,20 +2614,6 @@ export default function MediaCoursePlayer({
               })}
             </div>
 
-            {/* Sticky Footer in Curriculum Panel */}
-            <div className="p-3 bg-slate-50 dark:bg-white/5 border-t border-slate-200/80 dark:border-white/5 flex items-center justify-center">
-              <button
-                onClick={() => {
-                  setFocusMode(!focusMode);
-                  toast.info(focusMode ? "Exited Focus Learning Mode" : "Entered Focus Learning Mode");
-                }}
-                className="text-slate-500 hover:text-slate-900 dark:hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                type="button"
-              >
-                <Tv className="w-4 h-4" />
-                <span>{focusMode ? "Show Standard Layout" : "Focus Learning Mode"}</span>
-              </button>
-            </div>
           </div>
         </aside>
       </div>
@@ -2747,10 +2741,10 @@ export default function MediaCoursePlayer({
                   type="button"
                   id="media-bar-request-cert-btn"
                   onClick={() => setIsCelebrationModalOpen(true)}
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-bold text-xs shadow-sm shadow-amber-500/20 active:scale-95 transition-all cursor-pointer"
+                  className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl ${isCertAlreadyClaimed ? 'bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white shadow-emerald-500/20' : 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white shadow-amber-500/20'} font-bold text-xs shadow-sm active:scale-95 transition-all cursor-pointer`}
                 >
-                  <Award className="w-4 h-4" />
-                  <span>Request Certificate</span>
+                  <Award className={`w-4 h-4 ${isCertAlreadyClaimed ? 'text-amber-300' : 'text-white'}`} />
+                  <span>{isCertAlreadyClaimed ? "View Claimed Certificate" : "Claim Certificate"}</span>
                 </button>
               )}
             </div>

@@ -88,7 +88,7 @@ export default function TermsPage() {
             <p className="text-xs uppercase font-black text-slate-800 dark:text-white mb-2 tracking-wider flex items-center gap-1.5">
               💡 Need further clarification?
             </p>
-            For official complaints or inquiries about batch schedules, fee verification, or policy interpretations, please contact our helpline desk via WhatsApp at <strong className="text-slate-800 dark:text-slate-200">0330-4541573</strong> or mail us at <strong className="text-slate-800 dark:text-slate-200">info@sebsinstitute.com</strong>.
+            For official complaints or inquiries about batch schedules, fee verification, or policy interpretations, please contact our helpline desk via WhatsApp at <strong className="text-slate-800 dark:text-slate-200">0330-4541573</strong> or mail us at <strong className="text-slate-800 dark:text-slate-200">sebs.info@gmail.com</strong>.
           </div>
         </div>
 

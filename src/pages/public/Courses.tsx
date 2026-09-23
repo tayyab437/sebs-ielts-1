@@ -1878,7 +1878,7 @@ function StudentCoursesInner({
     if (!url) return "";
     let match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
     if (match && match[1]) {
-      return `https://www.youtube.com/embed/${match[1]}?autoplay=0&rel=0`;
+      return `https://www.youtube-nocookie.com/embed/${match[1]}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&playsinline=1`;
     }
     match = url.match(/vimeo\.com\/(?:video\/)?([0-9]+)/i);
     if (match && match[1]) {
@@ -3362,7 +3362,7 @@ function StudentCoursesInner({
                       loading="eager"
                       decoding="async"
                       referrerPolicy="no-referrer"
-                      className="w-full h-auto aspect-video max-h-[500px] object-cover object-center"
+                      className="w-full h-auto block object-contain"
                       onError={(e) => {
                         const target = e.currentTarget;
                         if (!target.src.includes("level_up_skills_banner.jpg") && !target.src.includes("level_up_skills_banner_1790064305498.jpg")) {
