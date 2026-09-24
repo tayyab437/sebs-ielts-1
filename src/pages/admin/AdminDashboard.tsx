@@ -1332,11 +1332,15 @@ export default function AdminDashboard() {
     window.addEventListener("mock_media_courses_updated", handleDataUpdate);
     window.addEventListener("media_courses_changed", handleDataUpdate);
     window.addEventListener("mock_courses_updated", handleDataUpdate);
+    window.addEventListener("sebs_user_membership_changed", handleDataUpdate);
+    window.addEventListener("sebs_memberships_updated", handleDataUpdate);
 
     return () => {
       window.removeEventListener("mock_media_courses_updated", handleDataUpdate);
       window.removeEventListener("media_courses_changed", handleDataUpdate);
       window.removeEventListener("mock_courses_updated", handleDataUpdate);
+      window.removeEventListener("sebs_user_membership_changed", handleDataUpdate);
+      window.removeEventListener("sebs_memberships_updated", handleDataUpdate);
     };
   }, []);
 

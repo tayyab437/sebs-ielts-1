@@ -178,14 +178,29 @@ export default function MembershipsManager({
         const uid = String(u.id || u.user_id || `user-raw-${idx}`).trim();
         const uemail = (u.email || u.user_email || `user-${idx}@candidate.com`).trim().toLowerCase();
         
+        // Find existing assignment for this user if any
+        const existingAssignment = userAssignments.find(a => 
+          (a.userId && String(a.userId).trim() === uid) || 
+          (a.userEmail && a.userEmail.trim().toLowerCase() === uemail)
+        );
+
         if (!seenIds.has(uid) && !seenEmails.has(uemail)) {
           seenIds.add(uid);
           seenEmails.add(uemail);
+
+          const assignedTier = existingAssignment 
+            ? (tiers.find(t => t.id === existingAssignment.tierId) || tiers.find(t => t.name.toLowerCase() === (existingAssignment.tierName || "").toLowerCase()))
+            : null;
+
+          const planName = assignedTier?.name || existingAssignment?.tierName || u.plan || "Free Trial Tier";
+          const tierId = assignedTier?.id || existingAssignment?.tierId || u.membership_tier_id;
+
           list.push({
             id: uid,
             email: uemail,
             name: u.first_name ? `${u.first_name} ${u.last_name || ""}`.trim() : (u.name || u.full_name || "Student"),
-            plan: u.plan || "Free Trial Tier",
+            plan: planName,
+            tierId: tierId,
             role: u.role || "student",
             created_at: u.created_at || new Date().toISOString()
           });
@@ -193,7 +208,7 @@ export default function MembershipsManager({
       });
     }
 
-    // Merge from local assignments
+    // Merge from local assignments that might not be in allUsersList
     userAssignments.forEach((a, idx) => {
       const aid = String(a.userId || `assign-u-${idx}`).trim();
       const aemail = (a.userEmail || `user-assign-${idx}@candidate.com`).trim().toLowerCase();
@@ -201,11 +216,15 @@ export default function MembershipsManager({
       if (!seenIds.has(aid) && !seenEmails.has(aemail)) {
         seenIds.add(aid);
         seenEmails.add(aemail);
+        
+        const matchingTier = tiers.find(t => t.id === a.tierId) || tiers.find(t => t.name.toLowerCase() === (a.tierName || "").toLowerCase());
+
         list.push({
           id: aid,
           email: aemail,
           name: a.userName || "Student",
-          plan: a.tierName,
+          plan: matchingTier?.name || a.tierName,
+          tierId: matchingTier?.id || a.tierId,
           role: "student",
           created_at: a.assignedAt
         });
@@ -222,7 +241,7 @@ export default function MembershipsManager({
     }
 
     return list;
-  }, [allUsersList, userAssignments]);
+  }, [allUsersList, userAssignments, tiers]);
 
   // Load Data
   const loadData = async () => {
@@ -418,28 +437,82 @@ export default function MembershipsManager({
     }
   };
 
-  // Actions: Assign User Membership Modal
-  const handleOpenAssignModal = (user?: any) => {
-    if (user) {
-      setAssignTargetUser(user);
-      const userAssignment = userAssignments.find(a => a.userId === user.id || a.userEmail.toLowerCase() === user.email.toLowerCase());
-      const currentTierId = userAssignment ? userAssignment.tierId : (tiers.find(t => t.name === user.plan)?.id || defaultTier?.id || "free-trial");
-      setSelectedTierForAssign(currentTierId);
-      if (userAssignment?.expiresAt) {
-        setAssignExpiryType("custom");
-        setAssignCustomExpiry(userAssignment.expiresAt.split("T")[0]);
-      } else {
-        setAssignExpiryType("lifetime");
-        setAssignCustomExpiry("");
-      }
-      setAssignNotes(userAssignment?.notes || "");
-    } else {
-      setAssignTargetUser(null);
+  // Helper: Resolve student's current active tier ID
+  const resolveUserTierId = (user: any): string => {
+    if (!user) return defaultTier?.id || "free-trial";
+    const userEmail = (user.email || user.user_email || "").trim().toLowerCase();
+    const userId = String(user.id || user.user_id || "").trim();
+
+    // 1. Look in userAssignments
+    const userAssignment = userAssignments.find(a => 
+      (a.userId && String(a.userId).trim() === userId) || 
+      (a.userEmail && a.userEmail.trim().toLowerCase() === userEmail)
+    );
+
+    if (userAssignment) {
+      const match = tiers.find(t => t.id === userAssignment.tierId || t.name.toLowerCase() === (userAssignment.tierName || "").toLowerCase());
+      if (match) return match.id;
+      if (userAssignment.tierId) return userAssignment.tierId;
+    }
+
+    // 2. Direct tier ID from user record
+    if (user.tierId) {
+      const match = tiers.find(t => t.id === user.tierId);
+      if (match) return match.id;
+    }
+    if (user.membership_tier_id) {
+      const match = tiers.find(t => t.id === user.membership_tier_id);
+      if (match) return match.id;
+    }
+
+    // 3. Plan string match
+    if (user.plan) {
+      const cleanPlan = String(user.plan).trim().toLowerCase();
+      const match = tiers.find(t => 
+        t.name.toLowerCase() === cleanPlan || 
+        t.id.toLowerCase() === cleanPlan || 
+        (t.slug && t.slug.toLowerCase() === cleanPlan)
+      );
+      if (match) return match.id;
+    }
+
+    return defaultTier?.id || "free-trial";
+  };
+
+  // Helper: Select target user in assignment modal and initialize to their current tier
+  const handleSelectAssignTargetUser = (user: any) => {
+    setAssignTargetUser(user);
+    if (!user) {
       setSelectedTierForAssign(defaultTier?.id || "free-trial");
       setAssignExpiryType("lifetime");
       setAssignCustomExpiry("");
       setAssignNotes("");
+      return;
     }
+
+    const currentTierId = resolveUserTierId(user);
+    setSelectedTierForAssign(currentTierId);
+
+    const userEmail = (user.email || user.user_email || "").trim().toLowerCase();
+    const userId = String(user.id || user.user_id || "").trim();
+    const userAssignment = userAssignments.find(a => 
+      (a.userId && String(a.userId).trim() === userId) || 
+      (a.userEmail && a.userEmail.trim().toLowerCase() === userEmail)
+    );
+
+    if (userAssignment?.expiresAt) {
+      setAssignExpiryType("custom");
+      setAssignCustomExpiry(userAssignment.expiresAt.split("T")[0]);
+    } else {
+      setAssignExpiryType("lifetime");
+      setAssignCustomExpiry("");
+    }
+    setAssignNotes(userAssignment?.notes || "");
+  };
+
+  // Actions: Assign User Membership Modal
+  const handleOpenAssignModal = (user?: any) => {
+    handleSelectAssignTargetUser(user || null);
     setUserSearchTerm("");
     setIsAssignModalOpen(true);
   };
@@ -840,8 +913,12 @@ export default function MembershipsManager({
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/5 font-medium">
                 {filteredUsers.map((user, uIdx) => {
-                  const assignment = userAssignments.find(a => a.userId === user.id || a.userEmail.toLowerCase() === user.email.toLowerCase());
-                  const currentTier = tiers.find(t => t.id === assignment?.tierId) || tiers.find(t => t.name.toLowerCase() === (user.plan || "").toLowerCase()) || defaultTier;
+                  const currentTierId = resolveUserTierId(user);
+                  const currentTier = tiers.find(t => t.id === currentTierId) || defaultTier;
+                  const assignment = userAssignments.find(a => 
+                    (a.userId && String(a.userId).trim() === String(user.id).trim()) || 
+                    (a.userEmail && a.userEmail.trim().toLowerCase() === (user.email || "").trim().toLowerCase())
+                  );
 
                   return (
                     <tr key={`user-table-row-${user.id || user.email || uIdx}-${uIdx}`} className="hover:bg-slate-50/50 dark:hover:bg-white/2 transition-colors">
@@ -1385,7 +1462,7 @@ export default function MembershipsManager({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setAssignTargetUser(null)}
+                      onClick={() => handleSelectAssignTargetUser(null)}
                       className="text-xs font-bold text-slate-500 hover:text-slate-800"
                     >
                       Change
@@ -1405,7 +1482,7 @@ export default function MembershipsManager({
                         .map((u, uIdx) => (
                           <div
                             key={`assign-search-user-${u.id || u.email || uIdx}-${uIdx}`}
-                            onClick={() => setAssignTargetUser(u)}
+                            onClick={() => handleSelectAssignTargetUser(u)}
                             className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer flex items-center justify-between text-xs"
                           >
                             <span className="font-bold text-slate-800 dark:text-slate-200">{u.name}</span>
