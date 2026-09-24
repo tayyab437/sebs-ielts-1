@@ -11,6 +11,9 @@ import AdminClassroomManager from "../../components/admin/AdminClassroomManager"
 import AdminCustomPagesManager from "../../components/admin/AdminCustomPagesManager";
 import CarouselManager from "../../components/admin/CarouselManager";
 import MediaCoursesManager from "../../components/admin/MediaCoursesManager";
+import MembershipsManager from "../../components/admin/MembershipsManager";
+import CourseAccessTierPicker from "../../components/admin/CourseAccessTierPicker";
+import { syncMockTestTierAccess, syncCourseTierAccess } from "@/src/lib/membershipService";
 import { mergeCoursesWithMedia, fetchAllMediaCourses } from "@/src/lib/mediaCourseAdapter";
 import SecureVideoPlayer from "@/src/components/common/SecureVideoPlayer";
 import { Button } from "@/components/ui/button";
@@ -39,6 +42,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   Plus,
+  Crown,
   Trash2,
   Edit3,
   BookOpen,
@@ -2256,6 +2260,20 @@ export default function AdminDashboard() {
         return;
       }
 
+      // Synchronize with membership tiers catalog
+      const targetId = payload.id || data.id;
+      if (targetId) {
+        try {
+          if (table === "mock_tests") {
+            await syncMockTestTierAccess(targetId, [payload.access_tier || data.access_tier || "Free Trial"]);
+          } else if (table === "courses") {
+            await syncCourseTierAccess(targetId, [payload.access_tier || data.access_tier || "Free Trial"]);
+          }
+        } catch (tierSyncErr) {
+          console.warn("Could not sync membership tier in AdminDashboard handleSave:", tierSyncErr);
+        }
+      }
+
       console.info("Save Successful:", res);
       setSaveStatus({
         type: "success",
@@ -2926,6 +2944,11 @@ export default function AdminDashboard() {
                     icon: <Users className="w-4 h-4" />,
                   },
                   {
+                    value: "memberships",
+                    label: "Memberships & Access",
+                    icon: <Crown className="w-4 h-4 text-amber-500" />,
+                  },
+                  {
                     value: "submissions",
                     label: "Submissions & Test Results",
                     icon: <PenTool className="w-4 h-4" />,
@@ -3400,6 +3423,20 @@ export default function AdminDashboard() {
                                 })
                               }
                               placeholder="Provide a detailed breakdown of what students will achieve in this module..."
+                            />
+                          </div>
+
+                          {/* Dynamic Membership Access Tier Selection */}
+                          <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10">
+                            <CourseAccessTierPicker
+                              value={currentCourse.access_tier || "Free Trial Tier"}
+                              courseId={currentCourse.id}
+                              onChange={(tierName) => {
+                                setCurrentCourse({
+                                  ...currentCourse,
+                                  access_tier: tierName
+                                });
+                              }}
                             />
                           </div>
 
@@ -5668,6 +5705,16 @@ export default function AdminDashboard() {
                                 </select>
                               </div>
                             </div>
+                          </div>
+
+                          {/* Unified Membership & Access Privileges */}
+                          <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-sm">
+                            <CourseAccessTierPicker
+                              value={currentTest.access_tier || "Free Trial"}
+                              isMockTest={true}
+                              courseId={currentTest.id}
+                              onChange={(tierName) => setCurrentTest({ ...currentTest, access_tier: tierName })}
+                            />
                           </div>
 
                           {/* Modular Composer Dashboard */}
@@ -8380,6 +8427,14 @@ export default function AdminDashboard() {
                       </div>
                     )}
                   </AnimatePresence>
+                </TabsContent>
+
+                <TabsContent value="memberships" className="mt-0">
+                  <MembershipsManager
+                    allCoursesList={courses}
+                    allMockTestsList={mockTests}
+                    allUsersList={students}
+                  />
                 </TabsContent>
 
                 <TabsContent value="submissions" className="mt-0">

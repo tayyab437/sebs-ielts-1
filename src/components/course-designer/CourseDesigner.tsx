@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Save, Eye, Layout, Columns, RefreshCw, Layers, Plus, Search, BookOpen, Trash2, ChevronRight, FileCode, Upload, Play, Pause, Volume2, VolumeX, FileText, Music, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { CourseAccessTierPicker } from "@/src/components/admin/CourseAccessTierPicker";
+import { syncCourseTierAccess } from "@/src/lib/membershipService";
 
 const safeUUID = () => {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -335,6 +337,9 @@ export function CourseDesignerComponent({ initialId }: { initialId?: string }) {
       };
     } else if (fieldName === 'access_tier') {
       updatePayload = { access_tier: value };
+      if (courseId) {
+        syncCourseTierAccess(courseId, [value]).catch(console.warn);
+      }
     } else if (fieldName === 'content') {
       updatePayload = { content: value };
     } else if (fieldName === 'type') {
@@ -1845,6 +1850,15 @@ export function CourseDesignerComponent({ initialId }: { initialId?: string }) {
       localStorage.setItem('mock_courses', JSON.stringify(localC));
     } catch (err) {}
 
+    // Fully synchronize membership tiers with course access level
+    if (courseId) {
+      try {
+        await syncCourseTierAccess(courseId, [dataToSave.access_tier || "Free Trial"]);
+      } catch (e) {
+        console.warn("Could not sync membership tier in saveCourse:", e);
+      }
+    }
+
     MOCK_DB['draft'] = dataToSave; 
     setLastSaved(new Date());
     setIsSaving(false);
@@ -2883,16 +2897,16 @@ export function CourseDesignerComponent({ initialId }: { initialId?: string }) {
 
                     <div className="space-y-2">
                       {renderFieldHeader("Required Membership Access Tier", "access_tier", course.access_tier || "Free Trial")}
-                      <select 
-                        className="flex h-14 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        value={editingFields['access_tier'] ? (draftValues['access_tier'] ?? "Free Trial") : (course.access_tier || "Free Trial")}
-                        onChange={e => setDraftValues(prev => ({ ...prev, access_tier: e.target.value }))}
-                        disabled={!editingFields['access_tier']}
-                      >
-                        <option value="Free Trial">Free Trial (Available to Everyone)</option>
-                        <option value="Pro Premium">Pro Premium (Requires Pro Premium Subscription)</option>
-                        <option value="Mastery Ultimate">Mastery Ultimate (Requires Mastery Ultimate Subscription)</option>
-                      </select>
+                      <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <CourseAccessTierPicker
+                          value={editingFields['access_tier'] ? (draftValues['access_tier'] ?? "Free Trial") : (course.access_tier || "Free Trial")}
+                          courseId={course.id}
+                          disabled={!editingFields['access_tier']}
+                          onChange={(tierName) => {
+                            setDraftValues(prev => ({ ...prev, access_tier: tierName }));
+                          }}
+                        />
+                      </div>
                     </div>
                     <div className="space-y-2">
                       {renderFieldHeader("Course Syllabus Content (Markdown / Optional)", "content", course.content || "")}

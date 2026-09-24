@@ -94,7 +94,7 @@ export default function TermsPage() {
 
         {/* Footer info inside Terms page */}
         <p className="text-center text-[10px] text-slate-400 font-mono tracking-widest uppercase">
-          SEB'S INSTITUTE • ESTABLISHED IN 1992
+          SEB's INSTITUTE • ESTABLISHED IN 1992
         </p>
 
       </div>

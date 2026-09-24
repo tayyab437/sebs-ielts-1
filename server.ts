@@ -363,6 +363,208 @@ async function initTables() {
       )
     `);
 
+    // Ensure membership_tiers table exists
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS membership_tiers (
+        id VARCHAR(255) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        slug VARCHAR(255),
+        tagline TEXT,
+        description TEXT,
+        price DECIMAL(10,2) DEFAULT 0,
+        priceDisplay VARCHAR(255) DEFAULT 'Free',
+        billingCycle VARCHAR(50) DEFAULT 'monthly',
+        isDefaultFreeTier TINYINT(1) DEFAULT 0,
+        isActive TINYINT(1) DEFAULT 1,
+        badgeColor VARCHAR(255),
+        accentColor VARCHAR(50),
+        sortOrder INT DEFAULT 0,
+        accessAllCourses TINYINT(1) DEFAULT 0,
+        allowedCourseIds JSON,
+        accessAllMockTests TINYINT(1) DEFAULT 0,
+        allowedMockTestIds JSON,
+        allowedTestCategories JSON,
+        accessAllPractice TINYINT(1) DEFAULT 1,
+        allowedPracticeModules JSON,
+        hasAiEvaluation TINYINT(1) DEFAULT 1,
+        hasLiveMeetings TINYINT(1) DEFAULT 0,
+        hasCertificates TINYINT(1) DEFAULT 1,
+        hasDownloadMaterials TINYINT(1) DEFAULT 1,
+        hasPrioritySupport TINYINT(1) DEFAULT 0,
+        features JSON,
+        created_at VARCHAR(255),
+        updated_at VARCHAR(255)
+      )
+    `);
+
+    // Ensure user_memberships table exists
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS user_memberships (
+        id VARCHAR(255) PRIMARY KEY,
+        userId VARCHAR(255),
+        userEmail VARCHAR(255),
+        userName VARCHAR(255),
+        tierId VARCHAR(255),
+        tierName VARCHAR(255),
+        status VARCHAR(50) DEFAULT 'active',
+        assignedAt VARCHAR(255),
+        expiresAt VARCHAR(255),
+        assignedBy VARCHAR(255),
+        notes TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Ensure membership columns exist on profiles table
+    try {
+      await connection.query("ALTER TABLE profiles ADD COLUMN membership_tier_id VARCHAR(255)");
+    } catch (e) {}
+    try {
+      await connection.query("ALTER TABLE profiles ADD COLUMN membership_expires_at VARCHAR(255)");
+    } catch (e) {}
+
+    // Seed default membership tiers if empty
+    try {
+      const [mTierRows]: any = await connection.query("SELECT COUNT(*) as cnt FROM membership_tiers");
+      if (mTierRows && mTierRows[0] && mTierRows[0].cnt === 0) {
+        console.log("Seeding default membership_tiers...");
+        const defaultTiers = [
+          {
+            id: "free-trial",
+            name: "Free Trial Tier",
+            slug: "free-trial",
+            tagline: "Explore core sample IELTS mock tests and introductory lectures",
+            description: "Standard free access granted to all newly registered candidate accounts.",
+            price: 0,
+            priceDisplay: "Free",
+            billingCycle: "free",
+            isDefaultFreeTier: 1,
+            isActive: 1,
+            badgeColor: "bg-slate-100 text-slate-700 border-slate-300 dark:bg-white/10 dark:text-slate-300",
+            accentColor: "#64748b",
+            sortOrder: 1,
+            accessAllCourses: 0,
+            allowedCourseIds: JSON.stringify([]),
+            accessAllMockTests: 0,
+            allowedMockTestIds: JSON.stringify([]),
+            allowedTestCategories: JSON.stringify(["Academic", "General Training"]),
+            accessAllPractice: 0,
+            allowedPracticeModules: JSON.stringify(["writing", "reading"]),
+            hasAiEvaluation: 0,
+            hasLiveMeetings: 0,
+            hasCertificates: 0,
+            hasDownloadMaterials: 0,
+            hasPrioritySupport: 0,
+            features: JSON.stringify([
+              "Access to Free Sample Mock Tests",
+              "Introductory IELTS Strategy Masterclasses",
+              "Instant Automated Answer Key Checking",
+              "Candidate Profile & Band Goal Setting"
+            ]),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          },
+          {
+            id: "pro-scholar",
+            name: "Pro Scholar",
+            slug: "pro-scholar",
+            tagline: "Comprehensive test suite with AI grading & full practice packs",
+            description: "Designed for serious candidates aiming for Band 7.5 to 8.5 in Academic or GT.",
+            price: 49,
+            priceDisplay: "$49 / month",
+            billingCycle: "monthly",
+            isDefaultFreeTier: 0,
+            isActive: 1,
+            badgeColor: "bg-sky-50 text-sky-700 border-sky-300 dark:bg-sky-950/40 dark:text-sky-300",
+            accentColor: "#00a8cc",
+            sortOrder: 2,
+            accessAllCourses: 1,
+            allowedCourseIds: JSON.stringify([]),
+            accessAllMockTests: 1,
+            allowedMockTestIds: JSON.stringify([]),
+            allowedTestCategories: JSON.stringify(["Academic", "General Training", "All"]),
+            accessAllPractice: 1,
+            allowedPracticeModules: JSON.stringify(["writing", "speaking", "reading", "listening", "quizzes"]),
+            hasAiEvaluation: 1,
+            hasLiveMeetings: 0,
+            hasCertificates: 1,
+            hasDownloadMaterials: 1,
+            hasPrioritySupport: 0,
+            features: JSON.stringify([
+              "All Authentic 2024-2028 Mock Examinations",
+              "Unlimited Computerized Split-Screen Tests",
+              "Instant AI Essay Band Scoring & Grammar Feedback",
+              "Audio Recordings Transcripts & Answer Keys",
+              "Course Completion Digital Certificate"
+            ]),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          },
+          {
+            id: "mastery-ultimate",
+            name: "Mastery Ultimate",
+            slug: "mastery-ultimate",
+            tagline: "Complete unrestricted all-access pass to all courses, media & live classes",
+            description: "Full institutional tier with live interactive rooms, 1-on-1 speaking, and full catalog.",
+            price: 129,
+            priceDisplay: "$129 / month",
+            billingCycle: "monthly",
+            isDefaultFreeTier: 0,
+            isActive: 1,
+            badgeColor: "bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300",
+            accentColor: "#f59e0b",
+            sortOrder: 3,
+            accessAllCourses: 1,
+            allowedCourseIds: JSON.stringify([]),
+            accessAllMockTests: 1,
+            allowedMockTestIds: JSON.stringify([]),
+            allowedTestCategories: JSON.stringify(["Academic", "General Training", "All"]),
+            accessAllPractice: 1,
+            allowedPracticeModules: JSON.stringify(["writing", "speaking", "reading", "listening", "quizzes"]),
+            hasAiEvaluation: 1,
+            hasLiveMeetings: 1,
+            hasCertificates: 1,
+            hasDownloadMaterials: 1,
+            hasPrioritySupport: 1,
+            features: JSON.stringify([
+              "Unrestricted Access to ALL Courses & Media Suites",
+              "Unlimited Mock Examinations & Diagnostics",
+              "AI Conversation Coach Clara Real-Time Voice",
+              "Interactive Google Meet & Live Cohorts Access",
+              "Official Verified Accredited Certificate with QR Code",
+              "1-on-1 Teacher Feedback & Priority Assessment"
+            ]),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        ];
+
+        for (const tier of defaultTiers) {
+          await connection.query(
+            `INSERT INTO membership_tiers (
+              id, name, slug, tagline, description, price, priceDisplay, billingCycle,
+              isDefaultFreeTier, isActive, badgeColor, accentColor, sortOrder,
+              accessAllCourses, allowedCourseIds, accessAllMockTests, allowedMockTestIds,
+              allowedTestCategories, accessAllPractice, allowedPracticeModules,
+              hasAiEvaluation, hasLiveMeetings, hasCertificates, hasDownloadMaterials,
+              hasPrioritySupport, features, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              tier.id, tier.name, tier.slug, tier.tagline, tier.description, tier.price, tier.priceDisplay, tier.billingCycle,
+              tier.isDefaultFreeTier, tier.isActive, tier.badgeColor, tier.accentColor, tier.sortOrder,
+              tier.accessAllCourses, tier.allowedCourseIds, tier.accessAllMockTests, tier.allowedMockTestIds,
+              tier.allowedTestCategories, tier.accessAllPractice, tier.allowedPracticeModules,
+              tier.hasAiEvaluation, tier.hasLiveMeetings, tier.hasCertificates, tier.hasDownloadMaterials,
+              tier.hasPrioritySupport, tier.features, tier.created_at, tier.updated_at
+            ]
+          );
+        }
+        console.log("Seeding default membership_tiers complete.");
+      }
+    } catch (e) {
+      console.warn("Error seeding membership_tiers:", e);
+    }
+
     connection.release();
     console.log("MySQL Tables initialized.");
   } catch (e) {
@@ -1079,6 +1281,17 @@ async function startServer() {
                 row[key] = JSON.parse(row[key]);
               } catch (e) {}
             }
+            // Boolean fields normalization for membership_tiers
+            if (table === "membership_tiers") {
+              if ([
+                "isDefaultFreeTier", "isActive", "accessAllCourses",
+                "accessAllMockTests", "accessAllPractice", "hasAiEvaluation",
+                "hasLiveMeetings", "hasCertificates", "hasDownloadMaterials",
+                "hasPrioritySupport"
+              ].includes(key)) {
+                row[key] = Boolean(row[key]);
+              }
+            }
           }
           return row;
         });
@@ -1090,7 +1303,13 @@ async function startServer() {
         return res.json(formatted);
       }
     } catch (err: any) {
-      console.error(`MySQL proxy error on ${req.body?.table}:`, err);
+      const tableName = req.body?.table;
+      console.warn(`MySQL proxy warning on table '${tableName}':`, err.message || err);
+      // If table does not exist, trigger table init in background and return empty dataset gracefully
+      if (err.errno === 1146 || err.code === "ER_NO_SUCH_TABLE" || err.message?.toLowerCase().includes("doesn't exist")) {
+        initTables().catch(() => {});
+        return res.json([]);
+      }
       res.status(500).json({ error: err.message });
     }
   });

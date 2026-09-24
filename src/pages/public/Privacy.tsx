@@ -94,7 +94,7 @@ export default function PrivacyPage() {
 
         {/* Footer info inside Privacy page */}
         <p className="text-center text-[10px] text-slate-400 font-mono tracking-widest uppercase">
-          SEB'S INSTITUTE • PRIVACY & CYBERSECURITY DEPARTMENT
+          SEB's INSTITUTE • PRIVACY & CYBERSECURITY DEPARTMENT
         </p>
 
       </div>

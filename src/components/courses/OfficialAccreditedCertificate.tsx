@@ -84,8 +84,8 @@ export default function OfficialAccreditedCertificate({
           </div>
 
           <div className="space-y-0.5">
-            <p className="font-sans text-[11px] sm:text-xs font-black tracking-[0.22em] uppercase text-[#991b1b]">
-              SEB'S INTERNATIONAL INSTITUTE FOR IELTS & FOREIGN LANGUAGES
+            <p className="font-sans text-[11px] sm:text-xs font-black tracking-[0.22em] text-[#991b1b]">
+              SEB's INTERNATIONAL INSTITUTE FOR IELTS & FOREIGN LANGUAGES
             </p>
             <div className="flex items-center justify-center gap-2 text-[9px] sm:text-[10px] font-sans font-bold uppercase tracking-widest text-[#b91c1c]/80">
               <span>ISO 9001:2015 Certified</span>

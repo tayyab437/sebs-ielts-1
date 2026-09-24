@@ -1,4 +1,4 @@
-import { GraduationCap, ExternalLink, Award, CheckCircle, BookOpen, Globe2, Sparkles } from "lucide-react";
+import { GraduationCap, BookOpen, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function SeoOverviewContentSection() {
@@ -26,8 +26,8 @@ export default function SeoOverviewContentSection() {
           </p>
         </div>
 
-        {/* Informative Body Content Grid (>350 Words with Structured Paragraphs) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 mb-12">
+        {/* Informative Body Content Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
           
           {/* Column 1: Academic & General Training Overview */}
           <div className="space-y-4">
@@ -57,86 +57,6 @@ export default function SeoOverviewContentSection() {
             </p>
           </div>
 
-        </div>
-
-        {/* Official External Resources & Accreditation Banner */}
-        <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
-                <Globe2 className="w-4 h-4 text-[#00a8cc]" />
-                Official Global Examination Authorities &amp; Resources
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Verify testing guidelines, exam formats, and test center availability through official international accreditation bodies.
-              </p>
-            </div>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded bg-sky-100 dark:bg-sky-950 text-[#00a8cc] border border-sky-200 dark:border-sky-800">
-              Verified Partners
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
-            <a
-              href="https://takeielts.britishcouncil.org"
-              target="_blank"
-              rel="nofollow noopener noreferrer"
-              className="group flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-[#00a8cc] transition-all shadow-2xs"
-            >
-              <div>
-                <div className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#00a8cc] transition-colors">
-                  British Council IELTS
-                </div>
-                <div className="text-[11px] text-slate-500">Official Exam Portal</div>
-              </div>
-              <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-[#00a8cc] transition-colors" />
-            </a>
-
-            <a
-              href="https://www.ieltsidp.com"
-              target="_blank"
-              rel="nofollow noopener noreferrer"
-              className="group flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-[#00a8cc] transition-all shadow-2xs"
-            >
-              <div>
-                <div className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#00a8cc] transition-colors">
-                  IDP Education IELTS
-                </div>
-                <div className="text-[11px] text-slate-500">Global Test Booking</div>
-              </div>
-              <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-[#00a8cc] transition-colors" />
-            </a>
-
-            <a
-              href="https://www.cambridgeenglish.org"
-              target="_blank"
-              rel="nofollow noopener noreferrer"
-              className="group flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-[#00a8cc] transition-all shadow-2xs"
-            >
-              <div>
-                <div className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#00a8cc] transition-colors">
-                  Cambridge Assessment
-                </div>
-                <div className="text-[11px] text-slate-500">English Language Standards</div>
-              </div>
-              <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-[#00a8cc] transition-colors" />
-            </a>
-
-            <a
-              href="https://www.ielts.org"
-              target="_blank"
-              rel="nofollow noopener noreferrer"
-              className="group flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-[#00a8cc] transition-all shadow-2xs"
-            >
-              <div>
-                <div className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#00a8cc] transition-colors">
-                  IELTS.org Official
-                </div>
-                <div className="text-[11px] text-slate-500">Format &amp; Band Descriptors</div>
-              </div>
-              <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-[#00a8cc] transition-colors" />
-            </a>
-          </div>
         </div>
 
       </div>

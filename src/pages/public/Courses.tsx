@@ -57,6 +57,7 @@ import { mergeCoursesWithMedia, fetchAllMediaCourses } from "@/src/lib/mediaCour
 import MediaCoursePlayer from "@/src/components/courses/MediaCoursePlayer";
 import SecureVideoPlayer from "@/src/components/common/SecureVideoPlayer";
 import { fetchSiteSettings } from "@/src/lib/settings";
+import { canAccessCourse, fetchMembershipTiers, MembershipTier } from "@/src/lib/membershipService";
 
 export const slugifyCourse = (str: string): string => {
   return String(str || "")
@@ -423,16 +424,42 @@ function StudentCoursesInner({
     }
   }, [propUserPlan]);
 
-  const checkCourseAccess = (plan: string, pathTier?: string) => {
-    const tier = pathTier || "Free Trial";
-    if (tier === "Free Trial") return true;
-    if (tier === "Pro Premium") {
-      return plan === "Pro Premium" || plan === "Mastery Ultimate";
-    }
-    if (tier === "Mastery Ultimate") {
-      return plan === "Mastery Ultimate";
-    }
-    return true;
+  const [membershipTiers, setMembershipTiers] = useState<MembershipTier[]>([]);
+
+  useEffect(() => {
+    fetchMembershipTiers().then(tiers => {
+      if (tiers && tiers.length > 0) setMembershipTiers(tiers);
+    }).catch(console.warn);
+
+    const handleTiersUpdate = () => {
+      fetchMembershipTiers().then(tiers => {
+        if (tiers && tiers.length > 0) setMembershipTiers(tiers);
+      }).catch(console.warn);
+    };
+
+    window.addEventListener("sebs_memberships_updated", handleTiersUpdate);
+    return () => window.removeEventListener("sebs_memberships_updated", handleTiersUpdate);
+  }, []);
+
+  const checkCourseAccess = (plan: string, pathTier?: string, courseId?: string, courseObj?: any) => {
+    const candidatePlan = (plan || userPlan || "Free Trial Tier").trim();
+    const targetCourseId = courseId || courseObj?.id;
+
+    // Use unified authorization with forcePlanCheck so preview/testing respects the exact plan
+    const mockProfile = { 
+      plan: candidatePlan, 
+      role: (window as any).__user_role || "student",
+      forcePlanCheck: true 
+    };
+
+    const authResult = canAccessCourse(
+      targetCourseId || "",
+      mockProfile,
+      membershipTiers,
+      courseObj || { id: targetCourseId, access_tier: pathTier }
+    );
+
+    return authResult.granted;
   };
 
   // Get filter type from prop or navigation state if any
@@ -1119,7 +1146,7 @@ function StudentCoursesInner({
           </div>
 
           {/* Locked overlay */}
-          {!checkCourseAccess(userPlan, course.access_tier || "Free Trial") && (
+          {!checkCourseAccess(userPlan, course.access_tier || "Free Trial", course.id, course) && (
             <div className="absolute inset-0 bg-slate-950/30 backdrop-blur-[1px] transition-all duration-300 flex items-center justify-center">
               <div className="bg-white/95 dark:bg-slate-900/95 p-3 rounded-2xl shadow-xl border border-slate-100 dark:border-white/5 flex items-center justify-center">
                 <Lock className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
@@ -1128,7 +1155,7 @@ function StudentCoursesInner({
           )}
 
           {/* Play/Lock Hover Overlay */}
-          {checkCourseAccess(userPlan, course.access_tier || "Free Trial") ? (
+          {checkCourseAccess(userPlan, course.access_tier || "Free Trial", course.id, course) ? (
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-90 group-hover:scale-100">
                <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-xl shadow-primary/40 ring-4 ring-white/20">
                   <Play className="w-7 h-7 text-white fill-white ml-1" />
@@ -1191,7 +1218,7 @@ function StudentCoursesInner({
           )}
 
           <div className="pt-2">
-            {checkCourseAccess(userPlan, course.access_tier || "Free Trial") ? (
+            {checkCourseAccess(userPlan, course.access_tier || "Free Trial", course.id, course) ? (
               <Button 
                 className={`w-full rounded-2xl ${isCompact ? 'h-10' : 'h-12'} font-black uppercase text-xs tracking-widest gap-2 bg-slate-900 dark:bg-white dark:text-slate-900 hover:bg-primary hover:text-white transition-all shadow-md group-hover:shadow-primary/20`}
                 onClick={(e) => {
@@ -3070,7 +3097,7 @@ function StudentCoursesInner({
     );
   }
 
-  if (activeCourse && activeCourseId && checkCourseAccess(userPlan, activeCourse.access_tier || "Free Trial")) {
+  if (activeCourse && activeCourseId && checkCourseAccess(userPlan, activeCourse.access_tier || "Free Trial", activeCourse.id, activeCourse)) {
     const isMedia = Boolean(
       activeCourse.isMediaCourse ||
       activeCourse.rawMediaCourse ||
@@ -3149,7 +3176,7 @@ function StudentCoursesInner({
         It uses z-[70] to stay above the content.
       */}
 
-      {(activeCourse && activeCourseId && checkCourseAccess(userPlan, activeCourse.access_tier || "Free Trial")) && (
+      {(activeCourse && activeCourseId && checkCourseAccess(userPlan, activeCourse.access_tier || "Free Trial", activeCourse.id, activeCourse)) && (
         <>
           <div className="sticky top-0 left-0 right-0 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-white/10 z-[70] flex items-center justify-center">
             <div className="absolute left-4">
@@ -3735,7 +3762,7 @@ function StudentCoursesInner({
               </section>
             </motion.div>
           
-          ) : !checkCourseAccess(userPlan, activeCourse.access_tier || "Free Trial") ? (
+          ) : !checkCourseAccess(userPlan, activeCourse.access_tier || "Free Trial", activeCourse.id, activeCourse) ? (
             /* ================= VIEW 1.5: GORGEOUS PREMIUM GATE LOCK SCREEN ================= */
             <motion.div
               key="premium-gate"

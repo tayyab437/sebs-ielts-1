@@ -183,10 +183,10 @@ export default function MockTestCollectionSection() {
         {/* CTA Button Below Main Showcase */}
         <div className="flex justify-center pt-2">
           <Link
-            to="/mock-tests"
-            className="bg-[#202e43] hover:bg-[#152030] text-white font-black text-xs sm:text-sm tracking-wider uppercase pl-7 pr-2 py-2 rounded-full shadow-xl hover:shadow-2xl transition-all flex items-center gap-3 cursor-pointer group"
+            to="/about"
+            className="bg-[#202e43] hover:bg-[#152030] text-white font-black text-xs sm:text-sm tracking-wider uppercase pl-6 sm:pl-7 pr-2 py-2 rounded-full shadow-xl hover:shadow-2xl transition-all flex items-center gap-3 cursor-pointer group"
           >
-            <span>GET FREE IELTS MOCK TEST</span>
+            <span>SERVING SINCE 1992</span>
             <div className="w-8 h-8 rounded-full bg-[#497cb5] group-hover:bg-[#3b6aa3] flex items-center justify-center text-white transition-colors">
               <ArrowUpRight className="w-4.5 h-4.5" />
             </div>

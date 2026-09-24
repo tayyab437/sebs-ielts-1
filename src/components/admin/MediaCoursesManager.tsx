@@ -952,61 +952,6 @@ Return valid JSON only matching the schema:
         </Card>
       </div>
 
-      {/* AI Quick Generator Box */}
-      <Card className="rounded-3xl border-purple-500/20 bg-gradient-to-r from-purple-950/20 via-indigo-950/20 to-slate-900/40 p-6 shadow-lg">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <span className="text-[10px] font-black uppercase tracking-widest text-purple-400 flex items-center gap-1">
-              <Zap className="w-3.5 h-3.5" /> AI Media Course & Quiz Generator
-            </span>
-            <h3 className="text-lg font-black text-slate-900 dark:text-white">Auto-Generate Video & Audio Syllabus with Interspersed MCQs & FIBs</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Input any topic to instantly produce video scripts, timestamps, multiple choice questions, fill-in-the-blanks, and model answers!
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-            <div className="flex-1 md:w-80">
-              <Input
-                placeholder="e.g. IELTS Speaking Part 3 Philosophical Issues or Pronunciation Weak Forms"
-                value={aiPromptTopic}
-                onChange={(e) => setAiPromptTopic(e.target.value)}
-                className="rounded-xl border-purple-500/30 bg-white/80 dark:bg-slate-950/80 text-xs font-bold"
-              />
-            </div>
-
-            <select
-              value={aiMediaType}
-              onChange={(e) => setAiMediaType(e.target.value as any)}
-              className="h-10 px-3 rounded-xl border border-purple-500/30 bg-white dark:bg-slate-950 text-xs font-bold text-slate-700 dark:text-slate-300"
-            >
-              <option value="video">Video Course</option>
-              <option value="audio">Audio Course</option>
-            </select>
-
-            <select
-              value={aiTargetBand}
-              onChange={(e) => setAiTargetBand(e.target.value)}
-              className="h-10 px-3 rounded-xl border border-purple-500/30 bg-white dark:bg-slate-950 text-xs font-bold text-slate-700 dark:text-slate-300"
-            >
-              <option value="7.0+">Band 7.0+</option>
-              <option value="7.5+">Band 7.5+</option>
-              <option value="8.0+">Band 8.0+</option>
-              <option value="8.5+">Band 8.5+</option>
-            </select>
-
-            <Button
-              onClick={handleGenerateAICourse}
-              disabled={aiIsGenerating}
-              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs uppercase px-5 py-2.5 rounded-xl shadow-md cursor-pointer border-none flex items-center gap-2"
-            >
-              <Sparkles className={`w-4 h-4 ${aiIsGenerating ? 'animate-spin' : ''}`} />
-              {aiIsGenerating ? "Generating Syllabus..." : "Generate with AI"}
-            </Button>
-          </div>
-        </div>
-      </Card>
-
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="relative w-full sm:w-80">

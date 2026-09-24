@@ -24,6 +24,7 @@ const TermsPage = lazyWithRetry(() => import("./pages/public/Terms"));
 const PrivacyPage = lazyWithRetry(() => import("./pages/public/Privacy"));
 const CustomPageView = lazyWithRetry(() => import("./pages/public/CustomPageView"));
 const ContactPage = lazyWithRetry(() => import("./pages/public/Contact"));
+const AboutPage = lazyWithRetry(() => import("./pages/public/About"));
 const BooksPage = lazyWithRetry(() => import("./pages/public/Books"));
 const NotFoundPage = lazyWithRetry(() => import("./pages/public/NotFound"));
 
@@ -111,12 +112,12 @@ function Footer() {
                   }
                 }}
               />
-              <span className="text-xl font-black italic tracking-tighter text-slate-900 dark:text-white uppercase font-sans">
-                SEB’s <span className="text-emerald-600 dark:text-emerald-400">Institute</span>
+              <span className="text-xl font-black italic tracking-tighter text-slate-900 dark:text-white font-sans">
+                SEB's <span className="text-emerald-600 dark:text-emerald-400">Institute</span>
               </span>
             </Link>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-semibold max-w-sm">
-              SEB’s Institute (Global Language Institute) is the premier trusted coaching academy empowering global scholars with masterly spoken English, verified IELTS Band scores, and supreme speaking confidence.
+              SEB's Institute (Global Language Institute) is the premier trusted coaching academy empowering global scholars with masterly spoken English, verified IELTS Band scores, and supreme speaking confidence.
             </p>
             
             {/* Social Channels List */}
@@ -305,7 +306,7 @@ function Footer() {
         </div>
         
         {/* External Testing Authorities & Global Accreditation Links */}
-        <div className="pt-6 pb-3 border-t border-slate-200 dark:border-slate-900 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+        <div className="pt-6 pb-3 mb-10 border-t border-slate-200 dark:border-slate-900 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-2 font-bold text-slate-700 dark:text-slate-300">
             <span>Official Examination Portals:</span>
           </div>
@@ -681,7 +682,7 @@ function Navbar() {
                     }
                   }}
                 />
-                <span className="font-black text-sm text-slate-900 dark:text-white uppercase tracking-wider hidden xl:inline">SEB's Institute</span>
+                <span className="font-black text-sm text-slate-900 dark:text-white tracking-wider hidden xl:inline">SEB's Institute</span>
               </Link>
 
               <div className="hidden md:flex items-center space-x-5">
@@ -837,7 +838,7 @@ function Navbar() {
               />
             </div>
             <div className="hidden lg:flex flex-col text-left">
-              <span className="text-sm font-black tracking-tight text-slate-900 dark:text-white uppercase leading-none">SEB’s Institute</span>
+              <span className="text-sm font-black tracking-tight text-slate-900 dark:text-white leading-none">SEB's Institute</span>
               <span className="text-[8.5px] font-bold text-emerald-600 tracking-widest uppercase mt-0.5 font-mono">Global Language Institute</span>
             </div>
           </Link>
@@ -1315,6 +1316,8 @@ function AppContent() {
         }>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/about-us" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/books" element={<BooksPage />} />
             <Route path="/dashboard/books" element={<BooksPage isDashboardMode={true} />} />

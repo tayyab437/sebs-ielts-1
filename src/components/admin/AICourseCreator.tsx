@@ -38,6 +38,8 @@ import {
   FolderOpen
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { syncCourseTierAccess } from "@/src/lib/membershipService";
+import { CourseAccessTierPicker } from "@/src/components/admin/CourseAccessTierPicker";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -900,6 +902,13 @@ export default function AICourseCreator() {
         localStorage.setItem('designer_courses', JSON.stringify(updatedLocal));
       } catch (e) {}
 
+      // Synchronize with membership tiers catalog
+      try {
+        await syncCourseTierAccess(courseId, [selectedCourse.access_tier || "Free Trial"]);
+      } catch (e) {
+        console.warn("Could not sync membership tier in AICourseCreator:", e);
+      }
+
       toast.success("Database synced successfully! Course is live in Courses section.");
       addLog(`SUCCESS: Course uploaded and fully indexed in public.courses table!`);
     } catch (dbErr: any) {
@@ -1406,17 +1415,12 @@ export default function AICourseCreator() {
                       />
                     </div>
 
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Access Tier</label>
-                      <select 
-                        className="w-full h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 text-xs font-bold focus:outline-none"
+                    <div className="sm:col-span-2 space-y-1.5">
+                      <CourseAccessTierPicker
                         value={selectedCourse.access_tier || "Free Trial"}
-                        onChange={(e) => setSelectedCourse({...selectedCourse, access_tier: e.target.value})}
-                      >
-                        <option value="Free Trial">Free Trial</option>
-                        <option value="Pro Premium">Pro Premium</option>
-                        <option value="Mastery Ultimate">Mastery Ultimate</option>
-                      </select>
+                        courseId={selectedCourse.id}
+                        onChange={(tierName) => setSelectedCourse({ ...selectedCourse, access_tier: tierName })}
+                      />
                     </div>
 
                     {/* Audio Link Input */}

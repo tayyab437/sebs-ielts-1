@@ -71,6 +71,7 @@ import {
   LayoutGrid,
 } from "lucide-react";
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
+import { canAccessMockTest, fetchMembershipTiers, MembershipTier } from "@/src/lib/membershipService";
 import ReactMarkdown from "react-markdown";
 import {
   AreaChart,
@@ -593,16 +594,41 @@ export default function MockTest({ defaultCategory }: MockTestProps = {}) {
     };
   };
 
-  const checkCourseAccess = (plan: string, pathTier?: string) => {
-    const tier = pathTier || "Free Trial";
-    if (tier === "Free Trial") return true;
-    if (tier === "Pro Premium") {
-      return plan === "Pro Premium" || plan === "Mastery Ultimate";
-    }
-    if (tier === "Mastery Ultimate") {
-      return plan === "Mastery Ultimate";
-    }
-    return true;
+  const [membershipTiers, setMembershipTiers] = useState<MembershipTier[]>([]);
+
+  useEffect(() => {
+    fetchMembershipTiers().then(tiers => {
+      if (tiers && tiers.length > 0) setMembershipTiers(tiers);
+    }).catch(console.warn);
+
+    const handleTiersUpdate = () => {
+      fetchMembershipTiers().then(tiers => {
+        if (tiers && tiers.length > 0) setMembershipTiers(tiers);
+      }).catch(console.warn);
+    };
+
+    window.addEventListener("sebs_memberships_updated", handleTiersUpdate);
+    return () => window.removeEventListener("sebs_memberships_updated", handleTiersUpdate);
+  }, []);
+
+  const checkCourseAccess = (plan: string, pathTier?: string, testId?: string, testObj?: any) => {
+    const candidatePlan = (plan || userPlan || "Free Trial Tier").trim();
+    const targetTestId = testId || testObj?.id;
+
+    const mockProfile = { 
+      plan: candidatePlan, 
+      role: (window as any).__user_role || "student",
+      forcePlanCheck: true 
+    };
+
+    const authResult = canAccessMockTest(
+      targetTestId || "",
+      testObj?.exam_category || "Academic",
+      mockProfile,
+      membershipTiers,
+      testObj || { id: targetTestId, access_tier: pathTier }
+    );
+    return authResult.granted;
   };
 
   // Category Detection Helper
@@ -1191,7 +1217,7 @@ export default function MockTest({ defaultCategory }: MockTestProps = {}) {
       return;
     }
 
-    if (!checkCourseAccess(userPlan, test.access_tier || "Free Trial")) {
+    if (!checkCourseAccess(userPlan, test.access_tier || "Free Trial", test.id, test)) {
       setSelectedTestForLock(test);
       return;
     }
@@ -1761,7 +1787,9 @@ export default function MockTest({ defaultCategory }: MockTestProps = {}) {
 
                 const isAccessible = checkCourseAccess(
                   userPlan,
-                  testItem.access_tier || "Free Trial"
+                  testItem.access_tier || "Free Trial",
+                  testItem.id,
+                  testItem
                 );
 
                 let testProgressPercent = 0;
@@ -2031,12 +2059,6 @@ export default function MockTest({ defaultCategory }: MockTestProps = {}) {
                   className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-white/10 data-[state=active]:text-primary font-black italic text-xs uppercase tracking-widest gap-2"
                 >
                   <History className="w-4 h-4" /> Records
-                </TabsTrigger>
-                <TabsTrigger
-                  value="analytics"
-                  className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-white/10 data-[state=active]:text-primary font-black italic text-xs uppercase tracking-widest gap-2"
-                >
-                  <BarChart3 className="w-4 h-4" /> Growth
                 </TabsTrigger>
               </TabsList>
             </Tabs>
