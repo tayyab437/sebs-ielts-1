@@ -101,14 +101,25 @@ export function EditorCanvas({ blocks, setBlocks, panelId, title }: EditorCanvas
     });
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
-    if (e.key === '/') {
-      const rect = (e.target as HTMLElement).getBoundingClientRect();
-      // Calculate relative position based on the container if needed. For now, fixed to viewport to avoid overflow issues
+  const handleOpenSlashMenu = (eOrTarget: React.KeyboardEvent | HTMLElement, index: number) => {
+    if ('key' in eOrTarget) {
+      if (eOrTarget.key === '/') {
+        const target = eOrTarget.target as HTMLElement;
+        if (target) {
+          const rect = target.getBoundingClientRect();
+          setSlashMenu({
+            isOpen: true,
+            pos: { top: rect.bottom, left: rect.left },
+            blockIndex: index
+          });
+        }
+      }
+    } else if (eOrTarget) {
+      const rect = eOrTarget.getBoundingClientRect();
       setSlashMenu({
-         isOpen: true, 
-         pos: { top: rect.bottom, left: rect.left }, 
-         blockIndex: index 
+        isOpen: true,
+        pos: { top: rect.bottom, left: rect.left },
+        blockIndex: index
       });
     }
   };
@@ -129,7 +140,7 @@ export function EditorCanvas({ blocks, setBlocks, panelId, title }: EditorCanvas
                 updateBlock={updateBlock}
                 deleteBlock={deleteBlock}
                 duplicateBlock={duplicateBlock}
-                onOpenSlashMenu={handleKeyDown}
+                onOpenSlashMenu={handleOpenSlashMenu}
               />
             ))}
           </SortableContext>
@@ -137,26 +148,21 @@ export function EditorCanvas({ blocks, setBlocks, panelId, title }: EditorCanvas
 
         {blocks.length === 0 && (
           <div 
-            className="w-full py-10 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-center cursor-text transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/50"
-            onClick={(e) => {
-              const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-              setSlashMenu({ isOpen: true, pos: { top: rect.bottom - 40, left: rect.left + rect.width / 2 - 100 }, blockIndex: -1 });
-            }}
+            className="w-full py-10 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-center cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/50"
+            onClick={(e) => handleOpenSlashMenu(e.currentTarget, -1)}
           >
-            <p className="text-slate-400 text-sm">Click here or type <kbd className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-xs font-mono">/</kbd> to add a block</p>
+            <p className="text-slate-400 text-sm">Click here or type <kbd className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-xs font-mono font-bold">/</kbd> to add a block</p>
           </div>
         )}
 
         {blocks.length > 0 && (
-          <div className="pt-4 flex justify-center opacity-0 hover:opacity-100 transition-opacity pb-8">
+          <div className="pt-4 flex justify-center opacity-90 hover:opacity-100 transition-opacity pb-8">
             <button 
-              className="flex items-center gap-2 text-xs font-bold text-slate-400 py-2 px-4 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              onClick={(e) => {
-                 const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                 setSlashMenu({ isOpen: true, pos: { top: rect.bottom, left: rect.left }, blockIndex: blocks.length - 1 });
-              }}
+              type="button"
+              className="flex items-center gap-2 text-xs font-extrabold text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/80 dark:hover:bg-slate-800 py-2.5 px-5 rounded-full border border-slate-200/80 dark:border-white/10 shadow-sm transition-all cursor-pointer"
+              onClick={(e) => handleOpenSlashMenu(e.currentTarget, blocks.length - 1)}
             >
-              <Plus className="w-3.5 h-3.5" /> Add Block
+              <Plus className="w-4 h-4 text-indigo-500" /> Add Block Below
             </button>
           </div>
         )}

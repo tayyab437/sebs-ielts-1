@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { 
   Flame, 
   Target, 
@@ -28,6 +28,7 @@ import {
   LogOut,
   Bell,
   Menu,
+  X,
   Upload,
   User as UserIcon,
   CheckCircle,
@@ -200,6 +201,23 @@ export default function StudentDashboard() {
       }
     }
   }, [activeTab, location.pathname]);
+
+  // Mobile navigation drawer state
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMobileSidebarOpen(false);
+  }, [activeTab]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isMobileSidebarOpen) {
+        setIsMobileSidebarOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isMobileSidebarOpen]);
 
   useEffect(() => {
     const syncState = async () => {
@@ -1537,12 +1555,12 @@ export default function StudentDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-2 flex">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-2 flex flex-col lg:flex-row w-full max-w-full overflow-x-clip">
       
       {/* Scrollable Sidebar Navigation */}
-      <aside className="hidden lg:flex flex-col w-72 h-[calc(100vh-80px)] sticky top-20 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-r border-slate-200 dark:border-white/10 overflow-y-auto p-6 space-y-8 no-scrollbar">
+      <aside className="hidden lg:flex flex-col w-72 h-[calc(100vh-80px)] sticky top-20 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-r border-slate-200 dark:border-white/10 overflow-y-auto p-6 space-y-8 no-scrollbar shrink-0">
         <div className="space-y-3">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4">Navigation</p>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 px-4">Navigation</p>
           <div className="space-y-1">
             {[
               { id: "overview", name: "Overview", icon: <Layout className="w-4 h-4" /> },
@@ -1569,7 +1587,7 @@ export default function StudentDashboard() {
         </div>
 
         <div className="space-y-3">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4">Training Modules</p>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 px-4">Training Modules</p>
           <div className="space-y-1">
             {[
               { id: "listening", name: "Listening", icon: <Headphones className="w-4 h-4" /> },
@@ -1598,7 +1616,7 @@ export default function StudentDashboard() {
                     <span>{item.name}</span>
                   </div>
                   {isComingSoon && (
-                    <span className="text-[8px] bg-red-600 text-white px-1.5 py-0.5 rounded-md font-black uppercase tracking-wider">
+                    <span className="text-[10px] bg-red-600 text-white px-2 py-0.5 rounded-md font-black uppercase tracking-wider">
                       Soon
                     </span>
                   )}
@@ -1609,7 +1627,7 @@ export default function StudentDashboard() {
         </div>
 
         <div className="space-y-3">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4">Interactive Live Rooms</p>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 px-4">Interactive Live Rooms</p>
           <div className="space-y-1">
             <button
               id="sidebar-link-google-meet"
@@ -1639,7 +1657,7 @@ export default function StudentDashboard() {
         </div>
 
         <div className="space-y-3">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4">Evaluation</p>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 px-4">Evaluation</p>
           <div className="space-y-1">
             <Link 
               to="/mock-tests" 
@@ -1663,69 +1681,118 @@ export default function StudentDashboard() {
             </button>
           </div>
         </div>
-
-        {/* Mobile-only horizontal bar as fallback if on small screen */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-200 dark:border-white/10 p-2 overflow-x-auto no-scrollbar flex gap-1">
-            {[
-              { id: "overview", name: "Overview", icon: <Layout className="w-4 h-4" /> },
-              { id: "classrooms", name: "Classes", icon: <Users className="w-4 h-4" /> },
-              { id: "courses", name: "Courses", icon: <BookOpen className="w-4 h-4" /> },
-              { id: "certificate", name: "Certificates", icon: <Award className="w-4 h-4" /> },
-              { id: "ai-conversation", name: "AI Coach", icon: <Sparkles className="w-4 h-4 text-emerald-500 animate-pulse" /> },
-              { id: "writing", name: "Writing", icon: <PenTool className="w-4 h-4" /> },
-              { id: "speaking", name: "Speaking", icon: <Mic className="w-4 h-4" /> },
-              { id: "settings", name: "Settings", icon: <Settings className="w-4 h-4" /> },
-            ].map((item) => {
-              const isComingSoon = item.id === "ai-conversation";
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => !isComingSoon && setActiveTab(item.id as any)}
-                  disabled={isComingSoon}
-                  className={`flex-1 flex flex-col items-center gap-1 p-2 rounded-xl text-[10px] font-bold transition-all whitespace-nowrap relative ${
-                    isComingSoon
-                      ? "opacity-50 cursor-not-allowed text-slate-400"
-                      : activeTab === item.id 
-                        ? "text-primary bg-primary/5" 
-                        : "text-slate-500"
-                  }`}
-                >
-                  {item.icon}
-                  <span className="flex items-center gap-1">
-                    {item.name}
-                    {isComingSoon && (
-                      <span className="text-[7px] bg-red-600 text-white px-1 rounded font-black uppercase">
-                        Soon
-                      </span>
-                    )}
-                  </span>
-                </button>
-              );
-            })}
-        </div>
       </aside>
 
       {/* Main Dashboard Content */}
-      <main className="flex-1 lg:max-w-[calc(100vw-288px)] px-4 sm:px-6 lg:px-12 py-8 pt-6">
-        <div className="max-w-[1600px] mx-auto space-y-12">
+      <main className="flex-1 w-full min-w-0 max-w-full lg:max-w-[calc(100vw-288px)] px-3 sm:px-6 lg:px-12 py-4 sm:py-8 pt-3 sm:pt-6 pb-32 lg:pb-8 overflow-x-clip">
+        <div className="w-full min-w-0 max-w-[1600px] mx-auto space-y-6 sm:space-y-10">
           
+          {/* Mobile Student Navigation Header Bar & Quick Pill Switcher */}
+          <div className="lg:hidden space-y-3 w-full min-w-0 max-w-full overflow-hidden">
+            <div className="flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 rounded-2xl p-3 shadow-xs w-full min-w-0 gap-2">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <button
+                  type="button"
+                  id="mobile-student-menu-btn"
+                  onClick={() => setIsMobileSidebarOpen(true)}
+                  className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+                  aria-label="Open student navigation menu"
+                >
+                  <Menu className="w-5 h-5" />
+                </button>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-400">Student Area</span>
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase bg-primary/10 text-primary">
+                      {activeTab}
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate capitalize">
+                    {activeTab === "overview"
+                      ? "Overview & Learning Path"
+                      : activeTab === "classrooms"
+                      ? "Classroom Hub"
+                      : activeTab === "courses"
+                      ? "Enrolled Tracks"
+                      : activeTab === "certificate"
+                      ? "Verified Certificates"
+                      : activeTab === "resources"
+                      ? "Reference Library"
+                      : activeTab === "google-meet"
+                      ? "Google Meet Sessions"
+                      : activeTab === "embedded-calling"
+                      ? "Live Virtual Calling"
+                      : activeTab === "ai-conversation"
+                      ? "AI Conversation Coach"
+                      : activeTab}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                id="mobile-student-all-tabs-btn"
+                onClick={() => setIsMobileSidebarOpen(true)}
+                className="text-xs font-bold text-primary flex items-center gap-1 px-3 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 transition-colors shrink-0 cursor-pointer active:scale-95 min-h-[42px]"
+              >
+                <span>All Tabs</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Quick Horizontal Scrollable Tabs */}
+            <div className="w-full min-w-0 max-w-full overflow-x-auto no-scrollbar py-1 px-0.5 touch-pan-x">
+              <div className="flex items-center gap-2 min-w-max pb-1">
+                {[
+                  { id: "overview", name: "Overview", icon: <Layout className="w-4 h-4" /> },
+                  { id: "classrooms", name: "Classes", icon: <Users className="w-4 h-4" /> },
+                  { id: "courses", name: "Courses", icon: <BookOpen className="w-4 h-4" /> },
+                  { id: "certificate", name: "Certificates", icon: <Award className="w-4 h-4" /> },
+                  { id: "resources", name: "Resources", icon: <FileText className="w-4 h-4" /> },
+                  { id: "listening", name: "Listening", icon: <Headphones className="w-4 h-4" /> },
+                  { id: "reading", name: "Reading", icon: <BookOpen className="w-4 h-4" /> },
+                  { id: "writing", name: "Writing", icon: <PenTool className="w-4 h-4" /> },
+                  { id: "speaking", name: "Speaking", icon: <Mic className="w-4 h-4" /> },
+                  { id: "google-meet", name: "Meet", icon: <Video className="w-4 h-4" /> },
+                  { id: "embedded-calling", name: "Calling", icon: <Phone className="w-4 h-4" /> },
+                  { id: "settings", name: "Settings", icon: <Settings className="w-4 h-4" /> },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id as any);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all shrink-0 cursor-pointer min-h-[40px] touch-manipulation ${
+                      activeTab === tab.id
+                        ? "bg-primary text-white shadow-md shadow-primary/25 scale-[1.02]"
+                        : "bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
+                    }`}
+                  >
+                    {tab.icon}
+                    <span>{tab.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
           {/* Header Section */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div className="space-y-1 flex-1">
-              <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tighter flex flex-wrap items-center gap-x-3">
-                {activeTab === "overview" ? `Welcome back, ${firstName || user.name}!` : activeTab === "certificate" ? "My Certificates & Credentials" : activeTab === "resources" ? "Resource Library" : activeTab === "courses" ? "My Courses" : activeTab === "ai-conversation" ? "AI Conversation Coach" : activeTab === "google-meet" ? "Google Meet Workspace" : activeTab === "embedded-calling" ? "Virtual Live Calling" : activeTab === "classrooms" ? "Classroom Hub" : "Profile Settings"}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6 w-full min-w-0">
+            <div className="space-y-1 flex-1 min-w-0 w-full">
+              <h1 className="text-xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight break-words flex flex-wrap items-center gap-2">
+                <span className="break-all">{activeTab === "overview" ? `Welcome back, ${firstName || user.name}!` : activeTab === "certificate" ? "My Certificates & Credentials" : activeTab === "resources" ? "Resource Library" : activeTab === "courses" ? "My Courses" : activeTab === "ai-conversation" ? "AI Conversation Coach" : activeTab === "google-meet" ? "Google Meet Workspace" : activeTab === "embedded-calling" ? "Virtual Live Calling" : activeTab === "classrooms" ? "Classroom Hub" : "Profile Settings"}</span>
                 {activeTab === "overview" && (
-                  <Badge className={`font-black text-[9px] uppercase tracking-wider border-none ${examType === 'Academic' ? 'bg-indigo-500 text-white' : 'bg-emerald-500 text-white'}`}>
+                  <Badge className={`font-black text-[10px] uppercase tracking-wider border-none ${examType === 'Academic' ? 'bg-indigo-500 text-white' : 'bg-emerald-500 text-white'}`}>
                     {examType} Preparation
                   </Badge>
                 )}
               </h1>
-              <p className="text-sm text-slate-500 font-medium italic">
+              <p className="text-xs sm:text-sm text-slate-500 font-medium italic break-words">
                 {activeTab === "overview" ? "Your AI Study Curator has updated your learning path." : activeTab === "certificate" ? "View, download, and verify your official course completion certificates and achievements." : activeTab === "resources" ? "Browse, filter, and access candidate reference resources uploaded by administrators." : activeTab === "courses" ? "Browse and participate in the official learning tracks." : activeTab === "ai-conversation" ? "Practice real-time spoken English conversation with our responsive AI avatar Clara." : activeTab === "google-meet" ? "Spawn and coordinate live video interaction session codes powered by Google Meet." : activeTab === "embedded-calling" ? "Connect with voice & video features directly in our built-in classroom portal." : activeTab === "classrooms" ? "Access your enrolled cohorts to mark attendance and track history." : "Personalize candidate identity details and target exam metrics."}
               </p>
 
               {activeTab === "overview" && (
-                <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-xl bg-white/50 dark:bg-white/5 backdrop-blur-md p-3.5 rounded-2xl border border-slate-200/60 dark:border-white/10 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4 w-full max-w-xl bg-white/50 dark:bg-white/5 backdrop-blur-md p-3.5 rounded-2xl border border-slate-200/60 dark:border-white/10 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
                   {[
                     { name: "Writing", val: moduleProgress.writing, color: "bg-amber-500" },
                     { name: "Speaking", val: moduleProgress.speaking, color: "bg-emerald-500" },
@@ -1733,12 +1800,12 @@ export default function StudentDashboard() {
                     { name: "Listening", val: moduleProgress.listening, color: "bg-indigo-500" },
                   ].map((skill, idx) => (
                     <div key={idx} className="space-y-1.5">
-                      <div className="flex justify-between items-center text-[10px]">
-                        <span className="font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{skill.name}</span>
-                        <span className="font-black text-slate-800 dark:text-slate-200">{skill.val}%</span>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest text-[11px] sm:text-xs">{skill.name}</span>
+                        <span className="font-black text-slate-800 dark:text-slate-200 text-xs sm:text-sm">{skill.val}%</span>
                       </div>
-                      <div className="h-1.5 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                        <div className={`h-full ${skill.color} transition-all duration-500`} style={{ width: `${skill.val}%` }} />
+                      <div className="h-2 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                        <div className={`h-full ${skill.color} transition-all duration-500 rounded-full`} style={{ width: `${skill.val}%` }} />
                       </div>
                     </div>
                   ))}
@@ -2228,97 +2295,98 @@ export default function StudentDashboard() {
           ) : (
             <>
               {/* My Test Performance Metrics Section */}
-              <div className="space-y-4">
+              <div className="space-y-4 w-full min-w-0">
                 <h2 className="text-xl sm:text-2xl font-bold text-[#1e293b] dark:text-slate-100 tracking-tight">
                   My Test Performance
                 </h2>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-4 w-full min-w-0 max-w-full">
                   {/* Card 1: Target Score */}
-                  <Card className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col justify-between items-center text-center relative shadow-xs hover:border-sky-300 dark:hover:border-sky-600 transition-all min-h-[140px]">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-3 sm:p-5 flex flex-col justify-between items-center text-center relative shadow-xs hover:border-sky-300 dark:hover:border-sky-600 transition-all min-h-[140px]">
                     <button 
                       onClick={() => {
                         setTempTargetBand(targetBand.toString());
                         setIsTargetModalOpen(true);
                       }}
-                      className="absolute top-3 right-3 text-xs font-semibold text-sky-500 hover:text-sky-600 underline cursor-pointer"
+                      className="absolute top-2 right-2 text-xs font-bold text-sky-500 hover:text-sky-600 underline cursor-pointer p-1.5 min-w-[40px] min-h-[40px] flex items-center justify-center touch-manipulation"
+                      aria-label="Edit target band score"
                     >
                       Edit
                     </button>
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-slate-800 dark:text-slate-200 mt-1">
                       <Target className="w-6 h-6 text-[#1e293b] dark:text-sky-400 stroke-[1.75]" />
                     </div>
-                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-2">
+                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-2">
                       Target Score
                     </div>
-                    <div className="text-2xl sm:text-3xl font-extrabold text-[#1e293b] dark:text-white mt-1.5 tracking-tight">
+                    <div className="text-2xl sm:text-3xl font-extrabold text-[#1e293b] dark:text-white mt-1 tracking-tight">
                       {targetBand ? Number(targetBand).toFixed(1) : "6.5"}
                     </div>
                   </Card>
 
                   {/* Card 2: Average Score */}
-                  <Card className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col justify-between items-center text-center relative shadow-xs hover:border-sky-300 dark:hover:border-sky-600 transition-all min-h-[140px]">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-3 sm:p-5 flex flex-col justify-between items-center text-center relative shadow-xs hover:border-sky-300 dark:hover:border-sky-600 transition-all min-h-[140px]">
                     <DashboardTooltip content="Real-time average band score across all completed test attempts">
-                      <div className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 cursor-pointer">
+                      <div className="absolute top-2 right-2 text-slate-400 hover:text-slate-600 cursor-pointer p-1.5 min-w-[40px] min-h-[40px] flex items-center justify-center touch-manipulation">
                         <HelpCircle className="w-4 h-4" />
                       </div>
                     </DashboardTooltip>
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-slate-800 dark:text-slate-200 mt-1">
                       <TrendingUp className="w-6 h-6 text-[#1e293b] dark:text-sky-400 stroke-[1.75]" />
                     </div>
-                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-2">
+                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-2">
                       Average Score
                     </div>
-                    <div className="text-2xl sm:text-3xl font-extrabold text-[#1e293b] dark:text-white mt-1.5 tracking-tight">
+                    <div className="text-2xl sm:text-3xl font-extrabold text-[#1e293b] dark:text-white mt-1 tracking-tight">
                       {performanceMetrics.averageScore}
                     </div>
                   </Card>
 
                   {/* Card 3: Total Tests Taken */}
-                  <Card className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col justify-between items-center text-center relative shadow-xs hover:border-sky-300 dark:hover:border-sky-600 transition-all min-h-[140px]">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-3 sm:p-5 flex flex-col justify-between items-center text-center relative shadow-xs hover:border-sky-300 dark:hover:border-sky-600 transition-all min-h-[140px]">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-slate-800 dark:text-slate-200 mt-1">
                       <FileText className="w-6 h-6 text-[#1e293b] dark:text-sky-400 stroke-[1.75]" />
                     </div>
-                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-2">
+                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-2">
                       Total Tests Taken
                     </div>
-                    <div className="text-2xl sm:text-3xl font-extrabold text-[#1e293b] dark:text-white mt-1.5 tracking-tight">
+                    <div className="text-2xl sm:text-3xl font-extrabold text-[#1e293b] dark:text-white mt-1 tracking-tight">
                       {performanceMetrics.totalTests}
                     </div>
                   </Card>
 
                   {/* Card 4: Average Time */}
-                  <Card className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col justify-between items-center text-center relative shadow-xs hover:border-sky-300 dark:hover:border-sky-600 transition-all min-h-[140px]">
+                  <Card className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-3 sm:p-5 flex flex-col justify-between items-center text-center relative shadow-xs hover:border-sky-300 dark:hover:border-sky-600 transition-all min-h-[140px]">
                     <DashboardTooltip content="Average duration spent per completed test attempt">
-                      <div className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 cursor-pointer">
+                      <div className="absolute top-2 right-2 text-slate-400 hover:text-slate-600 cursor-pointer p-1.5 min-w-[40px] min-h-[40px] flex items-center justify-center touch-manipulation">
                         <HelpCircle className="w-4 h-4" />
                       </div>
                     </DashboardTooltip>
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-slate-800 dark:text-slate-200 mt-1">
                       <Clock className="w-6 h-6 text-[#1e293b] dark:text-sky-400 stroke-[1.75]" />
                     </div>
-                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-2">
+                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-2">
                       Average Time
                     </div>
-                    <div className="text-2xl sm:text-3xl font-extrabold text-[#1e293b] dark:text-white mt-1.5 tracking-tight">
+                    <div className="text-2xl sm:text-3xl font-extrabold text-[#1e293b] dark:text-white mt-1 tracking-tight">
                       {performanceMetrics.averageTime}
                     </div>
                   </Card>
 
                   {/* Card 5: Accuracy */}
-                  <Card className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col justify-between items-center text-center relative shadow-xs hover:border-sky-300 dark:hover:border-sky-600 transition-all min-h-[140px]">
+                  <Card className="col-span-2 sm:col-span-1 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-3 sm:p-5 flex flex-col justify-between items-center text-center relative shadow-xs hover:border-sky-300 dark:hover:border-sky-600 transition-all min-h-[140px]">
                     <DashboardTooltip content="Real-time accuracy percentage across all attempted test questions">
-                      <div className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 cursor-pointer">
+                      <div className="absolute top-2 right-2 text-slate-400 hover:text-slate-600 cursor-pointer p-1.5 min-w-[40px] min-h-[40px] flex items-center justify-center touch-manipulation">
                         <HelpCircle className="w-4 h-4" />
                       </div>
                     </DashboardTooltip>
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-slate-800 dark:text-slate-200 mt-1">
                       <Target className="w-6 h-6 text-[#1e293b] dark:text-sky-400 stroke-[1.75]" />
                     </div>
-                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-2">
+                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-2">
                       Accuracy
                     </div>
-                    <div className="text-2xl sm:text-3xl font-extrabold text-[#1e293b] dark:text-white mt-1.5 tracking-tight">
+                    <div className="text-2xl sm:text-3xl font-extrabold text-[#1e293b] dark:text-white mt-1 tracking-tight">
                       {performanceMetrics.accuracy}
                     </div>
                   </Card>
@@ -2398,32 +2466,32 @@ export default function StudentDashboard() {
 
 
               {/* Visual Calendar Class Schedule Grid */}
-              <div className="pt-2">
+              <div className="pt-2 w-full min-w-0 max-w-full overflow-hidden">
                 <VisualCalendar />
               </div>
 
               {/* Analytics Section */}
-              <div className="w-full">
-                 <Card className="rounded-[2rem] border-none bg-white dark:bg-slate-900 shadow-xl p-6 sm:p-8 flex flex-col justify-between">
+              <div className="w-full min-w-0 max-w-full overflow-hidden">
+                 <Card className="rounded-[2rem] border-none bg-white dark:bg-slate-900 shadow-xl p-4 sm:p-6 lg:p-8 flex flex-col justify-between w-full min-w-0 max-w-full overflow-hidden">
                    <div className="space-y-4">
-                     <div className="flex items-center justify-between">
-                       <div className="flex items-center space-x-2">
-                         <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center">
+                     <div className="flex items-center justify-between gap-2">
+                       <div className="flex items-center space-x-2 min-w-0">
+                         <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center shrink-0">
                            <BarChart3 className="w-5 h-5" />
                          </div>
-                         <div>
-                           <h3 className="font-extrabold text-sm text-slate-800 dark:text-white leading-none">Mock Exam Trends</h3>
-                           <span className="text-[10px] text-slate-400 font-extrabold uppercase mt-1 tracking-wider block">Official grading performance over time</span>
+                         <div className="min-w-0">
+                           <h3 className="font-extrabold text-sm text-slate-800 dark:text-white leading-none truncate">Mock Exam Trends</h3>
+                           <span className="text-[10px] text-slate-400 font-extrabold uppercase mt-1 tracking-wider block truncate">Official grading performance over time</span>
                          </div>
                        </div>
-                       <Badge className="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 font-black text-[9px] uppercase tracking-wide border-none shadow-none">
+                       <Badge className="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 font-black text-[9px] uppercase tracking-wide border-none shadow-none shrink-0">
                          IELTS Metrics
                        </Badge>
                      </div>
                    </div>
 
-                   <div className="h-[260px] w-full pt-6">
-                     <ResponsiveContainer width="100%" height="100%">
+                   <div className="h-[260px] w-full min-w-0 max-w-full pt-6 overflow-hidden">
+                     <ResponsiveContainer width="99%" height="100%">
                        <AreaChart data={mockChartData} margin={{ left: -15, right: 10 }}>
                          <defs>
                            <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
@@ -2558,7 +2626,7 @@ export default function StudentDashboard() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2">
+                      <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2 w-full max-w-full touch-pan-x">
                         {/* Earned Badges */}
                         {[
                           { title: "Writing Master", icon: <PenTool className="w-5 h-5" />, color: "text-amber-300", bg: "bg-amber-500/20", borderColor: "border-amber-500/30", date: "Sep 12" },
@@ -2582,8 +2650,8 @@ export default function StudentDashboard() {
               </div>
 
               {/* Daily Tasks & Recent Results */}
-              <div className="w-full pb-12">
-                <Card className="w-full">
+              <div className="w-full min-w-0 max-w-full pb-12 overflow-hidden">
+                <Card className="w-full min-w-0 max-w-full overflow-hidden">
                   <CardHeader>
                     <div className="flex justify-between items-center">
                       <CardTitle className="text-xl">{quizHistory.length > 0 ? "Recent Quiz Results" : "Daily Study Plan"}</CardTitle>
@@ -2656,6 +2724,242 @@ export default function StudentDashboard() {
 
         </div>
       </main>
+
+      {/* Mobile Student Navigation Drawer Modal */}
+      <AnimatePresence>
+        {isMobileSidebarOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 flex">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+            />
+
+            {/* Slide-in Drawer */}
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 26, stiffness: 300 }}
+              className="relative w-80 max-w-[85vw] h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-white/10 shadow-2xl flex flex-col z-50 overflow-hidden"
+            >
+              {/* Drawer Header */}
+              <div className="p-4 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/70 dark:bg-white/5 shrink-0">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-indigo-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-md">
+                    {(user.name || "S").charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                      {firstName || user.name}
+                    </p>
+                    <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+                      Band {user.targetBand} • {user.xp} XP
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsMobileSidebarOpen(false)}
+                  className="w-8 h-8 rounded-lg bg-slate-200/60 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-700 dark:text-slate-200 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                  aria-label="Close menu"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Drawer Navigation List */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar">
+                {/* 1. Main Navigation */}
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-3">Navigation</p>
+                  <div className="space-y-1">
+                    {[
+                      { id: "overview", name: "Overview", icon: <Layout className="w-4 h-4" /> },
+                      { id: "classrooms", name: "Classroom Hub", icon: <Users className="w-4 h-4" /> },
+                      { id: "courses", name: "Courses", icon: <BookOpen className="w-4 h-4" /> },
+                      { id: "certificate", name: "Certificates", icon: <Award className="w-4 h-4" /> },
+                      { id: "resources", name: "Resources", icon: <FileText className="w-4 h-4" /> },
+                    ].map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveTab(item.id as any);
+                          setIsMobileSidebarOpen(false);
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          activeTab === item.id
+                            ? "bg-primary text-white shadow-md shadow-primary/20 scale-[1.01]"
+                            : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
+                        }`}
+                      >
+                        {item.icon}
+                        <span>{item.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 2. Training Modules */}
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-3">Training Modules</p>
+                  <div className="space-y-1">
+                    {[
+                      { id: "listening", name: "Listening", icon: <Headphones className="w-4 h-4" /> },
+                      { id: "reading", name: "Reading", icon: <BookOpen className="w-4 h-4" /> },
+                      { id: "writing", name: "Writing", icon: <PenTool className="w-4 h-4" /> },
+                      { id: "speaking", name: "Speaking", icon: <Mic className="w-4 h-4" /> },
+                      { id: "ai-conversation", name: "AI Conversation", icon: <Sparkles className="w-4 h-4 text-emerald-500 animate-pulse" /> },
+                    ].map((item) => {
+                      const isComingSoon = item.id === "ai-conversation";
+                      return (
+                        <button
+                          key={item.id}
+                          disabled={isComingSoon}
+                          onClick={() => {
+                            if (!isComingSoon) {
+                              setActiveTab(item.id as any);
+                              setIsMobileSidebarOpen(false);
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                            }
+                          }}
+                          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            isComingSoon
+                              ? "opacity-50 cursor-not-allowed text-slate-400"
+                              : activeTab === item.id
+                                ? "bg-primary text-white shadow-md shadow-primary/20 scale-[1.01]"
+                                : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            {item.icon}
+                            <span>{item.name}</span>
+                          </div>
+                          {isComingSoon && (
+                            <span className="text-[8px] bg-red-600 text-white px-1.5 py-0.5 rounded font-black uppercase">
+                              Soon
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Interactive Live Rooms */}
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-3">Interactive Live Rooms</p>
+                  <div className="space-y-1">
+                    <button
+                      onClick={() => {
+                        setActiveTab("google-meet");
+                        setIsMobileSidebarOpen(false);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        activeTab === "google-meet"
+                          ? "bg-primary text-white shadow-md shadow-primary/20 scale-[1.01]"
+                          : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
+                      }`}
+                    >
+                      <Video className="w-4 h-4 text-teal-400" />
+                      <span>Google Meet</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveTab("embedded-calling");
+                        setIsMobileSidebarOpen(false);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        activeTab === "embedded-calling"
+                          ? "bg-primary text-white shadow-md shadow-primary/20 scale-[1.01]"
+                          : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
+                      }`}
+                    >
+                      <Phone className="w-4 h-4 text-sky-400 animate-pulse" />
+                      <span>Embedded Calling</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 4. Evaluation & Settings */}
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-3">Evaluation & Settings</p>
+                  <div className="space-y-1">
+                    <Link
+                      to="/mock-tests"
+                      onClick={() => setIsMobileSidebarOpen(false)}
+                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+                    >
+                      <BarChart3 className="w-4 h-4 text-amber-500" />
+                      <span>Mock Tests</span>
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setActiveTab("settings");
+                        setIsMobileSidebarOpen(false);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        activeTab === "settings"
+                          ? "bg-primary text-white shadow-md shadow-primary/20 scale-[1.01]"
+                          : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
+                      }`}
+                    >
+                      <Settings className="w-4 h-4" />
+                      <span>Settings</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Fixed Bottom Navigation Bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-white/10 px-2 py-2 flex items-center justify-around shadow-lg safe-bottom max-w-full overflow-hidden">
+        {[
+          { id: "overview", name: "Overview", icon: <Layout className="w-5 h-5" /> },
+          { id: "classrooms", name: "Classes", icon: <Users className="w-5 h-5" /> },
+          { id: "courses", name: "Courses", icon: <BookOpen className="w-5 h-5" /> },
+          { id: "resources", name: "Resources", icon: <FileText className="w-5 h-5" /> },
+          { id: "menu", name: "All Tabs", icon: <Menu className="w-5 h-5" /> },
+        ].map((item) => {
+          const isMenu = item.id === "menu";
+          const isActive = !isMenu && activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => {
+                if (isMenu) {
+                  setIsMobileSidebarOpen(true);
+                } else {
+                  setActiveTab(item.id as any);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
+              className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-xs font-bold transition-all min-h-[48px] cursor-pointer touch-manipulation ${
+                isActive
+                  ? "text-primary font-black scale-105"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+              aria-label={item.name}
+            >
+              <div className={`p-1 rounded-lg ${isActive ? "bg-primary/10 text-primary" : ""}`}>
+                {item.icon}
+              </div>
+              <span className="truncate max-w-[64px] text-[11px] font-bold">{item.name}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

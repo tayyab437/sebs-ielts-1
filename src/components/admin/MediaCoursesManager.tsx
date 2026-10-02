@@ -2467,15 +2467,20 @@ Return valid JSON only matching the schema:
                                                 </div>
                                               )}
 
-                                              {/* SUBTAB 5: RESOURCES & DOWNLOADS */}
+                                              {/* SUBTAB 5: INTERACTIVE WORKSHEETS & HANDOUTS */}
                                               {(episodeActiveTabs[episode.id] || "questions") === "resources" && (
                                                 <div className="bg-indigo-500/5 dark:bg-indigo-500/10 border border-indigo-500/20 p-4 rounded-xl space-y-3">
                                                   <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-2">
                                                       <LinkIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                                                      <h4 className="text-xs font-black uppercase text-indigo-900 dark:text-indigo-200">
-                                                        Downloadable Handouts & Attached Materials ({episode.resources?.length || 0})
-                                                      </h4>
+                                                      <div>
+                                                        <h4 className="text-xs font-black uppercase text-indigo-900 dark:text-indigo-200">
+                                                          Interactive Worksheets & Practice Sheets ({episode.resources?.length || 0})
+                                                        </h4>
+                                                        <p className="text-[10px] text-slate-500">
+                                                          Worksheets are filled directly online by candidates (non-downloadable) with instant AI evaluation and grading.
+                                                        </p>
+                                                      </div>
                                                     </div>
                                                     <Button
                                                       size="sm"
@@ -2488,7 +2493,7 @@ Return valid JSON only matching the schema:
                                                                 ...ep,
                                                                 resources: [
                                                                   ...(ep.resources || []),
-                                                                  { id: `res-${Date.now()}`, title: "Lesson Worksheet PDF", url: "https://example.com/handout.pdf", type: "pdf" as const, size: "2.5 MB" }
+                                                                  { id: `res-${Date.now()}`, title: "SEBS Practice Sheet: Nouns & Common Suffixes", url: "https://sebsinstitute.com/worksheets/nouns.pdf", type: "pdf" as const, size: "2 Pages • Fillable Online" }
                                                                 ]
                                                               } : ep)
                                                             };
@@ -2499,12 +2504,12 @@ Return valid JSON only matching the schema:
                                                       }}
                                                       className="h-7 text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg px-2.5"
                                                     >
-                                                      <Plus className="w-3.5 h-3.5 mr-1" /> Add Resource
+                                                      <Plus className="w-3.5 h-3.5 mr-1" /> Add Worksheet
                                                     </Button>
                                                   </div>
 
                                                   {(!episode.resources || episode.resources.length === 0) ? (
-                                                    <p className="text-xs text-slate-400 italic">No resources attached. Add worksheets, audio drills, or summary slides.</p>
+                                                    <p className="text-xs text-slate-400 italic">No worksheets attached. Add interactive suffix worksheets or audio drills.</p>
                                                   ) : (
                                                     <div className="space-y-2">
                                                       {episode.resources.map((res, rIdx) => (
@@ -2527,7 +2532,6 @@ Return valid JSON only matching the schema:
                                                                 });
                                                                 setSelectedCourse({ ...selectedCourse, modules: updatedModules });
                                                               }}
-                                                              placeholder="Document Title"
                                                               className="h-8 text-xs font-bold"
                                                             />
                                                           </div>
@@ -2549,7 +2553,6 @@ Return valid JSON only matching the schema:
                                                                 });
                                                                 setSelectedCourse({ ...selectedCourse, modules: updatedModules });
                                                               }}
-                                                              placeholder="https://..."
                                                               className="h-8 text-xs font-mono"
                                                             />
                                                           </div>
@@ -2571,7 +2574,6 @@ Return valid JSON only matching the schema:
                                                                 });
                                                                 setSelectedCourse({ ...selectedCourse, modules: updatedModules });
                                                               }}
-                                                              placeholder="2.5 MB"
                                                               className="h-8 text-xs"
                                                             />
                                                           </div>

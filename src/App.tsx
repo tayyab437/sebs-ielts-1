@@ -729,7 +729,7 @@ function Navbar() {
             {/* Actions */}
             <div className="flex items-center space-x-3">
               {user ? (
-                <div className="flex items-center space-x-2">
+                <div className="hidden sm:flex items-center space-x-2">
                   {user.email === "ac.repair.in.dubai3@gmail.com" && (
                     <Link to="/admin">
                       <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-[10px] uppercase rounded-lg px-3 py-1">
@@ -747,7 +747,7 @@ function Navbar() {
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center space-x-2">
+                <div className="hidden sm:flex items-center space-x-2">
                   <Link to="/login">
                     <Button size="sm" variant="ghost" className="text-[11px] font-bold uppercase text-slate-700 dark:text-slate-200">
                       Login
@@ -1300,12 +1300,12 @@ function AppContent() {
   const isDashboard = location.pathname.startsWith("/dashboard");
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background w-full max-w-full overflow-x-clip">
       <PageSEOManager />
       <Toaster position="top-right" richColors />
       <Navbar />
       <AnnouncementPopup />
-      <main>
+      <main className="w-full min-w-0 max-w-full overflow-x-clip">
         <Suspense fallback={
           <div className="min-h-[60vh] flex items-center justify-center py-20">
             <div className="flex flex-col items-center space-y-3">

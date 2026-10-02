@@ -31,6 +31,7 @@ export default defineConfig(() => {
               if (id.includes('@dnd-kit')) return 'vendor-dnd';
               if (id.includes('motion')) return 'vendor-motion';
               if (id.includes('lucide-react')) return 'vendor-icons';
+              if (id.includes('recharts')) return 'vendor-charts';
               if (id.includes('react-markdown') || id.includes('rehype')) return 'vendor-markdown';
             }
           },

@@ -565,11 +565,169 @@ async function initTables() {
       console.warn("Error seeding membership_tiers:", e);
     }
 
+    // Ensure worksheet_submissions and auxiliary application tables exist
+    await ensureTableExists("worksheet_submissions");
+    await ensureTableExists("student_submissions");
+    await ensureTableExists("mock_tests");
+    await ensureTableExists("live_meetings");
+    await ensureTableExists("classrooms");
+    await ensureTableExists("classroom_enrollments");
+    await ensureTableExists("quizzes");
+    await ensureTableExists("students");
+
     connection.release();
     console.log("MySQL Tables initialized.");
   } catch (e) {
     console.error("Error initializing MySQL tables:", e);
   }
+}
+
+async function ensureTableExists(tableName: string, sampleRow?: any): Promise<boolean> {
+  try {
+    if (tableName === "worksheet_submissions") {
+      await mysqlPool.query(`
+        CREATE TABLE IF NOT EXISTS worksheet_submissions (
+          id VARCHAR(255) PRIMARY KEY,
+          worksheet_id VARCHAR(255),
+          episode_id VARCHAR(255),
+          course_id VARCHAR(255),
+          student_id VARCHAR(255),
+          student_name VARCHAR(255),
+          score INT DEFAULT 0,
+          max_score INT DEFAULT 100,
+          percentage DECIMAL(5,2) DEFAULT 0,
+          band_score VARCHAR(50),
+          grade VARCHAR(50),
+          answers JSON,
+          evaluation JSON,
+          status VARCHAR(50) DEFAULT 'submitted',
+          created_at VARCHAR(255),
+          updated_at VARCHAR(255)
+        )
+      `);
+      return true;
+    } else if (tableName === "student_submissions") {
+      await mysqlPool.query(`
+        CREATE TABLE IF NOT EXISTS student_submissions (
+          id VARCHAR(255) PRIMARY KEY,
+          student_id VARCHAR(255),
+          student_name VARCHAR(255),
+          course_id VARCHAR(255),
+          course_title VARCHAR(255),
+          lesson_title VARCHAR(255),
+          lesson_type VARCHAR(50),
+          module_idx INT DEFAULT 0,
+          lesson_idx INT DEFAULT 0,
+          answers JSON,
+          evaluation JSON,
+          score INT DEFAULT 0,
+          band_score VARCHAR(50),
+          status VARCHAR(50) DEFAULT 'submitted',
+          created_at VARCHAR(255),
+          updated_at VARCHAR(255)
+        )
+      `);
+      return true;
+    } else if (tableName === "mock_tests") {
+      await mysqlPool.query(`
+        CREATE TABLE IF NOT EXISTS mock_tests (
+          id VARCHAR(255) PRIMARY KEY,
+          title VARCHAR(255),
+          name VARCHAR(255),
+          category VARCHAR(255),
+          difficulty VARCHAR(50),
+          time_limit INT DEFAULT 60,
+          sections JSON,
+          created_at VARCHAR(255),
+          updated_at VARCHAR(255)
+        )
+      `);
+      return true;
+    } else if (tableName === "live_meetings") {
+      await mysqlPool.query(`
+        CREATE TABLE IF NOT EXISTS live_meetings (
+          id VARCHAR(255) PRIMARY KEY,
+          title VARCHAR(255),
+          description TEXT,
+          meet_url LONGTEXT,
+          scheduled_at VARCHAR(255),
+          duration INT DEFAULT 60,
+          instructor VARCHAR(255),
+          status VARCHAR(50) DEFAULT 'upcoming',
+          created_at VARCHAR(255),
+          updated_at VARCHAR(255)
+        )
+      `);
+      return true;
+    } else if (tableName === "classrooms") {
+      await mysqlPool.query(`
+        CREATE TABLE IF NOT EXISTS classrooms (
+          id VARCHAR(255) PRIMARY KEY,
+          name VARCHAR(255),
+          description LONGTEXT,
+          teacher_id VARCHAR(255),
+          created_at VARCHAR(255)
+        )
+      `);
+      return true;
+    } else if (tableName === "classroom_enrollments") {
+      await mysqlPool.query(`
+        CREATE TABLE IF NOT EXISTS classroom_enrollments (
+          id VARCHAR(255) PRIMARY KEY,
+          classroom_id VARCHAR(255),
+          student_id VARCHAR(255),
+          enrolled_at VARCHAR(255)
+        )
+      `);
+      return true;
+    } else if (tableName === "quizzes") {
+      await mysqlPool.query(`
+        CREATE TABLE IF NOT EXISTS quizzes (
+          id VARCHAR(255) PRIMARY KEY,
+          course_id VARCHAR(255),
+          title VARCHAR(255),
+          description TEXT,
+          questions JSON,
+          time_limit INT DEFAULT 30,
+          created_at VARCHAR(255),
+          updated_at VARCHAR(255)
+        )
+      `);
+      return true;
+    } else if (tableName === "students") {
+      await mysqlPool.query(`
+        CREATE TABLE IF NOT EXISTS students (
+          id VARCHAR(255) PRIMARY KEY,
+          name VARCHAR(255),
+          email VARCHAR(255),
+          phone VARCHAR(50),
+          status VARCHAR(50),
+          target_band DECIMAL(3,1),
+          current_band DECIMAL(3,1),
+          plan VARCHAR(100),
+          created_at VARCHAR(255),
+          updated_at VARCHAR(255)
+        )
+      `);
+      return true;
+    } else if (sampleRow && typeof sampleRow === "object") {
+      const keys = Object.keys(sampleRow);
+      if (keys.length > 0) {
+        const colsDef = keys.map(k => {
+          if (k === "id") return "`id` VARCHAR(255) PRIMARY KEY";
+          return `\`${k}\` LONGTEXT`;
+        });
+        if (!sampleRow.hasOwnProperty("id")) {
+          colsDef.unshift("`id` VARCHAR(255) PRIMARY KEY");
+        }
+        await mysqlPool.query(`CREATE TABLE IF NOT EXISTS \`${tableName}\` (${colsDef.join(", ")})`);
+        return true;
+      }
+    }
+  } catch (err: any) {
+    console.warn(`Failed to auto-create table '${tableName}':`, err.message || err);
+  }
+  return false;
 }
 
 async function startServer() {
@@ -1089,8 +1247,24 @@ async function startServer() {
           if (Array.isArray(colRows) && colRows.length > 0) {
             validCols = new Set(colRows.map((col: any) => col.Field));
           }
-        } catch (colErr) {
-          console.warn(`Could not fetch columns for ${table}:`, colErr);
+        } catch (colErr: any) {
+          // If table does not exist, auto-create it and retry fetching columns
+          if (colErr.errno === 1146 || colErr.code === "ER_NO_SUCH_TABLE" || colErr.message?.toLowerCase().includes("doesn't exist")) {
+            const sample = (insertData && (Array.isArray(insertData) ? insertData[0] : insertData)) || 
+                           (upsertData && (Array.isArray(upsertData) ? upsertData[0] : upsertData)) || 
+                           updateData;
+            await ensureTableExists(table, sample);
+            try {
+              const [colRowsRetry]: any = await mysqlPool.query(`SHOW COLUMNS FROM \`${table}\``);
+              if (Array.isArray(colRowsRetry) && colRowsRetry.length > 0) {
+                validCols = new Set(colRowsRetry.map((col: any) => col.Field));
+              }
+            } catch (retryErr) {
+              // Gracefully handle if columns still unavailable
+            }
+          } else {
+            console.warn(`Could not fetch columns for ${table}:`, colErr.message || colErr);
+          }
         }
       }
 
@@ -1304,12 +1478,15 @@ async function startServer() {
       }
     } catch (err: any) {
       const tableName = req.body?.table;
-      console.warn(`MySQL proxy warning on table '${tableName}':`, err.message || err);
-      // If table does not exist, trigger table init in background and return empty dataset gracefully
+      // If table does not exist, auto-create it now and return empty dataset gracefully
       if (err.errno === 1146 || err.code === "ER_NO_SUCH_TABLE" || err.message?.toLowerCase().includes("doesn't exist")) {
-        initTables().catch(() => {});
+        const sample = (req.body?.insertData && (Array.isArray(req.body.insertData) ? req.body.insertData[0] : req.body.insertData)) || 
+                       (req.body?.upsertData && (Array.isArray(req.body.upsertData) ? req.body.upsertData[0] : req.body.upsertData)) || 
+                       req.body?.updateData;
+        await ensureTableExists(tableName, sample);
         return res.json([]);
       }
+      console.warn(`MySQL proxy warning on table '${tableName}':`, err.message || err);
       res.status(500).json({ error: err.message });
     }
   });

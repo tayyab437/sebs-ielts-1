@@ -37,7 +37,7 @@ interface BlockProps {
   updateBlock: (id: string, data: any) => void;
   deleteBlock: (id: string) => void;
   duplicateBlock: (id: string) => void;
-  onOpenSlashMenu: (e: React.KeyboardEvent, index: number) => void;
+  onOpenSlashMenu: (e: React.KeyboardEvent | any, index: number) => void;
   dragHandleProps?: any;
 }
 
@@ -794,20 +794,32 @@ export function BlockEditor({ block, index, updateBlock, deleteBlock, duplicateB
       {/* Block Controls (Hover) */}
       <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 mt-2 shrink-0">
         <button 
+          type="button"
           className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 cursor-grab active:cursor-grabbing"
           {...dragHandleProps}
+          title="Drag to reorder"
         >
           <GripVertical className="w-4 h-4" />
         </button>
         <button 
-          className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+          type="button"
+          className="p-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+          onClick={(e) => onOpenSlashMenu(e.currentTarget, index)}
+          title="Add Block Below"
+        >
+          <Plus className="w-3.5 h-3.5" />
+        </button>
+        <button 
+          type="button"
+          className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
           onClick={() => duplicateBlock(block.id)}
           title="Duplicate Block"
         >
           <Copy className="w-3.5 h-3.5" />
         </button>
         <button 
-          className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500"
+          type="button"
+          className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors"
           onClick={() => deleteBlock(block.id)}
           title="Delete Block"
         >

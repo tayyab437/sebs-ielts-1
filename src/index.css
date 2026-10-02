@@ -99,6 +99,7 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    box-sizing: border-box;
   }
   html {
     @apply font-sans;
@@ -107,10 +108,22 @@
     text-size-adjust: 100%;
     touch-action: manipulation;
     scroll-behavior: smooth;
+    overflow-x: clip;
+    max-width: 100vw;
+    width: 100%;
   }
   body {
     @apply bg-background text-foreground;
     touch-action: manipulation;
+    overflow-x: clip;
+    max-width: 100vw;
+    width: 100%;
+    position: relative;
+  }
+  #root {
+    overflow-x: clip;
+    max-width: 100vw;
+    width: 100%;
   }
 
   /* Eliminate 300ms tap delay and ensure responsive tap responsiveness across mobile browsers */
@@ -122,6 +135,21 @@
   @media (max-width: 768px) {
     input, select, textarea {
       font-size: 16px !important;
+    }
+
+    /* Boost tiny text to legible thresholds on mobile screens for Google PageSpeed compliance */
+    .text-\[7px\], .text-\[7\.5px\], .text-\[8px\], .text-\[8\.5px\], .text-\[9px\] {
+      font-size: 11px !important;
+      line-height: 1.3 !important;
+    }
+    .text-\[10px\], .text-\[10\.5px\] {
+      font-size: 12px !important;
+      line-height: 1.35 !important;
+    }
+
+    /* Adequate spacing and minimum touch target size */
+    button, [role="button"], a.btn {
+      min-height: 38px;
     }
   }
 }
@@ -138,8 +166,18 @@
   /* Content visibility optimization for off-screen sections: defers layout/paint until scrolled into view */
   .content-visibility-auto {
     content-visibility: auto;
-    contain-intrinsic-size: 1px 500px;
+    contain-intrinsic-size: auto 500px;
   }
+}
+
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
+}
+
+/* Fast tap response: eliminates 300ms mobile tap delay & optimizes INP */
+button, a, input, select, textarea, [role="button"] {
+  touch-action: manipulation;
 }
 
 /* Elegant, Custom thin scrollbars across the application */

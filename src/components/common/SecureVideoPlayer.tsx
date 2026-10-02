@@ -238,10 +238,11 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
   const vqQuery = selectedOpt.ytQuality !== "default" ? `&vq=${selectedOpt.ytQuality}` : "";
 
   // Masked URL generation for YouTube iframe:
-  // Using youtube-nocookie embed with enablejsapi=1, autoplay=1, mute=1 to eliminate YouTube's center play button overlay
   const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const autoplayFlag = autoPlay ? 1 : 0;
+  const muteFlag = isMuted ? 1 : 0;
   const maskedEmbedUrl = isYouTube
-    ? `https://www.youtube-nocookie.com/embed/${youtubeId}?enablejsapi=1&autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&widget_referrer=${encodeURIComponent(origin)}&origin=${encodeURIComponent(origin)}${vqQuery}`
+    ? `https://www.youtube-nocookie.com/embed/${youtubeId}?enablejsapi=1&autoplay=${autoplayFlag}&mute=${muteFlag}&controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&widget_referrer=${encodeURIComponent(origin)}&origin=${encodeURIComponent(origin)}${vqQuery}`
     : url;
 
   // PostMessage sender for YouTube iframe API commands
@@ -545,6 +546,7 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
         if (onPauseRef.current) onPauseRef.current();
       } else {
         sendYouTubeCommand("unMute");
+        sendYouTubeCommand("setVolume", [Math.max(20, (volumeRef.current || 0.8) * 100)]);
         sendYouTubeCommand("playVideo");
         setIsPlaying(true);
         if (onPlayRef.current) onPlayRef.current();

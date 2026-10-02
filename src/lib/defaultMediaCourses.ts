@@ -90,6 +90,22 @@ export const DEFAULT_MEDIA_COURSES: MediaCourse[] = [
                 points: 15,
                 requiredToPass: true
               }
+            ],
+            resources: [
+              {
+                id: "res-nouns-1",
+                title: "SEBS Practice Sheet: Nouns & Suffix Word Formation",
+                url: "https://sebsinstitute.com/worksheets/nouns.pdf",
+                type: "pdf",
+                size: "2 Pages • Fillable Online"
+              },
+              {
+                id: "res-adj-1",
+                title: "SEBS Practice Sheet: Adjectives, Adverbs & Verbs",
+                url: "https://sebsinstitute.com/worksheets/adjectives-adverbs.pdf",
+                type: "pdf",
+                size: "2 Pages • Fillable Online"
+              }
             ]
           },
           {

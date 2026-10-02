@@ -69,6 +69,9 @@ import { MediaCourse, MediaEpisode, MediaQuestion } from "@/src/types/mediaCours
 import { safeSetItem, safeGetItemAndParse } from "@/src/lib/safeStorage";
 import { SecureVideoPlayer, getStoredResolution } from "@/src/components/common/SecureVideoPlayer";
 import CourseCompletionCelebrationModal from "@/src/components/courses/CourseCompletionCelebrationModal";
+import InteractiveWorksheetViewer from "@/src/components/courses/InteractiveWorksheetViewer";
+import { getWorksheetSubmission, getLoggedInStudentInfo } from "@/src/lib/worksheetService";
+import { WorksheetEvaluationResult } from "@/src/types/worksheet";
 
 interface MediaCoursePlayerProps {
   course: any; // MediaCourse or adapted Course
@@ -238,6 +241,26 @@ export default function MediaCoursePlayer({
   });
   const [isCelebrationModalOpen, setIsCelebrationModalOpen] = useState(false);
 
+  // Interactive Worksheet Viewer State
+  const [activeWorksheet, setActiveWorksheet] = useState<{
+    isOpen: boolean;
+    type: string;
+    title: string;
+  } | null>(null);
+
+  const [worksheetScores, setWorksheetScores] = useState<Record<string, WorksheetEvaluationResult>>({});
+
+  useEffect(() => {
+    try {
+      const nounsSub = getWorksheetSubmission("nouns_suffixes", "std-current");
+      const adjSub = getWorksheetSubmission("adjectives_adverbs_verbs", "std-current");
+      const map: Record<string, WorksheetEvaluationResult> = {};
+      if (nounsSub?.evaluation) map["nouns_suffixes"] = nounsSub.evaluation;
+      if (adjSub?.evaluation) map["adjectives_adverbs_verbs"] = adjSub.evaluation;
+      setWorksheetScores(map);
+    } catch (e) {}
+  }, [activeWorksheet]);
+
   // Check if certificate is already claimed for this course
   const isCertAlreadyClaimed = React.useMemo(() => {
     try {
@@ -360,6 +383,49 @@ export default function MediaCoursePlayer({
   const [customResUrl, setCustomResUrl] = useState("");
   const [customResType, setCustomResType] = useState<"doc" | "audio" | "link" | "pdf">("doc");
   const [previewResource, setPreviewResource] = useState<any | null>(null);
+
+  // Deduplicated worksheets list to avoid repetitive/overflowing cards
+  const uniqueWorksheets = React.useMemo(() => {
+    const rawList = [
+      {
+        id: "ws-nouns-suffixes",
+        worksheetType: "nouns_suffixes",
+        title: "SEBS Practice Sheet: Nouns & Suffix Word Formation",
+        type: "pdf" as const,
+        size: "2 Pages • Fillable Online",
+        description: "Word formation through 12 common noun suffixes, 8 noun classifications, and the 10-word root noun challenge."
+      },
+      {
+        id: "ws-adjectives-adverbs-verbs",
+        worksheetType: "adjectives_adverbs_verbs",
+        title: "SEBS Practice Sheet: Adjectives, Adverbs & Verbs",
+        type: "pdf" as const,
+        size: "2 Pages • Fillable Online",
+        description: "Master word formation across -full, -less, -ive, -ly, -ify and apply most common adverbs in natural sentences."
+      },
+      ...(currentEpisode?.resources || []).map((r: any) => ({
+        ...r,
+        worksheetType: r.title?.toLowerCase().includes("adj") ? "adjectives_adverbs_verbs" : "nouns_suffixes"
+      })),
+      ...customResources.map((c) => ({
+        ...c,
+        isCustom: true,
+        worksheetType: c.title?.toLowerCase().includes("adj") ? "adjectives_adverbs_verbs" : "nouns_suffixes"
+      }))
+    ];
+
+    const seen = new Set<string>();
+    return rawList.filter((item: any) => {
+      // Exclude duplicate types challenge if encountered
+      if (item.id === "ws-nouns-types" || (item.title && item.title.toLowerCase().includes("types of nouns & challenge"))) {
+        return false;
+      }
+      const norm = (item.title || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (!norm || seen.has(norm)) return false;
+      seen.add(norm);
+      return true;
+    });
+  }, [currentEpisode?.resources, customResources]);
 
   // Video seeking target
   const [seekTarget, setSeekTarget] = useState<number | null>(null);
@@ -1208,7 +1274,7 @@ export default function MediaCoursePlayer({
           </div>
 
           {/* INTERACTIVE MULTI-TAB SYSTEM */}
-          <section className="bg-white dark:bg-[#161b22] rounded-2xl shadow-sm border border-slate-200/80 dark:border-white/5 overflow-hidden flex flex-col">
+          <section className="bg-white dark:bg-[#161b22] rounded-2xl shadow-sm border border-slate-200/80 dark:border-white/5 overflow-hidden flex flex-col max-w-full">
             
             {/* Pill-Style Navigation Tab Headers */}
             <div className="p-2.5 sm:p-3 bg-slate-50/75 dark:bg-white/5 border-b border-slate-200/80 dark:border-white/5">
@@ -1236,7 +1302,7 @@ export default function MediaCoursePlayer({
                 >
                   <span>Resources</span>
                   <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${activeTab === "resources" ? "bg-white/20 text-white" : "bg-slate-300 dark:bg-white/20 text-slate-700 dark:text-slate-300"}`}>
-                    {currentEpisode.resources?.length || 3}
+                    {uniqueWorksheets.length}
                   </span>
                 </button>
 
@@ -1288,7 +1354,7 @@ export default function MediaCoursePlayer({
             </div>
 
             {/* Tab Body */}
-            <div className="p-4 sm:p-6">
+            <div className="p-4 sm:p-6 overflow-hidden max-w-full">
               
               {/* 1. OVERVIEW TAB */}
               {activeTab === "overview" && (
@@ -1437,253 +1503,108 @@ export default function MediaCoursePlayer({
                 </div>
               )}
 
-              {/* 2. RESOURCES TAB */}
+              {/* 2. RESOURCES TAB: NON-DOWNLOADABLE INTERACTIVE WORKSHEETS */}
               {activeTab === "resources" && (
-                <div className="flex flex-col gap-5">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
-                    <div>
-                      <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                        <BookOpen className="w-4 h-4 text-rose-600" />
-                        Lesson Handouts & Certified Material
-                      </h2>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Download certified institute handouts, phonetics audio tracks, and personal notes for offline review.
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsAddingResource(!isAddingResource)}
-                        className="text-xs font-semibold gap-1.5 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer"
-                      >
-                        <Plus className="w-3.5 h-3.5 text-rose-600" /> Add Resource / Link
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={handleDownloadAllResources}
-                        className="text-xs font-semibold gap-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white cursor-pointer shadow-xs"
-                      >
-                        <Download className="w-3.5 h-3.5" /> Download All (.ZIP / Pack)
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Add Custom Resource Form */}
-                  {isAddingResource && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3 shadow-xs"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-900">Add Personal Study Resource</span>
-                        <button
-                          onClick={() => setIsAddingResource(false)}
-                          className="text-slate-400 hover:text-slate-600 p-1"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                        <Input
-                          value={customResTitle}
-                          onChange={(e) => setCustomResTitle(e.target.value)}
-                          placeholder="Resource title (e.g. My Vocabulary Cheat Sheet)..."
-                          className="text-xs bg-white border-slate-200"
-                        />
-                        <Input
-                          value={customResUrl}
-                          onChange={(e) => setCustomResUrl(e.target.value)}
-                          placeholder="URL / Web link (optional)..."
-                          className="text-xs bg-white border-slate-200"
-                        />
-                        <div className="flex items-center gap-2">
-                          <select
-                            value={customResType}
-                            onChange={(e: any) => setCustomResType(e.target.value)}
-                            className="text-xs bg-white border border-slate-200 rounded-lg px-2.5 py-2 text-slate-700 flex-1 outline-none"
-                          >
-                            <option value="doc">Document (.DOC)</option>
-                            <option value="pdf">PDF Worksheet (.PDF)</option>
-                            <option value="audio">Audio Track (.MP3)</option>
-                            <option value="link">Web Link (.URL)</option>
-                          </select>
-                          <Button
-                            size="sm"
-                            onClick={handleAddCustomResource}
-                            className="bg-rose-600 hover:bg-rose-700 text-white text-xs px-3 rounded-lg"
-                          >
-                            Save
-                          </Button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Resources Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                    {/* Default Official Handouts */}
-                    {[
-                      {
-                        id: "res-def-1",
-                        title: `${currentEpisode.title} - Speaking Worksheet`,
-                        type: "doc" as const,
-                        size: "2.4 MB • Certified PDF",
-                        description: "Full question inversion drills, speech templates, and answer models."
-                      },
-                      {
-                        id: "res-def-2",
-                        title: "High-Band Fillers & Collocations Guide",
-                        type: "pdf" as const,
-                        size: "1.1 MB • Cambridge Model",
-                        description: "Buffer hedges, discourse markers, and formal conversational openers."
-                      },
-                      {
-                        id: "res-def-3",
-                        title: "Diaphragmatic Intonation Drill Audio",
-                        type: "audio" as const,
-                        size: "8.5 MB • High-Res Audio",
-                        description: "Listen & repeat voice pitch modulations recorded by Syed Ejaz Bukhari."
-                      },
-                      ...(currentEpisode.resources || []),
-                      ...customResources.map((c) => ({
-                        ...c,
-                        isCustom: true
-                      }))
-                    ].map((res: any, rIdx: number) => {
+                <div className="flex flex-col gap-4">
+                  {/* Worksheets Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 w-full">
+                    {uniqueWorksheets.map((res: any, rIdx: number) => {
                       const isAudio = res.type === "audio";
-                      const isDoc = res.type === "doc" || res.type === "pdf";
-                      const isLink = res.type === "link";
-                      const isDownloaded = downloadedResourceIds.includes(res.id || `res-${rIdx}`);
+                      const evalScore = worksheetScores[res.worksheetType];
+                      const isCompleted = !!evalScore;
 
                       return (
                         <div
                           key={res.id || rIdx}
-                          className="p-4 rounded-xl bg-white border border-slate-200 flex flex-col justify-between gap-3.5 shadow-xs hover:border-slate-300 transition-all group"
+                          className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 flex flex-col justify-between gap-3.5 shadow-xs hover:border-rose-300 dark:hover:border-rose-500/50 transition-all group overflow-hidden min-w-0 max-w-full"
                         >
-                          <div className="flex items-start gap-3">
+                          <div className="flex items-start gap-3 min-w-0">
                             <div
                               className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                                 isAudio
                                   ? "bg-emerald-50 text-emerald-600 border border-emerald-200/60"
-                                  : isLink
-                                  ? "bg-purple-50 text-purple-600 border border-purple-200/60"
+                                  : isCompleted
+                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-300"
                                   : "bg-rose-50 text-rose-600 border border-rose-200/60"
                               }`}
                             >
                               {isAudio ? (
                                 <Headphones className="w-5 h-5" />
-                              ) : isLink ? (
-                                <ExternalLink className="w-5 h-5" />
+                              ) : isCompleted ? (
+                                <Award className="w-5 h-5 text-emerald-600" />
                               ) : (
                                 <FileText className="w-5 h-5" />
                               )}
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center justify-between gap-1">
-                                <h3 className="text-xs font-bold text-slate-900 truncate" title={res.title}>
+                            <div className="min-w-0 flex-1 overflow-hidden">
+                              <div className="flex items-center justify-between gap-1 min-w-0">
+                                <h3 className="text-xs font-bold text-slate-900 dark:text-white truncate" title={res.title}>
                                   {res.title}
                                 </h3>
                                 {res.isCustom && (
                                   <button
                                     onClick={() => handleDeleteCustomResource(res.id)}
-                                    className="text-slate-400 hover:text-rose-600 p-0.5"
-                                    title="Delete custom resource"
+                                    className="text-slate-400 hover:text-rose-600 p-0.5 shrink-0 cursor-pointer"
+                                    title="Delete custom worksheet"
                                   >
                                     <Trash2 className="w-3 h-3" />
                                   </button>
                                 )}
                               </div>
-                              <p className="text-[11px] text-slate-500 uppercase tracking-wide mt-0.5">
-                                {res.type.toUpperCase()} • {res.size || "Certified Resource"}
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-wide mt-0.5 flex items-center gap-1.5 font-semibold truncate">
+                                <span className="text-rose-600 dark:text-rose-400 font-bold shrink-0">ONLINE WORKSHEET</span>
+                                <span className="shrink-0">•</span>
+                                <span className="truncate">{res.size || "Interactive"}</span>
                               </p>
                               {res.description && (
-                                <p className="text-[11px] text-slate-600 line-clamp-2 mt-1">
+                                <p className="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2 mt-1 break-words">
                                   {res.description}
                                 </p>
                               )}
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-                            {isDownloaded && (
-                              <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
-                                <FileCheck className="w-3 h-3" /> Ready
-                              </span>
-                            )}
-                            {isAudio ? (
-                              <Button
-                                size="sm"
-                                onClick={() => handleDownloadFile(res)}
-                                className="w-full text-xs h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 cursor-pointer shadow-xs"
-                              >
-                                <Play className="w-3.5 h-3.5" /> Practice Audio Drill
-                              </Button>
+                          <div className="flex flex-col gap-2 pt-2 border-t border-slate-100 dark:border-white/5 min-w-0">
+                            {isCompleted ? (
+                              <div className="flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 p-2 rounded-lg border border-emerald-200 dark:border-emerald-800/40 text-xs min-w-0">
+                                <div className="flex items-center gap-1.5 font-bold truncate">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                  <span className="truncate">Evaluated: {evalScore.totalScore}/100</span>
+                                </div>
+                                <span className="text-[10px] font-black uppercase bg-emerald-600 text-white px-2 py-0.5 rounded shrink-0">
+                                  {evalScore.grade.split(" ")[0]}
+                                </span>
+                              </div>
                             ) : (
-                              <>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setPreviewResource(res)}
-                                  className="flex-1 text-xs h-8 rounded-lg border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer"
-                                >
-                                  <Eye className="w-3 h-3 mr-1 text-slate-500" /> Preview
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleDownloadFile(res)}
-                                  className="flex-1 text-xs h-8 rounded-lg bg-rose-600 hover:bg-rose-700 text-white gap-1 cursor-pointer shadow-xs"
-                                >
-                                  <Download className="w-3 h-3" /> Get File
-                                </Button>
-                              </>
+                              <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/5 px-2 py-1 rounded-md border border-slate-200/80 dark:border-white/10 truncate">
+                                <FileCheck className="w-3 h-3 text-rose-500 shrink-0" />
+                                <span className="truncate">Ready to Fill & Submit</span>
+                              </div>
                             )}
+
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setActiveWorksheet({
+                                  isOpen: true,
+                                  type: res.worksheetType || "nouns_suffixes",
+                                  title: res.title
+                                });
+                              }}
+                              className={`w-full text-xs h-9 rounded-lg font-bold transition-all cursor-pointer shadow-xs gap-1.5 min-w-0 shrink-0 ${
+                                isCompleted
+                                  ? "bg-slate-900 hover:bg-slate-800 text-white"
+                                  : "bg-[#c5221f] hover:bg-rose-700 text-white"
+                              }`}
+                            >
+                              <FileText className="w-3.5 h-3.5 shrink-0" />
+                              <span className="truncate">{isCompleted ? "Review Evaluated Worksheet" : "Open Worksheet / Fill Online"}</span>
+                            </Button>
                           </div>
                         </div>
                       );
                     })}
                   </div>
-
-                  {/* Resource Preview Dialog */}
-                  {previewResource && (
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3 mt-2 shadow-xs">
-                      <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                        <div className="flex items-center gap-2">
-                          <Eye className="w-4 h-4 text-rose-600" />
-                          <span className="text-xs font-bold text-slate-900">
-                            Resource Preview: {previewResource.title}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handleDownloadFile(previewResource)}
-                            className="text-xs h-7 rounded-lg bg-rose-600 hover:bg-rose-700 text-white gap-1"
-                          >
-                            <Download className="w-3 h-3" /> Download Document
-                          </Button>
-                          <button
-                            onClick={() => setPreviewResource(null)}
-                            className="text-slate-400 hover:text-slate-600 p-1"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="p-4 bg-white rounded-lg border border-slate-200 font-mono text-xs text-slate-800 space-y-2 max-h-56 overflow-y-auto leading-relaxed">
-                        <div className="font-bold text-rose-600">SEBS Certified Study Sheet - Lesson 0{currentLessonNum}</div>
-                        <div>Target Topic: {currentEpisode.title}</div>
-                        <div>Instructor: {rawCourse.instructor || "Syed Ejaz Bukhari"}</div>
-                        <div className="border-t border-slate-100 pt-2 text-slate-600">
-                          {currentEpisode.pedagogicalRule?.description || "In spoken discourse, remember to elevate tone on key contrastive words and relax vowels during transition markers."}
-                        </div>
-                        <div className="text-slate-600">
-                          Recommended Practice: Read all dialogue items with voice projection and record your speech memo for mentor review.
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -2761,6 +2682,31 @@ export default function MediaCoursePlayer({
         totalLectures={flattenedEpisodes.length}
         category={rawCourse.category || "IELTS"}
       />
+
+      {/* Full-Screen Interactive Fillable Worksheet Modal */}
+      {activeWorksheet?.isOpen && (() => {
+        const studentInfo = getLoggedInStudentInfo();
+        return (
+          <InteractiveWorksheetViewer
+            worksheetType={activeWorksheet.type}
+            resourceTitle={activeWorksheet.title}
+            episodeId={currentEpisode.id}
+            courseId={rawCourse.id || "media-course-1"}
+            studentId={studentInfo.id || "std-current"}
+            studentName={studentInfo.name || ""}
+            onClose={() => setActiveWorksheet(null)}
+            onSubmitted={(evalRes) => {
+              setWorksheetScores(prev => ({
+                ...prev,
+                [activeWorksheet.type]: evalRes
+              }));
+              if (!completedEpisodeIds.includes(currentEpisode.id)) {
+                handleCompleteEpisode();
+              }
+            }}
+          />
+        );
+      })()}
     </div>
   );
 }
