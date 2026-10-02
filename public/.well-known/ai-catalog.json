@@ -1,0 +1,48 @@
+{
+  "$schema": "https://agenticresourcediscovery.org/schemas/v1.0/ai-catalog.json",
+  "specVersion": "1.0",
+  "host": {
+    "identifier": "urn:ai:sebsinstitute.com",
+    "displayName": "SEB's Institute",
+    "documentationUrl": "https://sebsinstitute.com/about",
+    "logoUrl": "https://sebsinstitute.com/sebs_official_logo_315.webp"
+  },
+  "entries": [
+    {
+      "identifier": "urn:ai:sebsinstitute.com:service:ielts-mock-tests",
+      "displayName": "IELTS Computer-Delivered Mock Tests",
+      "description": "Full-length timed IELTS Academic and General Training practice tests with automated AI band score evaluation and rubrics breakdown.",
+      "type": "application/json",
+      "url": "https://sebsinstitute.com/mock-tests",
+      "representativeQueries": [
+        "Take IELTS mock test online with instant band evaluation",
+        "Practice IELTS Academic reading and listening computer-delivered tests",
+        "Evaluate IELTS writing Task 1 and Task 2 essays for band score"
+      ]
+    },
+    {
+      "identifier": "urn:ai:sebsinstitute.com:service:ielts-courses",
+      "displayName": "IELTS & Spoken English Masterclasses",
+      "description": "Specialized IELTS Band 8.5+ coaching and spoken English phonetics training taught by Syed Ejaz Bukhari.",
+      "type": "application/json",
+      "url": "https://sebsinstitute.com/courses",
+      "representativeQueries": [
+        "Learn IELTS preparation strategies from Syed Ejaz Bukhari",
+        "Enroll in live IELTS speaking and phonetics classes",
+        "Online English language fluency and grammar courses"
+      ]
+    },
+    {
+      "identifier": "urn:ai:sebsinstitute.com:service:ai-writing-evaluator",
+      "displayName": "AI IELTS Writing Evaluator",
+      "description": "Instant essay grading against official IELTS assessment criteria: Task Achievement, Coherence & Cohesion, Lexical Resource, and Grammatical Range.",
+      "type": "application/json",
+      "url": "https://sebsinstitute.com/dashboard/writing",
+      "representativeQueries": [
+        "Grade my IELTS writing task 2 essay instantly",
+        "Evaluate IELTS task 1 chart analysis against Cambridge rubrics",
+        "Check lexical resource and grammar accuracy for IELTS essays"
+      ]
+    }
+  ]
+}

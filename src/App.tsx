@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "motion/react";
 import { Home, BookOpen, GraduationCap, Trophy, LayoutDashboard, User, LogIn, Menu, X, ArrowRight, ShieldCheck, Globe, Users, Star, BarChart3, Clock, Sparkles, Bell, Facebook, Youtube, Instagram, Linkedin, Send, Mail, Phone, MapPin, Megaphone, Search, ExternalLink, FileText, HelpCircle, ArrowUpRight, FolderOpen, Compass } from "lucide-react";
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { fetchCustomPages, CustomPage } from "./lib/customPages";
@@ -51,18 +50,19 @@ function Footer() {
   }, []);
 
   useEffect(() => {
-    const handleFooterLogoSync = () => {
-      fetchSiteSettings(true).then(settings => {
+    const handleFooterLogoSync = (bypass = false) => {
+      fetchSiteSettings(typeof bypass === "boolean" ? bypass : false).then(settings => {
         if (settings?.site_logo_url) setLogoUrl(settings.site_logo_url);
         if (settings?.site_logo_alt) setLogoAlt(settings.site_logo_alt);
       });
     };
-    handleFooterLogoSync();
-    window.addEventListener("storage", handleFooterLogoSync);
-    window.addEventListener("site_settings_updated", handleFooterLogoSync);
+    handleFooterLogoSync(false);
+    const onSettingsUpdate = () => handleFooterLogoSync(true);
+    window.addEventListener("storage", onSettingsUpdate);
+    window.addEventListener("site_settings_updated", onSettingsUpdate);
     return () => {
-      window.removeEventListener("storage", handleFooterLogoSync);
-      window.removeEventListener("site_settings_updated", handleFooterLogoSync);
+      window.removeEventListener("storage", onSettingsUpdate);
+      window.removeEventListener("site_settings_updated", onSettingsUpdate);
     };
   }, []);
 
@@ -403,8 +403,8 @@ function Navbar() {
   const [isOfferBarDismissed, setIsOfferBarDismissed] = useState(() => sessionStorage.getItem("top_offer_bar_dismissed") === "true");
 
   useEffect(() => {
-    const handleStorageChange = () => {
-      fetchSiteSettings(true).then(settings => {
+    const handleStorageChange = (bypass = false) => {
+      fetchSiteSettings(typeof bypass === "boolean" ? bypass : false).then(settings => {
         if (settings?.site_logo_url) setLogoUrl(settings.site_logo_url);
         if (settings?.site_logo_alt) setLogoAlt(settings.site_logo_alt);
         setHeaderStyle(settings.site_header_style || "classic");
@@ -429,12 +429,13 @@ function Navbar() {
         }
       });
     };
-    window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("site_settings_updated", handleStorageChange);
-    handleStorageChange();
+    const onSettingsUpdate = () => handleStorageChange(true);
+    window.addEventListener("storage", onSettingsUpdate);
+    window.addEventListener("site_settings_updated", onSettingsUpdate);
+    handleStorageChange(false);
     return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("site_settings_updated", handleStorageChange);
+      window.removeEventListener("storage", onSettingsUpdate);
+      window.removeEventListener("site_settings_updated", onSettingsUpdate);
     };
   }, []);
 
@@ -883,74 +884,68 @@ function Navbar() {
                   )}
                 </Button>
 
-                <AnimatePresence>
-                  {showNotifications && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute right-0 mt-3 w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl z-50 overflow-hidden"
-                    >
-                      <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-white/5">
-                        <span className="font-extrabold text-xs uppercase tracking-wider text-slate-900 dark:text-white">Notifications</span>
-                        {unreadCount > 0 && (
-                          <button
-                            onClick={handleMarkAllAsRead}
-                            className="text-[10px] font-black uppercase tracking-wider text-emerald-600 hover:text-emerald-500 transition-colors"
-                          >
-                            Mark all as read
-                          </button>
-                        )}
-                      </div>
-                      <div className="max-h-[320px] overflow-y-auto">
-                        {notifications.length === 0 ? (
-                          <div className="p-6 text-center text-slate-550 dark:text-slate-405 text-slate-400">
-                            <Bell className="w-8 h-8 opacity-25 mx-auto mb-2" />
-                            <p className="text-xs font-bold uppercase tracking-wider">No notifications yet</p>
-                          </div>
-                        ) : (
-                          <div className="divide-y divide-slate-100 dark:divide-white/5">
-                            {notifications.map((notif, idx) => (
-                              <div
-                                key={idx}
-                                className={`p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${
-                                  !notif.read ? "bg-emerald-500/5 dark:bg-emerald-500/10" : ""
-                                }`}
-                                onClick={() => {
-                                  if (!notif.read) {
-                                    setNotifications((prev) =>
-                                      prev.map((n, i) => (i === idx ? { ...n, read: true } : n))
-                                    );
-                                  }
-                                }}
-                              >
-                                <div className="flex gap-3">
-                                  <div className="mt-1 shrink-0">
-                                    <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                                      <Sparkles className="w-4 h-4" />
-                                    </div>
-                                  </div>
-                                  <div className="text-left">
-                                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 leading-snug">
-                                      {notif.message}
-                                    </p>
-                                    <p className="text-[10px] font-semibold text-slate-400 mt-1">
-                                      {new Date(notif.time).toLocaleTimeString([], {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                      })}
-                                    </p>
+                {showNotifications && (
+                  <div
+                    className="absolute right-0 mt-3 w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl z-50 overflow-hidden transition-all duration-200 transform origin-top-right animate-in fade-in zoom-in-95"
+                  >
+                    <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-white/5">
+                      <span className="font-extrabold text-xs uppercase tracking-wider text-slate-900 dark:text-white">Notifications</span>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={handleMarkAllAsRead}
+                          className="text-[10px] font-black uppercase tracking-wider text-emerald-600 hover:text-emerald-500 transition-colors"
+                        >
+                          Mark all as read
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-[320px] overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="p-6 text-center text-slate-550 dark:text-slate-405 text-slate-400">
+                          <Bell className="w-8 h-8 opacity-25 mx-auto mb-2" />
+                          <p className="text-xs font-bold uppercase tracking-wider">No notifications yet</p>
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-slate-100 dark:divide-white/5">
+                          {notifications.map((notif, idx) => (
+                            <div
+                              key={idx}
+                              className={`p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${
+                                !notif.read ? "bg-emerald-500/5 dark:bg-emerald-500/10" : ""
+                              }`}
+                              onClick={() => {
+                                if (!notif.read) {
+                                  setNotifications((prev) =>
+                                    prev.map((n, i) => (i === idx ? { ...n, read: true } : n))
+                                  );
+                                }
+                              }}
+                            >
+                              <div className="flex gap-3">
+                                <div className="mt-1 shrink-0">
+                                  <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                                    <Sparkles className="w-4 h-4" />
                                   </div>
                                 </div>
+                                <div className="text-left">
+                                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 leading-snug">
+                                    {notif.message}
+                                  </p>
+                                  <p className="text-[10px] font-semibold text-slate-400 mt-1">
+                                    {new Date(notif.time).toLocaleTimeString([], {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
+                                  </p>
+                                </div>
                               </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1028,66 +1023,61 @@ function Navbar() {
       </div>
 
       {/* Mobile Nav Overlay Panel */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-white/10 absolute w-full left-0 right-0 shadow-xl overflow-hidden"
-          >
-            <div className="px-5 pt-2 pb-6 space-y-1 text-left">
-              {navLinks.map((link) => {
-                const isActive = location.pathname === link.path;
-                return (
-                  <Link 
-                    key={link.name} 
-                    to={link.path} 
-                    className={`block px-4 py-3.5 text-sm font-black uppercase tracking-wider rounded-xl transition-all min-h-[48px] flex items-center ${isActive ? 'text-emerald-600 bg-emerald-500/5 pl-6' : 'text-slate-605 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <span className="flex items-center justify-between w-full">
-                      <span>{link.name}</span>
-                      {link.badge && (
-                        <span className="text-[10px] px-2 py-0.5 rounded font-black bg-emerald-500/10 text-emerald-600">
-                          {link.badge}
-                        </span>
-                      )}
-                    </span>
-                  </Link>
-                );
-              })}
-
-              <div className="pt-4 flex flex-col space-y-2.5 border-t border-slate-100 dark:border-white/5 mt-3">
-                {user ? (
-                  <>
-                    {user.email === "ac.repair.in.dubai3@gmail.com" && (
-                      <Link to="/admin" onClick={() => setIsOpen(false)}>
-                        <Button variant="ghost" className="w-full font-black text-emerald-650 dark:text-emerald-400 bg-emerald-500/5 rounded-xl uppercase tracking-wider text-xs">Admin Console</Button>
-                      </Link>
+      {isOpen && (
+        <div 
+          className="md:hidden bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-white/10 absolute w-full left-0 right-0 shadow-xl overflow-hidden transition-all duration-300 animate-in slide-in-from-top-2 fade-in"
+        >
+          <div className="px-5 pt-2 pb-6 space-y-1 text-left">
+            {navLinks.map((link) => {
+              const isActive = location.pathname === link.path;
+              return (
+                <Link 
+                  key={link.name} 
+                  to={link.path} 
+                  className={`block px-4 py-3.5 text-sm font-black uppercase tracking-wider rounded-xl transition-all min-h-[48px] flex items-center ${isActive ? 'text-emerald-600 bg-emerald-500/5 pl-6' : 'text-slate-605 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
+                  onClick={() => setIsOpen(false)}
+                >
+                  <span className="flex items-center justify-between w-full">
+                    <span>{link.name}</span>
+                    {link.badge && (
+                      <span className="text-[10px] px-2 py-0.5 rounded font-black bg-emerald-500/10 text-emerald-600">
+                        {link.badge}
+                      </span>
                     )}
-                    <Link to="/dashboard" onClick={() => setIsOpen(false)}>
-                      <Button variant="outline" className="w-full font-black uppercase tracking-wider text-xs">
-                        {userRole === "teacher" ? "Teacher Dashboard" : "Student Dashboard"}
-                      </Button>
+                  </span>
+                </Link>
+              );
+            })}
+
+            <div className="pt-4 flex flex-col space-y-2.5 border-t border-slate-100 dark:border-white/5 mt-3">
+              {user ? (
+                <>
+                  {user.email === "ac.repair.in.dubai3@gmail.com" && (
+                    <Link to="/admin" onClick={() => setIsOpen(false)}>
+                      <Button variant="ghost" className="w-full font-black text-emerald-650 dark:text-emerald-400 bg-emerald-500/5 rounded-xl uppercase tracking-wider text-xs">Admin Console</Button>
                     </Link>
-                    <Button onClick={() => { handleLogout(); setIsOpen(false); }} className="w-full bg-red-50 text-red-600 hover:bg-red-100 border-red-200 uppercase font-black tracking-wider text-xs rounded-xl">Logout</Button>
-                  </>
-                ) : (
-                  <>
-                    <Link to="/login" onClick={() => setIsOpen(false)}>
-                      <Button variant="outline" className="w-full font-black uppercase tracking-wider text-xs rounded-xl">Login</Button>
-                    </Link>
-                    <Link to="/signup" onClick={() => setIsOpen(false)}>
-                      <Button className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-black uppercase tracking-wider text-xs rounded-xl border-none">Get Started</Button>
-                    </Link>
-                  </>
-                )}
-              </div>
+                  )}
+                  <Link to="/dashboard" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full font-black uppercase tracking-wider text-xs">
+                      {userRole === "teacher" ? "Teacher Dashboard" : "Student Dashboard"}
+                    </Button>
+                  </Link>
+                  <Button onClick={() => { handleLogout(); setIsOpen(false); }} className="w-full bg-red-50 text-red-600 hover:bg-red-100 border-red-200 uppercase font-black tracking-wider text-xs rounded-xl">Logout</Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full font-black uppercase tracking-wider text-xs rounded-xl">Login</Button>
+                  </Link>
+                  <Link to="/signup" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-black uppercase tracking-wider text-xs rounded-xl border-none">Get Started</Button>
+                  </Link>
+                </>
+              )}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
@@ -1121,28 +1111,21 @@ function AnnouncementPopup() {
   }, [location.pathname, announcementActive]);
 
   return (
-    <AnimatePresence>
+    <>
       {showAnnouncementPopup && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           {/* Dark Ambient Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <div
             onClick={() => {
               setShowAnnouncementPopup(false);
               sessionStorage.setItem("site_announcement_shown", "true");
             }}
-            className="absolute inset-0 bg-black/85 backdrop-blur-md"
+            className="absolute inset-0 bg-black/85 backdrop-blur-md transition-opacity duration-300 animate-in fade-in"
           />
 
           {/* Styled Popup Container */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 30 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 30 }}
-            transition={{ type: "spring", duration: 0.5, bounce: 0.15 }}
-            className={`relative max-w-lg w-full rounded-[2.5rem] overflow-hidden shadow-3xl text-white border ${
+          <div
+            className={`relative max-w-lg w-full rounded-[2.5rem] overflow-hidden shadow-3xl text-white border transition-all duration-300 transform animate-in fade-in zoom-in-95 ${
               announcementTheme === "urgent-red"
                 ? "bg-gradient-to-b from-slate-900 via-red-950/80 to-slate-950 border-red-500/30"
                 : "bg-gradient-to-b from-slate-900 via-slate-950/80 to-black border-emerald-500/30"
@@ -1227,10 +1210,10 @@ function AnnouncementPopup() {
                 </Link>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       )}
-    </AnimatePresence>
+    </>
   );
 }
 

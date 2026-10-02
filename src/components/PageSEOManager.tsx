@@ -181,13 +181,18 @@ export function PageSEOManager() {
       }
     };
 
-    const handleSync = () => {
-      fetchSiteSettings(true).then(updatePageSEO);
+    const handleSync = (bypass = false) => {
+      fetchSiteSettings(typeof bypass === "boolean" ? bypass : false).then(updatePageSEO);
     };
 
-    handleSync();
-    window.addEventListener("storage", handleSync);
-    return () => window.removeEventListener("storage", handleSync);
+    handleSync(false);
+    const onSettingsUpdate = () => handleSync(true);
+    window.addEventListener("storage", onSettingsUpdate);
+    window.addEventListener("site_settings_updated", onSettingsUpdate);
+    return () => {
+      window.removeEventListener("storage", onSettingsUpdate);
+      window.removeEventListener("site_settings_updated", onSettingsUpdate);
+    };
   }, [location.pathname]);
 
   return null;

@@ -1493,6 +1493,8 @@ async function startServer() {
 
   // Hostinger MySQL & Local File Persistent Settings Endpoints
   const SETTINGS_FILE_PATH = path.join(process.cwd(), "site_settings.json");
+  let cachedServerSettings: Record<string, any> | null = null;
+  let cachedServerSettingsTime = 0;
 
   const readServerSettingsFile = (): Record<string, any> => {
     try {
@@ -1515,31 +1517,40 @@ async function startServer() {
   };
 
   app.get("/api/mysql/settings", async (req, res) => {
+    res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    const now = Date.now();
+    if (cachedServerSettings && (now - cachedServerSettingsTime) < 60000) {
+      return res.json(cachedServerSettings);
+    }
     try {
       const fileData = readServerSettingsFile();
       let mysqlData: Record<string, any> = {};
 
       try {
-        const [rows]: any = await mysqlPool.execute(
-          "SELECT * FROM resources WHERE name = 'SITE_SETTINGS' AND type = 'SETTINGS' LIMIT 1"
-        );
+        const [rows]: any = await Promise.race([
+          mysqlPool.execute("SELECT * FROM resources WHERE name = 'SITE_SETTINGS' AND type = 'SETTINGS' LIMIT 1"),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 350))
+        ]);
         if (rows && rows.length > 0 && rows[0].url) {
           mysqlData = JSON.parse(rows[0].url);
         }
       } catch (dbErr) {
-        // MySQL query failed or not initialized; fileData will serve as fallback
+        // Fallback to fileData
       }
 
       const merged = { ...fileData, ...mysqlData };
+      cachedServerSettings = merged;
+      cachedServerSettingsTime = Date.now();
       return res.json(merged);
     } catch (err: any) {
       console.error("Settings GET error:", err);
       const fallback = readServerSettingsFile();
-      res.json(fallback);
+      return res.json(fallback);
     }
   });
 
   app.post("/api/mysql/settings", async (req, res) => {
+    cachedServerSettings = null;
     try {
       const newIncoming = req.body || {};
       const fileData = readServerSettingsFile();
@@ -2980,6 +2991,74 @@ Ensure that the output is formatted as a valid JSON object matching the followin
   });
 
   // Explicit handlers for llms.txt, llms-full.txt and robots.txt
+  app.get(["/ai-catalog.json", "/.well-known/ai-catalog.json", "/ard.json", "/.well-known/ard.json"], (req, res) => {
+    res.removeHeader("X-Frame-Options");
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+
+    const requested = req.path.includes("ard.json") ? "ard.json" : "ai-catalog.json";
+    const wellKnownPublic = path.join(process.cwd(), "public", ".well-known", requested);
+    const rootPublic = path.join(process.cwd(), "public", requested);
+    const distPath = path.join(process.cwd(), "dist", requested);
+
+    if (fs.existsSync(wellKnownPublic)) {
+      return res.sendFile(wellKnownPublic);
+    }
+    if (fs.existsSync(rootPublic)) {
+      return res.sendFile(rootPublic);
+    }
+    if (fs.existsSync(distPath)) {
+      return res.sendFile(distPath);
+    }
+    
+    // Fallback JSON payload matching ARD specification
+    return res.json({
+      "$schema": "https://agenticresourcediscovery.org/schemas/v1.0/ai-catalog.json",
+      "specVersion": "1.0",
+      "host": {
+        "identifier": "urn:ai:sebsinstitute.com",
+        "displayName": "SEB's Institute",
+        "documentationUrl": "https://sebsinstitute.com/about",
+        "logoUrl": "https://sebsinstitute.com/sebs_official_logo_315.webp"
+      },
+      "entries": [
+        {
+          "identifier": "urn:ai:sebsinstitute.com:service:ielts-mock-tests",
+          "displayName": "IELTS Computer-Delivered Mock Tests",
+          "description": "Full-length timed IELTS Academic and General Training practice tests with automated AI band score evaluation.",
+          "type": "application/json",
+          "url": "https://sebsinstitute.com/mock-tests",
+          "representativeQueries": [
+            "Take IELTS mock test online with instant band evaluation",
+            "Practice IELTS Academic reading and listening computer-delivered tests"
+          ]
+        },
+        {
+          "identifier": "urn:ai:sebsinstitute.com:service:ielts-courses",
+          "displayName": "IELTS & Spoken English Masterclasses",
+          "description": "Specialized IELTS Band 8.5+ coaching and spoken English phonetics training taught by Syed Ejaz Bukhari.",
+          "type": "application/json",
+          "url": "https://sebsinstitute.com/courses",
+          "representativeQueries": [
+            "Learn IELTS preparation strategies from Syed Ejaz Bukhari",
+            "Enroll in live IELTS speaking and phonetics classes"
+          ]
+        },
+        {
+          "identifier": "urn:ai:sebsinstitute.com:service:ai-writing-evaluator",
+          "displayName": "AI IELTS Writing Evaluator",
+          "description": "Instant essay grading against official IELTS assessment criteria.",
+          "type": "application/json",
+          "url": "https://sebsinstitute.com/dashboard/writing",
+          "representativeQueries": [
+            "Grade my IELTS writing task 2 essay instantly"
+          ]
+        }
+      ]
+    });
+  });
+
   app.get("/llms.txt", (req, res) => {
     const publicPath = path.join(process.cwd(), "public", "llms.txt");
     const distPath = path.join(process.cwd(), "dist", "llms.txt");
@@ -3039,6 +3118,18 @@ Sitemap: https://sebsinstitute.com/sitemap.xml
     }
     res.status(404).send("<?xml version=\"1.0\" encoding=\"UTF-8\"?><error>Sitemap not found</error>");
   });
+
+  // Long-term immutable caching for static assets (images, webp, png, fonts, icons)
+  const publicDir = path.join(process.cwd(), "public");
+  app.use(express.static(publicDir, {
+    maxAge: "1y",
+    immutable: true,
+    setHeaders: (res, filePath) => {
+      if (filePath.match(/\.(webp|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|mp3|mp4)$/i)) {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      }
+    }
+  }));
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

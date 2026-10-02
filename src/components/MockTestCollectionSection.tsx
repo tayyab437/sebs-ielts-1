@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, lazy, Suspense } from "react";
 import { ArrowUpRight, VolumeX, Volume2, Play } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { fetchSiteSettings } from "@/src/lib/settings";
-import SecureVideoPlayer from "@/src/components/common/SecureVideoPlayer";
+
+const SecureVideoPlayer = lazy(() => import("@/src/components/common/SecureVideoPlayer"));
 
 const FALLBACK_YOUTUBE_EMBED = "https://www.youtube-nocookie.com/embed/yY-7o-q9M7U?autoplay=1&mute=1&loop=1&playlist=yY-7o-q9M7U&controls=1&modestbranding=1&rel=0";
 
@@ -143,16 +144,19 @@ export default function MockTestCollectionSection() {
               </div>
             </div>
           ) : parsed.type === "iframe" || videoError ? (
-            <SecureVideoPlayer
-              url={rawVideoUrl}
-              title="SEBS Official Masterclass Showcase"
-              className="w-full h-full rounded-[28px] border-none shadow-none"
-            />
+            <Suspense fallback={<div className="w-full h-full bg-slate-900 animate-pulse rounded-[28px]" />}>
+              <SecureVideoPlayer
+                url={rawVideoUrl}
+                title="SEBS Official Masterclass Showcase"
+                className="w-full h-full rounded-[28px] border-none shadow-none"
+              />
+            </Suspense>
           ) : (
             <>
               <video 
                 ref={videoRef}
                 src={parsed.src} 
+                preload="none"
                 loop 
                 muted={isMuted}
                 playsInline

@@ -28,11 +28,12 @@ export default defineConfig(() => {
           manualChunks(id) {
             if (id.includes('node_modules')) {
               if (id.includes('firebase')) return 'vendor-firebase';
+              if (id.includes('@supabase')) return 'vendor-supabase';
               if (id.includes('@dnd-kit')) return 'vendor-dnd';
-              if (id.includes('motion')) return 'vendor-motion';
+              if (id.includes('motion') || id.includes('framer-motion')) return 'vendor-motion';
               if (id.includes('lucide-react')) return 'vendor-icons';
-              if (id.includes('recharts')) return 'vendor-charts';
-              if (id.includes('react-markdown') || id.includes('rehype')) return 'vendor-markdown';
+              if (id.includes('recharts') || id.includes('d3') || id.includes('victory') || id.includes('decimal.js')) return 'vendor-charts';
+              if (id.includes('react-markdown') || id.includes('rehype') || id.includes('remark')) return 'vendor-markdown';
             }
           },
         },

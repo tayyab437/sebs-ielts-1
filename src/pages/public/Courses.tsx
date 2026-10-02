@@ -1090,16 +1090,48 @@ function StudentCoursesInner({
       >
         {/* Thumbnail Area */}
         <div className={`relative overflow-hidden shrink-0 ${isCompact ? 'aspect-[2/1] rounded-[2rem]' : 'aspect-video'}`}>
-          <img 
-            src={course.featured_image || course.thumbnail_url || "https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format,compress&fm=webp&w=800&q=75"} 
-            alt={course.title} 
-            loading="lazy"
-            decoding="async"
-            width={800}
-            height={450}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-            referrerPolicy="no-referrer"
-          />
+          {course.featured_image && !course.featured_image.includes("1543269865-cbf427effbad") ? (
+            <img 
+              src={course.featured_image} 
+              alt={course.title} 
+              loading="lazy"
+              decoding="async"
+              width={800}
+              height={450}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              referrerPolicy="no-referrer"
+            />
+          ) : course.thumbnail_url && !course.thumbnail_url.includes("1543269865-cbf427effbad") ? (
+            <img 
+              src={course.thumbnail_url} 
+              alt={course.title} 
+              loading="lazy"
+              decoding="async"
+              width={800}
+              height={450}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 flex flex-col items-center justify-center p-6 text-center relative overflow-hidden group-hover:scale-105 transition-transform duration-700">
+              <div className="absolute -top-10 -right-10 w-36 h-36 bg-red-600/15 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute -bottom-10 -left-10 w-36 h-36 bg-indigo-600/15 rounded-full blur-2xl pointer-events-none" />
+              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white mb-2 shadow-inner border border-white/10">
+                {course.isMediaCourse ? (
+                  course.mediaType === "audio" ? <Volume2 className="w-7 h-7 text-violet-400" /> : <Video className="w-7 h-7 text-indigo-400" />
+                ) : course.course_type === "Listening" ? (
+                  <Headphones className="w-7 h-7 text-sky-400" />
+                ) : course.course_type === "Writing" ? (
+                  <PenTool className="w-7 h-7 text-amber-400" />
+                ) : course.course_type === "Speaking" ? (
+                  <Mic className="w-7 h-7 text-rose-400" />
+                ) : (
+                  <BookOpen className="w-7 h-7 text-emerald-400" />
+                )}
+              </div>
+              <span className="text-white/80 font-black text-xs uppercase tracking-wider line-clamp-1">{course.course_type || "IELTS Official Module"}</span>
+            </div>
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60" />
           
           {/* Skill Badge */}
@@ -3269,16 +3301,35 @@ function StudentCoursesInner({
               className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-100 dark:border-white/5 flex flex-col"
             >
               <div className="relative h-56 w-full overflow-hidden shrink-0">
-                <img 
-                  src={courseToStart.featured_image || courseToStart.thumbnail_url || "https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format,compress&fm=webp&w=800&q=75"} 
-                  alt={courseToStart.title}
-                  loading="lazy"
-                  decoding="async"
-                  width={800}
-                  height={224}
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
+                {(courseToStart.featured_image && !courseToStart.featured_image.includes("1543269865-cbf427effbad")) ? (
+                  <img 
+                    src={courseToStart.featured_image} 
+                    alt={courseToStart.title}
+                    loading="lazy"
+                    decoding="async"
+                    width={800}
+                    height={224}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (courseToStart.thumbnail_url && !courseToStart.thumbnail_url.includes("1543269865-cbf427effbad")) ? (
+                  <img 
+                    src={courseToStart.thumbnail_url} 
+                    alt={courseToStart.title}
+                    loading="lazy"
+                    decoding="async"
+                    width={800}
+                    height={224}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/10">
+                      <BookOpen className="w-8 h-8 text-emerald-400" />
+                    </div>
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
                 
                 <Button 
@@ -3481,13 +3532,19 @@ function StudentCoursesInner({
                           setCourseToStart(resumeCourse);
                         }}
                       >
-                        <div className="w-full md:w-48 aspect-video rounded-2xl overflow-hidden shrink-0 shadow-lg relative">
-                          <img 
-                            src={resumeCourse.featured_image || "https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&auto=format&fit=crop&q=60"} 
-                            alt={resumeCourse.title} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            referrerPolicy="no-referrer"
-                          />
+                        <div className="w-full md:w-48 aspect-video rounded-2xl overflow-hidden shrink-0 shadow-lg relative bg-slate-950">
+                          {resumeCourse.featured_image && !resumeCourse.featured_image.includes("1543269865-cbf427effbad") ? (
+                            <img 
+                              src={resumeCourse.featured_image} 
+                              alt={resumeCourse.title} 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 flex items-center justify-center">
+                              <BookOpen className="w-8 h-8 text-emerald-400" />
+                            </div>
+                          )}
                           <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                              <PlayCircle className="w-12 h-12 text-white" />
                           </div>
