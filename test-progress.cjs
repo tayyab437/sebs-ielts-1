@@ -1,3 +1,0 @@
-const testProgress = (testId) => {
-  // simulate
-}
