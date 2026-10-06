@@ -3,10 +3,24 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
 
+function asyncCssPlugin() {
+  return {
+    name: 'async-css-plugin',
+    enforce: 'post' as const,
+    transformIndexHtml(html: string) {
+      // Replace standard render-blocking CSS link with non-blocking preload + media switch
+      return html.replace(
+        /<link rel="stylesheet" crossorigin href="(\/assets\/[^"]+\.css)">/g,
+        '<link rel="preload" as="style" crossorigin href="$1" />\n    <link rel="stylesheet" crossorigin href="$1" media="print" onload="this.media=\'all\'" />\n    <noscript><link rel="stylesheet" crossorigin href="$1" /></noscript>'
+      );
+    }
+  };
+}
+
 export default defineConfig(() => {
   return {
     base: '/',
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), asyncCssPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
@@ -23,6 +37,20 @@ export default defineConfig(() => {
       cssCodeSplit: true,
       target: 'es2020',
       minify: 'esbuild' as const,
+      modulePreload: {
+        polyfill: false,
+        resolveDependencies(_filename, deps) {
+          // Defer heavy vendor chunks (charts, motion, markdown, dnd) until explicitly visited
+          return deps.filter(dep => 
+            !dep.includes('vendor-charts') && 
+            !dep.includes('vendor-motion') && 
+            !dep.includes('vendor-markdown') &&
+            !dep.includes('vendor-dnd') &&
+            !dep.includes('AdminDashboard') &&
+            !dep.includes('TeacherDashboard')
+          );
+        }
+      },
       rollupOptions: {
         output: {
           manualChunks(id) {

@@ -4,12 +4,12 @@ import { Home, BookOpen, GraduationCap, Trophy, LayoutDashboard, User, LogIn, Me
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { fetchCustomPages, CustomPage } from "./lib/customPages";
 
-// Home is eagerly loaded for instant initial render
+// Eagerly load HomePage for instant first contentful paint (FCP)
 import { Toaster, toast } from "sonner";
 import HomePage from "./pages/public/Home";
 import { lazyWithRetry } from "./lib/lazyRetry";
 
-// Route-level code splitting with resilience for secondary pages
+// Code-split heavy routes to eliminate unused JavaScript from initial bundle
 const LoginPage = lazyWithRetry(() => import("./pages/auth/Login"));
 const SignupPage = lazyWithRetry(() => import("./pages/auth/Signup"));
 const DashboardPage = lazyWithRetry(() => import("./pages/dashboard/StudentDashboard"));
@@ -26,6 +26,22 @@ const ContactPage = lazyWithRetry(() => import("./pages/public/Contact"));
 const AboutPage = lazyWithRetry(() => import("./pages/public/About"));
 const BooksPage = lazyWithRetry(() => import("./pages/public/Books"));
 const NotFoundPage = lazyWithRetry(() => import("./pages/public/NotFound"));
+
+// Intelligent prefetcher on hover/touch/idle
+export const prefetchRoute = (path: string) => {
+  if (!path) return;
+  if (path.startsWith("/courses")) import("./pages/public/Courses");
+  else if (path.startsWith("/mock-test") || path.startsWith("/academic") || path.startsWith("/general") || path.startsWith("/gt")) import("./pages/dashboard/MockTest");
+  else if (path.startsWith("/pricing")) import("./pages/public/Pricing");
+  else if (path.startsWith("/dashboard/writing")) import("./pages/dashboard/WritingModule");
+  else if (path.startsWith("/dashboard")) import("./pages/dashboard/StudentDashboard");
+  else if (path.startsWith("/admin")) import("./pages/admin/AdminDashboard");
+  else if (path.startsWith("/login")) import("./pages/auth/Login");
+  else if (path.startsWith("/signup")) import("./pages/auth/Signup");
+  else if (path.startsWith("/about")) import("./pages/public/About");
+  else if (path.startsWith("/contact")) import("./pages/public/Contact");
+  else if (path.startsWith("/books")) import("./pages/public/Books");
+};
 
 import { supabase } from "./lib/supabaseClient";
 import { MeetingsProvider } from "./context/MeetingsContext";
@@ -693,6 +709,8 @@ function Navbar() {
                     <Link
                       key={link.name}
                       to={link.path}
+                      onMouseEnter={() => prefetchRoute(link.path)}
+                      onTouchStart={() => prefetchRoute(link.path)}
                       className={`text-xs font-bold uppercase tracking-wider transition-all duration-200 py-1 ${
                         isActive
                           ? 'text-red-600 dark:text-red-400 font-black border-b-2 border-red-600 dark:border-red-400'
@@ -853,6 +871,8 @@ function Navbar() {
                   <Link 
                     key={link.name} 
                     to={link.path} 
+                    onMouseEnter={() => prefetchRoute(link.path)}
+                    onTouchStart={() => prefetchRoute(link.path)}
                     className={`text-xs font-black uppercase tracking-wider transition-all duration-300 relative group py-1 ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
                   >
                     <span className="flex items-center gap-1.5">
@@ -1219,7 +1239,6 @@ function AnnouncementPopup() {
 
 function UnifiedDashboard() {
   const [role, setRole] = useState<string>(() => localStorage.getItem("user_role") || "student");
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function determineRole() {
@@ -1229,7 +1248,6 @@ function UnifiedDashboard() {
       }
 
       if (!supabase) {
-        setLoading(false);
         return;
       }
       try {
@@ -1251,8 +1269,6 @@ function UnifiedDashboard() {
         }
       } catch (e) {
         console.warn("Failed checking user profile role in UnifiedDashboard:", e);
-      } finally {
-        setLoading(false);
       }
     }
     determineRole();
@@ -1264,23 +1280,31 @@ function UnifiedDashboard() {
     return () => window.removeEventListener("storage", syncRoleChange);
   }, []);
 
-  if (loading && supabase && !localStorage.getItem("user_role")) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="text-center space-y-4">
-          <Sparkles className="w-10 h-10 text-emerald-505 text-emerald-500 animate-spin mx-auto" />
-          <p className="text-xs font-black uppercase tracking-widest text-slate-500">Securing Academic Sessions...</p>
-        </div>
-      </div>
-    );
-  }
-
   return role === "teacher" ? <TeacherDashboard /> : <DashboardPage />;
 }
 
 function AppContent() {
   const location = useLocation();
   const isDashboard = location.pathname.startsWith("/dashboard");
+
+  useEffect(() => {
+    // Silently prefetch primary public routes when the browser is completely idle
+    if (typeof window !== "undefined") {
+      const runIdlePrefetch = () => {
+        prefetchRoute("/courses");
+        prefetchRoute("/mock-tests");
+        prefetchRoute("/pricing");
+      };
+
+      if ("requestIdleCallback" in window) {
+        const id = (window as any).requestIdleCallback(runIdlePrefetch, { timeout: 3500 });
+        return () => (window as any).cancelIdleCallback(id);
+      } else {
+        const timer = setTimeout(runIdlePrefetch, 2500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-background w-full max-w-full overflow-x-clip">
@@ -1289,14 +1313,7 @@ function AppContent() {
       <Navbar />
       <AnnouncementPopup />
       <main className="w-full min-w-0 max-w-full overflow-x-clip">
-        <Suspense fallback={
-          <div className="min-h-[60vh] flex items-center justify-center py-20">
-            <div className="flex flex-col items-center space-y-3">
-              <div className="w-8 h-8 rounded-full border-3 border-[#00a8cc] border-t-transparent animate-spin" />
-              <span className="text-xs font-semibold text-slate-500 tracking-wider uppercase">Loading page...</span>
-            </div>
-          </div>
-        }>
+        <Suspense fallback={<div className="fixed top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500 to-indigo-500 animate-pulse z-50 pointer-events-none" />}>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/about" element={<AboutPage />} />

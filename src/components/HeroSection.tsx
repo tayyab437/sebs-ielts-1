@@ -19,7 +19,7 @@ export default function HeroSection() {
   const navigate = useNavigate();
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [heroImage, setHeroImage] = useState(
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuCiEeL_rvkeTN1WD6jaHqpjjT6Ax0o76N4V0pu0-U9-8L1-NmC3hc-k0EqLXXfB8w7S_JHA6uxlcJjT8HwJ71j-cNAM7_gbTUJWGN8laDVri0819emFvtVeJw9ECQhOkzQ3RMjUHwfzUzbRiBQjBA9pd6Akxy_LHqda19ke-kK_FnKsrOsty0qCAuANw2-QNsmrthXPUV2iOWueWW_foCUWkH5CGELRy807DzjiALnHmhKPMt_TPi8Fc37lfjxiLk5GbFg"
+    "/syed_ejaz_bukhari_hero.webp"
   );
 
   useEffect(() => {

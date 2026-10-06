@@ -563,7 +563,7 @@ function StudentCoursesInner({
     : catalogCourses;
 
   const [quizzes, setQuizzes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [subExamMode, setSubExamMode] = useState<"ac" | "gt">("ac");
   const FIVE_MINUTES_MS = 5 * 60 * 1000;
 
@@ -2649,17 +2649,6 @@ function StudentCoursesInner({
 
   const activeAudioSourceUrl = uploadedVoiceUrl || displayAudioUrl || "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="text-center space-y-4">
-          <RefreshCw className="w-8 h-8 text-primary animate-spin mx-auto text-center" />
-          <p className="text-xs font-black uppercase tracking-widest text-slate-400 italic">Formatting Candidate Study Roadmaps...</p>
-        </div>
-      </div>
-    );
-  }
-
   const displayEnableRecording = (currentLesson?.parts && currentLesson.parts.length > 0)
     ? (currentLesson.parts[activePartIdx]?.enableRecording !== false)
     : (currentLesson?.enableRecording !== false);
@@ -3088,14 +3077,6 @@ function StudentCoursesInner({
       default: return <FileText className="w-3.5 h-3.5 text-blue-500" />;
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <RefreshCw className="w-8 h-8 text-primary animate-spin" />
-      </div>
-    );
-  }
 
   const isSupabaseDev = !supabase;
   if (!user && !isSupabaseDev) {

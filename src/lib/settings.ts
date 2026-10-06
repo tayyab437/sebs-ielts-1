@@ -128,7 +128,7 @@ export const defaultSettings: SiteSettings = {
   site_favicon_alt: "SEB's Institute Favicon",
   site_logo_url: "/sebs_official_logo_315.webp",
   site_logo_alt: "SEB's Institute Logo",
-  site_hero_image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuCiEeL_rvkeTN1WD6jaHqpjjT6Ax0o76N4V0pu0-U9-8L1-NmC3hc-k0EqLXXfB8w7S_JHA6uxlcJjT8HwJ71j-cNAM7_gbTUJWGN8laDVri0819emFvtVeJw9ECQhOkzQ3RMjUHwfzUzbRiBQjBA9pd6Akxy_LHqda19ke-kK_FnKsrOsty0qCAuANw2-QNsmrthXPUV2iOWueWW_foCUWkH5CGELRy807DzjiALnHmhKPMt_TPi8Fc37lfjxiLk5GbFg",
+  site_hero_image_url: "/syed_ejaz_bukhari_hero.webp",
   site_hero_image_alt: "Sir Syed Ejaz Bukhari - Founder & Master English Coach",
   courses_banner_image_url: "/level_up_skills_banner.jpg",
   courses_banner_image_alt: "Level Up Your Skills with Syed Ejaz Bukhari - SEB's Institute Course MasterClasses",
@@ -204,7 +204,7 @@ export function sanitizeAssetUrl(url: string | null | undefined, defaultUrl: str
 }
 
 let activeFetchPromise: Promise<SiteSettings> | null = null;
-let cachedSettings: SiteSettings | null = null;
+let cachedSettings: SiteSettings | null = typeof window !== "undefined" ? getLocalSettings() : defaultSettings;
 
 export function invalidateSettingsCache() {
   cachedSettings = null;
@@ -216,8 +216,34 @@ export async function fetchSiteSettings(bypassCache = false): Promise<SiteSettin
     cachedSettings = null;
     activeFetchPromise = null;
   } else if (cachedSettings) {
+    // Return cached settings immediately to eliminate critical request chaining
+    // Trigger background sync silently without blocking
+    if (!activeFetchPromise && typeof window !== "undefined") {
+      activeFetchPromise = (async () => {
+        try {
+          const res = await fetch("/api/mysql/settings");
+          if (res.ok) {
+            const data = await res.json();
+            if (data && typeof data === "object" && Object.keys(data).length > 0) {
+              const sanitizedData = { ...data };
+              if (sanitizedData.site_logo_url) sanitizedData.site_logo_url = sanitizeAssetUrl(sanitizedData.site_logo_url, defaultSettings.site_logo_url);
+              if (sanitizedData.site_favicon_url) sanitizedData.site_favicon_url = sanitizeAssetUrl(sanitizedData.site_favicon_url, defaultSettings.site_favicon_url);
+              if (sanitizedData.site_hero_image_url) sanitizedData.site_hero_image_url = sanitizeAssetUrl(sanitizedData.site_hero_image_url, defaultSettings.site_hero_image_url);
+              if (sanitizedData.courses_banner_image_url) sanitizedData.courses_banner_image_url = sanitizeAssetUrl(sanitizedData.courses_banner_image_url, defaultSettings.courses_banner_image_url);
+              cachedSettings = { ...defaultSettings, ...sanitizedData };
+            }
+          }
+        } catch {
+          // Ignore background sync errors
+        } finally {
+          activeFetchPromise = null;
+        }
+        return cachedSettings || defaultSettings;
+      })();
+    }
     return cachedSettings;
   }
+
   if (activeFetchPromise) {
     return activeFetchPromise;
   }

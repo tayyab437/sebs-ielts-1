@@ -151,12 +151,21 @@ export default function StudentDashboard() {
   const [userProfile, setUserProfile] = useState<any>(() => {
     try {
       const stored = localStorage.getItem("student_profile") || localStorage.getItem("sb-user") || localStorage.getItem("authenticated_user");
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    return {
+      first_name: "Student",
+      last_name: "",
+      streak: 12,
+      xp: 2450,
+      target_band: 8.0,
+      predicted_band: 7.5,
+      last_lesson: "Orientation Lecture",
+      avatar_url: "",
+      exam_type: "Academic"
+    };
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   
   // Responsive navigation and active sub-view toggling
   const [activeTab, setActiveTab] = useState<"overview" | "settings" | "resources" | "courses" | "certificate" | "writing" | "speaking" | "listening" | "reading" | "writing-simulator" | "speaking-simulator" | "ai-conversation" | "google-meet" | "embedded-calling" | "classrooms">(() => {
@@ -1502,15 +1511,6 @@ export default function StudentDashboard() {
       setIsUpdating(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center">
-        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-slate-500 font-bold italic animate-pulse">Syncing your IELTS preparation workspace...</p>
-      </div>
-    );
-  }
 
   // Registration gate for dashboard
   const isSupabaseDev = !supabase;

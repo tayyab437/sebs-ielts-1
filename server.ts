@@ -769,6 +769,15 @@ async function startServer() {
     next();
   });
 
+  // Efficient 1-year immutable caching for all static assets (images, webp, png, svg, fonts, css, js)
+  app.use((req, res, next) => {
+    if (req.path.match(/\.(webp|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|mp4|mp3)$/i) || req.path.startsWith("/assets/")) {
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      res.setHeader("Expires", new Date(Date.now() + 31536000000).toUTCString());
+    }
+    next();
+  });
+
   // Stripe Webhook Endpoint needs RAW body (MUST be defined before express.json() is applied)
   app.post("/api/payment/webhook", express.raw({ type: "application/json" }), async (req: any, res: any) => {
     const stripe = getStripe();
@@ -3014,20 +3023,19 @@ Ensure that the output is formatted as a valid JSON object matching the followin
     
     // Fallback JSON payload matching ARD specification
     return res.json({
-      "$schema": "https://agenticresourcediscovery.org/schemas/v1.0/ai-catalog.json",
       "specVersion": "1.0",
       "host": {
-        "identifier": "urn:ai:sebsinstitute.com",
+        "identifier": "urn:air:sebsinstitute.com:host:main",
         "displayName": "SEB's Institute",
         "documentationUrl": "https://sebsinstitute.com/about",
         "logoUrl": "https://sebsinstitute.com/sebs_official_logo_315.webp"
       },
       "entries": [
         {
-          "identifier": "urn:ai:sebsinstitute.com:service:ielts-mock-tests",
+          "identifier": "urn:air:sebsinstitute.com:service:ielts-mock-tests",
           "displayName": "IELTS Computer-Delivered Mock Tests",
           "description": "Full-length timed IELTS Academic and General Training practice tests with automated AI band score evaluation.",
-          "type": "application/json",
+          "type": "application/agent-card+json",
           "url": "https://sebsinstitute.com/mock-tests",
           "representativeQueries": [
             "Take IELTS mock test online with instant band evaluation",
@@ -3035,10 +3043,10 @@ Ensure that the output is formatted as a valid JSON object matching the followin
           ]
         },
         {
-          "identifier": "urn:ai:sebsinstitute.com:service:ielts-courses",
+          "identifier": "urn:air:sebsinstitute.com:service:ielts-courses",
           "displayName": "IELTS & Spoken English Masterclasses",
           "description": "Specialized IELTS Band 8.5+ coaching and spoken English phonetics training taught by Syed Ejaz Bukhari.",
-          "type": "application/json",
+          "type": "application/agent-card+json",
           "url": "https://sebsinstitute.com/courses",
           "representativeQueries": [
             "Learn IELTS preparation strategies from Syed Ejaz Bukhari",
@@ -3046,10 +3054,10 @@ Ensure that the output is formatted as a valid JSON object matching the followin
           ]
         },
         {
-          "identifier": "urn:ai:sebsinstitute.com:service:ai-writing-evaluator",
+          "identifier": "urn:air:sebsinstitute.com:service:ai-writing-evaluator",
           "displayName": "AI IELTS Writing Evaluator",
           "description": "Instant essay grading against official IELTS assessment criteria.",
-          "type": "application/json",
+          "type": "application/agent-card+json",
           "url": "https://sebsinstitute.com/dashboard/writing",
           "representativeQueries": [
             "Grade my IELTS writing task 2 essay instantly"

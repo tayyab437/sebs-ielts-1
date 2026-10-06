@@ -72,12 +72,15 @@ export default function CustomPageView() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (loading) {
+  if (loading && !page) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="text-center space-y-4">
-          <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs font-black uppercase tracking-widest text-slate-500">Loading Custom Page...</p>
+      <div className="min-h-[60vh] max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-6 animate-pulse">
+        <div className="h-8 bg-slate-200 dark:bg-slate-800 rounded-xl w-1/3" />
+        <div className="h-12 bg-slate-200 dark:bg-slate-800 rounded-2xl w-2/3" />
+        <div className="space-y-4 pt-6">
+          <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-full" />
+          <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-5/6" />
+          <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-4/6" />
         </div>
       </div>
     );

@@ -2796,13 +2796,6 @@ export default function AdminDashboard() {
     );
   };
 
-  if (loading)
-    return (
-      <div className="h-screen flex items-center justify-center font-bold text-primary italic">
-        Verifying Admin clearance...
-      </div>
-    );
-
   if (isAdmin === false) {
     return (
       <div className="h-screen flex items-center justify-center p-4">

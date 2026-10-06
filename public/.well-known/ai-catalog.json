@@ -1,18 +1,17 @@
 {
-  "$schema": "https://agenticresourcediscovery.org/schemas/v1.0/ai-catalog.json",
   "specVersion": "1.0",
   "host": {
-    "identifier": "urn:ai:sebsinstitute.com",
+    "identifier": "urn:air:sebsinstitute.com:host:main",
     "displayName": "SEB's Institute",
     "documentationUrl": "https://sebsinstitute.com/about",
     "logoUrl": "https://sebsinstitute.com/sebs_official_logo_315.webp"
   },
   "entries": [
     {
-      "identifier": "urn:ai:sebsinstitute.com:service:ielts-mock-tests",
+      "identifier": "urn:air:sebsinstitute.com:service:ielts-mock-tests",
       "displayName": "IELTS Computer-Delivered Mock Tests",
       "description": "Full-length timed IELTS Academic and General Training practice tests with automated AI band score evaluation and rubrics breakdown.",
-      "type": "application/json",
+      "type": "application/agent-card+json",
       "url": "https://sebsinstitute.com/mock-tests",
       "representativeQueries": [
         "Take IELTS mock test online with instant band evaluation",
@@ -21,10 +20,10 @@
       ]
     },
     {
-      "identifier": "urn:ai:sebsinstitute.com:service:ielts-courses",
+      "identifier": "urn:air:sebsinstitute.com:service:ielts-courses",
       "displayName": "IELTS & Spoken English Masterclasses",
       "description": "Specialized IELTS Band 8.5+ coaching and spoken English phonetics training taught by Syed Ejaz Bukhari.",
-      "type": "application/json",
+      "type": "application/agent-card+json",
       "url": "https://sebsinstitute.com/courses",
       "representativeQueries": [
         "Learn IELTS preparation strategies from Syed Ejaz Bukhari",
@@ -33,10 +32,10 @@
       ]
     },
     {
-      "identifier": "urn:ai:sebsinstitute.com:service:ai-writing-evaluator",
+      "identifier": "urn:air:sebsinstitute.com:service:ai-writing-evaluator",
       "displayName": "AI IELTS Writing Evaluator",
       "description": "Instant essay grading against official IELTS assessment criteria: Task Achievement, Coherence & Cohesion, Lexical Resource, and Grammatical Range.",
-      "type": "application/json",
+      "type": "application/agent-card+json",
       "url": "https://sebsinstitute.com/dashboard/writing",
       "representativeQueries": [
         "Grade my IELTS writing task 2 essay instantly",

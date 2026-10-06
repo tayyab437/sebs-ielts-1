@@ -85,7 +85,7 @@ export default function WritingModule({ initialType }: { initialType?: 'writing'
     }
   });
   const [userId, setUserId] = useState<string | null>(() => user?.id || null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [editorMode, setEditorMode] = useState<'edit' | 'preview'>('edit');
   const [isDictating, setIsDictating] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(40 * 60);
@@ -433,16 +433,6 @@ You should say:
   };
 
   const wordCount = essay.trim().split(/\s+/).filter(Boolean).length;
-
-  // Loading handling
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col items-center justify-center">
-        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-slate-400 font-black italic text-[10px] uppercase tracking-widest animate-pulse">Initializing Practice Module...</p>
-      </div>
-    );
-  }
 
   // Registration gate
   const isSupabaseDev = !supabase;

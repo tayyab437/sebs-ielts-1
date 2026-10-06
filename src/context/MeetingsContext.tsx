@@ -28,8 +28,14 @@ interface MeetingsContextType {
 const MeetingsContext = createContext<MeetingsContextType | undefined>(undefined);
 
 export const MeetingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [meetings, setMeetings] = useState<Meeting[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [meetings, setMeetings] = useState<Meeting[]>(() => {
+    try {
+      const saved = localStorage.getItem("sebs_global_meetings");
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+  const [loading, setLoading] = useState(false);
 
   const fetchMeetings = async () => {
     try {
@@ -160,7 +166,15 @@ export const MeetingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   useEffect(() => {
-    fetchMeetings();
+    // Run fetchMeetings during idle time to avoid critical request chains during initial navigation
+    let timer: any;
+    if (typeof window !== "undefined") {
+      if ("requestIdleCallback" in window) {
+        timer = (window as any).requestIdleCallback(() => fetchMeetings(), { timeout: 4000 });
+      } else {
+        timer = setTimeout(() => fetchMeetings(), 3000);
+      }
+    }
 
     // Listen to changes from other tabs or windows
     window.addEventListener("sebs_meetings_updated", fetchMeetings);
