@@ -1,13 +1,15 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import HeroSection from "@/src/components/HeroSection";
 import LiveLessonsSection from "@/src/components/LiveLessonsSection";
-import MockTestCollectionSection from "@/src/components/MockTestCollectionSection";
-import OfficialPracticeMaterialsSection from "@/src/components/OfficialPracticeMaterialsSection";
-import StudentTrustBannerSection from "@/src/components/StudentTrustBannerSection";
-import SixStepsSection from "@/src/components/SixStepsSection";
-import TakeFreeTestSection from "@/src/components/TakeFreeTestSection";
-import SeoOverviewContentSection from "@/src/components/SeoOverviewContentSection";
-import FaqSection from "@/src/components/FaqSection";
+
+// Code-split below-the-fold sections to shrink initial JS payload
+const MockTestCollectionSection = lazy(() => import("@/src/components/MockTestCollectionSection"));
+const OfficialPracticeMaterialsSection = lazy(() => import("@/src/components/OfficialPracticeMaterialsSection"));
+const StudentTrustBannerSection = lazy(() => import("@/src/components/StudentTrustBannerSection"));
+const SixStepsSection = lazy(() => import("@/src/components/SixStepsSection"));
+const TakeFreeTestSection = lazy(() => import("@/src/components/TakeFreeTestSection"));
+const SeoOverviewContentSection = lazy(() => import("@/src/components/SeoOverviewContentSection"));
+const FaqSection = lazy(() => import("@/src/components/FaqSection"));
 
 /**
  * DeferredSection: Defers the creation and mounting of below-the-fold DOM nodes
@@ -56,7 +58,7 @@ function DeferredSection({
       style={{ minHeight: isVisible ? undefined : minHeight }}
       className="content-visibility-auto"
     >
-      {isVisible ? children : null}
+      {isVisible ? <Suspense fallback={null}>{children}</Suspense> : null}
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
   X
 } from "lucide-react";
 import { fetchSiteSettings } from "@/src/lib/settings";
+import { prefetchRoute } from "../App";
 
 export default function HeroSection() {
   const navigate = useNavigate();
@@ -100,6 +101,8 @@ export default function HeroSection() {
               
               <Link
                 to="/courses"
+                onMouseEnter={() => prefetchRoute("/courses")}
+                onTouchStart={() => prefetchRoute("/courses")}
                 className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-[#202e43] hover:bg-[#152030] text-white font-bold text-sm shadow-lg shadow-slate-950/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl cursor-pointer"
               >
                 <BookOpen className="w-4 h-4 text-cyan-400" />

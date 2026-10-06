@@ -1287,25 +1287,6 @@ function AppContent() {
   const location = useLocation();
   const isDashboard = location.pathname.startsWith("/dashboard");
 
-  useEffect(() => {
-    // Silently prefetch primary public routes when the browser is completely idle
-    if (typeof window !== "undefined") {
-      const runIdlePrefetch = () => {
-        prefetchRoute("/courses");
-        prefetchRoute("/mock-tests");
-        prefetchRoute("/pricing");
-      };
-
-      if ("requestIdleCallback" in window) {
-        const id = (window as any).requestIdleCallback(runIdlePrefetch, { timeout: 3500 });
-        return () => (window as any).cancelIdleCallback(id);
-      } else {
-        const timer = setTimeout(runIdlePrefetch, 2500);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, []);
-
   return (
     <div className="min-h-screen bg-background w-full max-w-full overflow-x-clip">
       <PageSEOManager />

@@ -40,14 +40,11 @@ export default defineConfig(() => {
       modulePreload: {
         polyfill: false,
         resolveDependencies(_filename, deps) {
-          // Defer heavy vendor chunks (charts, motion, markdown, dnd) until explicitly visited
+          // Strictly limit initial modulepreload to essential entry scripts.
+          // Defer all secondary page chunks (Courses, MockTest, Pricing, Admin, etc.) and heavy libraries.
           return deps.filter(dep => 
-            !dep.includes('vendor-charts') && 
-            !dep.includes('vendor-motion') && 
-            !dep.includes('vendor-markdown') &&
-            !dep.includes('vendor-dnd') &&
-            !dep.includes('AdminDashboard') &&
-            !dep.includes('TeacherDashboard')
+            dep.includes('vendor-icons') || 
+            dep.includes('vendor-supabase')
           );
         }
       },
