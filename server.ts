@@ -738,7 +738,7 @@ async function startServer() {
   app.disable("x-powered-by");
   
   // Enable Gzip/Deflate compression for optimal transfer speeds
-  app.use(compression());
+  app.use(compression() as any);
 
   const PORT = Number(process.env.PORT) || 3000;
 
@@ -755,8 +755,8 @@ async function startServer() {
   // Security & SEO Headers Middleware
   app.use((req, res, next) => {
     res.removeHeader("X-Powered-By");
+    res.removeHeader("X-Frame-Options");
     res.setHeader("X-Content-Type-Options", "nosniff");
-    res.setHeader("X-Frame-Options", "SAMEORIGIN");
     res.setHeader("X-XSS-Protection", "1; mode=block");
     res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
 
@@ -3136,7 +3136,10 @@ Sitemap: https://sebsinstitute.com/sitemap.xml
 
   if (isDev) {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        allowedHosts: true,
+      },
       appType: "spa",
     });
     app.use(vite.middlewares);
