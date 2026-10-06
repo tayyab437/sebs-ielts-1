@@ -25,6 +25,7 @@ const CustomPageView = lazyWithRetry(() => import("./pages/public/CustomPageView
 const ContactPage = lazyWithRetry(() => import("./pages/public/Contact"));
 const AboutPage = lazyWithRetry(() => import("./pages/public/About"));
 const BooksPage = lazyWithRetry(() => import("./pages/public/Books"));
+const IeltsWritingGuide = lazyWithRetry(() => import("./pages/public/IeltsWritingGuide"));
 const NotFoundPage = lazyWithRetry(() => import("./pages/public/NotFound"));
 
 import { supabase } from "./lib/supabaseClient";
@@ -613,6 +614,7 @@ function Navbar() {
 
   const navLinks = [
     { name: "Home", path: "/" },
+    { name: "Writing", path: "/ielts-writing", badge: "Guide" },
     { name: "Courses", path: "/courses", badge: "Live" },
     { name: "Mock Tests", path: "/mock-tests", badge: "IELTS" },
     { name: "Pricing", path: "/pricing" },
@@ -1301,6 +1303,9 @@ function AppContent() {
             <Route path="/" element={<HomePage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/about-us" element={<AboutPage />} />
+            <Route path="/ielts-writing" element={<IeltsWritingGuide />} />
+            <Route path="/ielts-writing/" element={<IeltsWritingGuide />} />
+            <Route path="/resources/ielts-writing" element={<IeltsWritingGuide />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/books" element={<BooksPage />} />
             <Route path="/dashboard/books" element={<BooksPage isDashboardMode={true} />} />

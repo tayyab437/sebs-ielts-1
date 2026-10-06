@@ -11,6 +11,8 @@ import AdminClassroomManager from "../../components/admin/AdminClassroomManager"
 import AdminCustomPagesManager from "../../components/admin/AdminCustomPagesManager";
 import CarouselManager from "../../components/admin/CarouselManager";
 import MediaCoursesManager from "../../components/admin/MediaCoursesManager";
+import ListeningCourseBuilder from "../../components/admin/ListeningCourseBuilder";
+import SpeakingCourseBuilder from "../../components/admin/SpeakingCourseBuilder";
 import MembershipsManager from "../../components/admin/MembershipsManager";
 import CourseAccessTierPicker from "../../components/admin/CourseAccessTierPicker";
 import { syncMockTestTierAccess, syncCourseTierAccess } from "@/src/lib/membershipService";
@@ -81,6 +83,7 @@ import {
   HelpCircle,
   Video,
   Mic,
+  Headphones,
   Volume2,
   MapPin,
   Calendar,
@@ -353,6 +356,13 @@ const DEFAULT_STUDENTS = [
 export default function AdminDashboard() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(true);
   const [activeTab, setActiveTab] = useState(() => localStorage.getItem("admin_dashboard_tab") || "courses");
+  const [coursesSubTab, setCoursesSubTab] = useState<"all" | "listening" | "speaking" | "media" | "designer" | "ai" | "visualizer">(() => {
+    return (localStorage.getItem("admin_courses_subtab") as any) || "all";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("admin_courses_subtab", coursesSubTab);
+  }, [coursesSubTab]);
 
   useEffect(() => {
     localStorage.setItem("admin_dashboard_tab", activeTab);
@@ -369,8 +379,10 @@ export default function AdminDashboard() {
   const [generalFaviconAlt, setGeneralFaviconAlt] = useState(() => localStorage.getItem("site_favicon_alt") || "SEB's Institute Favicon");
   const [generalLogoUrl, setGeneralLogoUrl] = useState(() => localStorage.getItem("site_logo_url") || "/sebs_official_logo_315.webp");
   const [generalLogoAlt, setGeneralLogoAlt] = useState(() => localStorage.getItem("site_logo_alt") || "SEB's Institute Logo");
-  const [generalHeroImageUrl, setGeneralHeroImageUrl] = useState(() => localStorage.getItem("site_hero_image_url") || "/level_up_skills_banner.jpg");
-  const [generalHeroImageAlt, setGeneralHeroImageAlt] = useState(() => localStorage.getItem("site_hero_image_alt") || "Level Up Your Skills with Syed Ejaz Bukhari - SEB's Institute Course MasterClasses");
+  const [generalHeroImageUrl, setGeneralHeroImageUrl] = useState(() => localStorage.getItem("site_hero_image_url") || "https://lh3.googleusercontent.com/aida-public/AB6AXuCiEeL_rvkeTN1WD6jaHqpjjT6Ax0o76N4V0pu0-U9-8L1-NmC3hc-k0EqLXXfB8w7S_JHA6uxlcJjT8HwJ71j-cNAM7_gbTUJWGN8laDVri0819emFvtVeJw9ECQhOkzQ3RMjUHwfzUzbRiBQjBA9pd6Akxy_LHqda19ke-kK_FnKsrOsty0qCAuANw2-QNsmrthXPUV2iOWueWW_foCUWkH5CGELRy807DzjiALnHmhKPMt_TPi8Fc37lfjxiLk5GbFg");
+  const [generalHeroImageAlt, setGeneralHeroImageAlt] = useState(() => localStorage.getItem("site_hero_image_alt") || "Sir Syed Ejaz Bukhari - Founder & Master English Coach");
+  const [coursesBannerImageUrl, setCoursesBannerImageUrl] = useState(() => localStorage.getItem("courses_banner_image_url") || "/level_up_skills_banner.jpg");
+  const [coursesBannerImageAlt, setCoursesBannerImageAlt] = useState(() => localStorage.getItem("courses_banner_image_alt") || "Level Up Your Skills with Syed Ejaz Bukhari - SEB's Institute Course MasterClasses");
   const [generalAudioUrl, setGeneralAudioUrl] = useState(() => localStorage.getItem("site_bukhari_audio_url") || "");
   const [generalAudioTranscript, setGeneralAudioTranscript] = useState(() => localStorage.getItem("site_bukhari_audio_transcript") || "Welcome to SEB's Institute! I'm Syed Ejaz Bukhari, your principal coach.");
   const [mockTestPromoVideoUrl, setMockTestPromoVideoUrl] = useState(() => localStorage.getItem("mock_test_promo_video_url") || "/SEBS_promo.mp4");
@@ -421,8 +433,14 @@ export default function AdminDashboard() {
       setGeneralFaviconAlt(settings.site_favicon_alt);
       setGeneralLogoUrl(settings.site_logo_url);
       setGeneralLogoAlt(settings.site_logo_alt);
-      setGeneralHeroImageUrl(settings.site_hero_image_url);
-      setGeneralHeroImageAlt(settings.site_hero_image_alt);
+      setGeneralHeroImageUrl(settings.site_hero_image_url || "https://lh3.googleusercontent.com/aida-public/AB6AXuCiEeL_rvkeTN1WD6jaHqpjjT6Ax0o76N4V0pu0-U9-8L1-NmC3hc-k0EqLXXfB8w7S_JHA6uxlcJjT8HwJ71j-cNAM7_gbTUJWGN8laDVri0819emFvtVeJw9ECQhOkzQ3RMjUHwfzUzbRiBQjBA9pd6Akxy_LHqda19ke-kK_FnKsrOsty0qCAuANw2-QNsmrthXPUV2iOWueWW_foCUWkH5CGELRy807DzjiALnHmhKPMt_TPi8Fc37lfjxiLk5GbFg");
+      setGeneralHeroImageAlt(settings.site_hero_image_alt || "Sir Syed Ejaz Bukhari - Founder & Master English Coach");
+      if (settings.courses_banner_image_url) {
+        setCoursesBannerImageUrl(settings.courses_banner_image_url);
+      }
+      if (settings.courses_banner_image_alt) {
+        setCoursesBannerImageAlt(settings.courses_banner_image_alt);
+      }
       setGeneralAudioUrl(settings.site_bukhari_audio_url);
       setGeneralAudioTranscript(settings.site_bukhari_audio_transcript);
       if (settings.site_header_style) setSiteHeaderStyle(settings.site_header_style);
@@ -770,7 +788,7 @@ export default function AdminDashboard() {
   const [offerBarLinkText, setOfferBarLinkText] = useState(() => localStorage.getItem("top_offer_bar_link_text") || "Claim Seats");
   const [offerBarLink, setOfferBarLink] = useState(() => localStorage.getItem("top_offer_bar_link") || "/courses");
 
-  const handleGeneralFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: "favicon" | "logo" | "hero" | "audio") => {
+  const handleGeneralFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: "favicon" | "logo" | "hero" | "courses_banner" | "audio") => {
     const file = e.target.files?.[0];
     if (file) {
       if (supabase) {
@@ -792,6 +810,7 @@ export default function AdminDashboard() {
             if (type === "favicon") setGeneralFaviconUrl(publicUrl);
             else if (type === "logo") setGeneralLogoUrl(publicUrl);
             else if (type === "hero") setGeneralHeroImageUrl(publicUrl);
+            else if (type === "courses_banner") setCoursesBannerImageUrl(publicUrl);
             else if (type === "audio") setGeneralAudioUrl(publicUrl);
             
             setIsUploading(false);
@@ -812,6 +831,8 @@ export default function AdminDashboard() {
             setGeneralLogoUrl(reader.result);
           } else if (type === "hero") {
             setGeneralHeroImageUrl(reader.result);
+          } else if (type === "courses_banner") {
+            setCoursesBannerImageUrl(reader.result);
           } else if (type === "audio") {
             setGeneralAudioUrl(reader.result);
           }
@@ -829,8 +850,8 @@ export default function AdminDashboard() {
       site_logo_alt: generalLogoAlt,
       site_hero_image_url: generalHeroImageUrl,
       site_hero_image_alt: generalHeroImageAlt,
-      courses_banner_image_url: generalHeroImageUrl,
-      courses_banner_image_alt: generalHeroImageAlt,
+      courses_banner_image_url: coursesBannerImageUrl,
+      courses_banner_image_alt: coursesBannerImageAlt,
       site_bukhari_audio_url: generalAudioUrl,
       site_bukhari_audio_transcript: generalAudioTranscript,
       mock_test_promo_video_url: mockTestPromoVideoUrl,
@@ -2894,28 +2915,8 @@ export default function AdminDashboard() {
                 {[
                   {
                     value: "courses",
-                    label: "Curriculum Suite",
+                    label: "Courses",
                     icon: <BookOpen className="w-4 h-4" />,
-                  },
-                  {
-                    value: "media-courses",
-                    label: "Media Courses",
-                    icon: <Film className="w-4 h-4 text-purple-500" />,
-                  },
-                  {
-                    value: "course-designer",
-                    label: "Course Designer",
-                    icon: <PenTool className="w-4 h-4" />,
-                  },
-                  {
-                    value: "ai-course-creator",
-                    label: "AI Course Creator",
-                    icon: <Sparkles className="w-4 h-4 text-indigo-500" />,
-                  },
-                  {
-                    value: "course-visualizer",
-                    label: "Course Visualizer",
-                    icon: <Eye className="w-4 h-4 text-emerald-500" />,
                   },
                   {
                     value: "mock-tests",
@@ -3042,6 +3043,106 @@ export default function AdminDashboard() {
                 className="space-y-6"
               >
                 <TabsContent value="courses" className="mt-0 space-y-6">
+                  {/* Sub-Navigation Pill Bar inside Courses Tab */}
+                  {!isEditingCourse && (
+                    <div className="flex items-center gap-2 p-1.5 bg-slate-100/80 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-white/5 w-fit flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => setCoursesSubTab("all")}
+                        className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+                          coursesSubTab === "all"
+                            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-md shadow-slate-200/50 dark:shadow-none"
+                            : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        }`}
+                      >
+                        <BookOpen className="w-3.5 h-3.5 text-primary" />
+                        <span>Curriculum & Lessons</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
+                          {courses.length}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setCoursesSubTab("listening")}
+                        className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+                          coursesSubTab === "listening"
+                            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-md shadow-slate-200/50 dark:shadow-none"
+                            : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        }`}
+                      >
+                        <Headphones className="w-3.5 h-3.5 text-sky-500" />
+                        <span>Listening</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setCoursesSubTab("speaking")}
+                        className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+                          coursesSubTab === "speaking"
+                            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-md shadow-slate-200/50 dark:shadow-none"
+                            : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        }`}
+                      >
+                        <Mic className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>Speaking</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setCoursesSubTab("media")}
+                        className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+                          coursesSubTab === "media"
+                            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-md shadow-slate-200/50 dark:shadow-none"
+                            : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        }`}
+                      >
+                        <Film className="w-3.5 h-3.5 text-purple-500" />
+                        <span>Media Courses</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setCoursesSubTab("designer")}
+                        className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+                          coursesSubTab === "designer"
+                            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-md shadow-slate-200/50 dark:shadow-none"
+                            : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        }`}
+                      >
+                        <PenTool className="w-3.5 h-3.5 text-pink-500" />
+                        <span>Course Designer</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setCoursesSubTab("ai")}
+                        className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+                          coursesSubTab === "ai"
+                            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-md shadow-slate-200/50 dark:shadow-none"
+                            : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        }`}
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                        <span>AI Course Creator</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setCoursesSubTab("visualizer")}
+                        className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+                          coursesSubTab === "visualizer"
+                            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-md shadow-slate-200/50 dark:shadow-none"
+                            : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        }`}
+                      >
+                        <Eye className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>Course Visualizer</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {(coursesSubTab === "all" || isEditingCourse) && (
                   <div className={`grid gap-6 ${isEditingCourse ? "grid-cols-1" : "grid-cols-1 md:grid-cols-3"}`}>
                     {/* Summary Card */}
                     {!isEditingCourse && (
@@ -5376,31 +5477,43 @@ export default function AdminDashboard() {
                       )}
                     </Card>
                   </div>
-                </TabsContent>
+                  )}
 
-                
-                <TabsContent value="course-designer" className="mt-0 space-y-6 overflow-hidden">
-                  <div className="h-[calc(100vh-140px)] w-full overflow-y-auto overflow-x-hidden custom-scrollbar rounded-3xl -mx-6 px-6 pb-20">
-                     <CourseDesignerComponent initialId={currentCourse?.id} />
-                  </div>
-                </TabsContent>
+                  {!isEditingCourse && coursesSubTab === "listening" && (
+                    <div className="h-[calc(100vh-140px)] w-full overflow-y-auto overflow-x-hidden custom-scrollbar rounded-3xl sm:-mx-6 sm:px-6 px-1 pb-20">
+                       <ListeningCourseBuilder onCourseSaved={fetchData} />
+                    </div>
+                  )}
 
-                <TabsContent value="ai-course-creator" className="mt-0 space-y-6 overflow-hidden">
-                  <div className="h-[calc(100vh-140px)] w-full overflow-y-auto overflow-x-hidden custom-scrollbar rounded-3xl -mx-6 px-6 pb-20">
-                     <AICourseCreator />
-                  </div>
-                </TabsContent>
+                  {!isEditingCourse && coursesSubTab === "speaking" && (
+                    <div className="h-[calc(100vh-140px)] w-full overflow-y-auto overflow-x-hidden custom-scrollbar rounded-3xl sm:-mx-6 sm:px-6 px-1 pb-20">
+                       <SpeakingCourseBuilder onCourseSaved={fetchData} />
+                    </div>
+                  )}
 
-                <TabsContent value="course-visualizer" className="mt-0 space-y-6 overflow-hidden">
-                  <div className="h-[calc(100vh-140px)] w-full overflow-y-auto overflow-x-hidden custom-scrollbar rounded-3xl -mx-6 px-6 pb-20">
-                     <CourseVisualizer />
-                  </div>
-                </TabsContent>
+                  {!isEditingCourse && coursesSubTab === "media" && (
+                    <div className="h-[calc(100vh-140px)] w-full overflow-y-auto overflow-x-hidden custom-scrollbar rounded-3xl sm:-mx-6 sm:px-6 px-1 pb-20">
+                       <MediaCoursesManager />
+                    </div>
+                  )}
 
-                <TabsContent value="media-courses" className="mt-0 space-y-6 overflow-hidden">
-                  <div className="h-[calc(100vh-140px)] w-full overflow-y-auto overflow-x-hidden custom-scrollbar rounded-3xl sm:-mx-6 sm:px-6 px-1 pb-20">
-                     <MediaCoursesManager />
-                  </div>
+                  {!isEditingCourse && coursesSubTab === "designer" && (
+                    <div className="h-[calc(100vh-140px)] w-full overflow-y-auto overflow-x-hidden custom-scrollbar rounded-3xl -mx-6 px-6 pb-20">
+                       <CourseDesignerComponent initialId={currentCourse?.id} />
+                    </div>
+                  )}
+
+                  {!isEditingCourse && coursesSubTab === "ai" && (
+                    <div className="h-[calc(100vh-140px)] w-full overflow-y-auto overflow-x-hidden custom-scrollbar rounded-3xl -mx-6 px-6 pb-20">
+                       <AICourseCreator />
+                    </div>
+                  )}
+
+                  {!isEditingCourse && coursesSubTab === "visualizer" && (
+                    <div className="h-[calc(100vh-140px)] w-full overflow-y-auto overflow-x-hidden custom-scrollbar rounded-3xl -mx-6 px-6 pb-20">
+                       <CourseVisualizer />
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="mock-tests" className="mt-0">
@@ -6264,7 +6377,7 @@ export default function AdminDashboard() {
                                                 course_type: "Mock Test"
                                               });
                                               localStorage.setItem("active_course_designer_id", test.id);
-                                              setActiveTab("course-designer");
+                                              setActiveTab("courses"); setCoursesSubTab("designer");
                                             } else {
                                               const monthVal = test.test_month || test.month || "January";
                                               const yearVal = test.test_year || test.year || "2026";
@@ -9164,55 +9277,55 @@ export default function AdminDashboard() {
                                     </div>
                                   </div>
 
-                                  {/* Hero Image Settings Section */}
+                                  {/* 3A. Homepage Hero Portrait Settings Section */}
                                   <div className="space-y-4 p-5 rounded-2xl bg-white dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
                                     <div className="flex items-center justify-between">
                                       <h3 className="text-xs font-black uppercase tracking-widest italic text-primary">
-                                        3. Hero Section & Courses Banner Image Architecture
+                                        3A. Homepage Hero Portrait / Mentor Image (Home Page)
                                       </h3>
-                                      <Badge variant="outline" className="text-[10px] font-bold text-sky-600 bg-sky-50 dark:bg-sky-950/40">
-                                        Live on Courses Banner
+                                      <Badge variant="outline" className="text-[10px] font-bold text-red-600 bg-red-50 dark:bg-red-950/40">
+                                        Live on Homepage Hero
                                       </Badge>
                                     </div>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                                      Configure the promotional banner image displayed across site headers and on the Courses page banner. Enter any image URL or upload an image file.
+                                      Configure the authentic portrait of Sir Syed Ejaz Bukhari displayed inside the architectural arch on the homepage hero section.
                                     </p>
                                     <div className="grid grid-cols-1 gap-4">
                                       <div className="space-y-2">
                                         <Label htmlFor="hero-image-url" className="text-xs font-bold text-slate-705 dark:text-slate-300">
-                                          Hero / Course Banner Image URL
+                                          Homepage Hero Portrait URL
                                         </Label>
                                         <div className="flex gap-2">
                                           <Input
                                             id="hero-image-url"
-                                            placeholder="https://... or /level_up_skills_banner.jpg"
+                                            placeholder="https://..."
                                             value={generalHeroImageUrl}
                                             onChange={(e) => setGeneralHeroImageUrl(e.target.value)}
                                             className="rounded-xl border h-10 font-bold text-xs flex-1"
                                           />
-                                          {generalHeroImageUrl && generalHeroImageUrl !== "/level_up_skills_banner.jpg" && (
+                                          {generalHeroImageUrl && (
                                             <Button
                                               type="button"
                                               variant="outline"
                                               size="sm"
-                                              onClick={() => setGeneralHeroImageUrl("/level_up_skills_banner.jpg")}
+                                              onClick={() => setGeneralHeroImageUrl("https://lh3.googleusercontent.com/aida-public/AB6AXuCiEeL_rvkeTN1WD6jaHqpjjT6Ax0o76N4V0pu0-U9-8L1-NmC3hc-k0EqLXXfB8w7S_JHA6uxlcJjT8HwJ71j-cNAM7_gbTUJWGN8laDVri0819emFvtVeJw9ECQhOkzQ3RMjUHwfzUzbRiBQjBA9pd6Akxy_LHqda19ke-kK_FnKsrOsty0qCAuANw2-QNsmrthXPUV2iOWueWW_foCUWkH5CGELRy807DzjiALnHmhKPMt_TPi8Fc37lfjxiLk5GbFg")}
                                               className="text-[10px] font-bold h-10 px-3 whitespace-nowrap"
-                                              title="Reset to default Level Up Your Skills banner"
+                                              title="Reset to default Sir Ejaz Bukhari Portrait"
                                             >
                                               Reset
                                             </Button>
                                           )}
                                         </div>
                                         <span className="text-[10px] text-slate-400">
-                                          This image URL is rendered live on the Courses page hero section banner.
+                                          Controls the main mentor headshot portrait on the Home Page hero.
                                         </span>
                                       </div>
 
                                       <div className="space-y-2">
-                                        <Label className="text-xs font-bold text-slate-705 dark:text-slate-300">Upload Hero Image File</Label>
+                                        <Label className="text-xs font-bold text-slate-705 dark:text-slate-300">Upload Hero Portrait File</Label>
                                         <div className="border border-dashed border-slate-250 dark:border-white/10 rounded-xl p-4 text-center cursor-pointer hover:bg-slate-50 transition relative flex flex-col items-center justify-center bg-white dark:bg-transparent">
                                           <Upload className="w-6 h-6 text-slate-400 mb-2" />
-                                          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Click to upload your hero image file</span>
+                                          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Click to upload portrait photo</span>
                                           <span className="text-[10px] text-slate-400 mt-1">Converts automatically to Base64 URI</span>
                                           <input
                                             type="file"
@@ -9226,11 +9339,101 @@ export default function AdminDashboard() {
                                       {/* Mini In-card Preview */}
                                       {generalHeroImageUrl && (
                                         <div className="space-y-1.5 pt-1">
-                                          <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Current Hero Image Preview</Label>
-                                          <div className="relative rounded-xl overflow-hidden aspect-video max-h-48 border border-slate-200 dark:border-white/10 bg-slate-950">
+                                          <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Current Hero Portrait Preview</Label>
+                                          <div className="relative rounded-xl overflow-hidden aspect-[4/5] max-h-56 max-w-xs border border-slate-200 dark:border-white/10 bg-slate-950">
                                             <img
                                               src={generalHeroImageUrl}
-                                              alt={generalHeroImageAlt || "Hero banner preview"}
+                                              alt={generalHeroImageAlt || "Hero portrait preview"}
+                                              className="w-full h-full object-cover object-top"
+                                              referrerPolicy="no-referrer"
+                                              onError={(e) => {
+                                                (e.target as HTMLImageElement).src = "https://lh3.googleusercontent.com/aida-public/AB6AXuCiEeL_rvkeTN1WD6jaHqpjjT6Ax0o76N4V0pu0-U9-8L1-NmC3hc-k0EqLXXfB8w7S_JHA6uxlcJjT8HwJ71j-cNAM7_gbTUJWGN8laDVri0819emFvtVeJw9ECQhOkzQ3RMjUHwfzUzbRiBQjBA9pd6Akxy_LHqda19ke-kK_FnKsrOsty0qCAuANw2-QNsmrthXPUV2iOWueWW_foCUWkH5CGELRy807DzjiALnHmhKPMt_TPi8Fc37lfjxiLk5GbFg";
+                                              }}
+                                            />
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      <div className="space-y-2">
+                                        <Label htmlFor="hero-image-alt" className="text-xs font-bold text-slate-705 dark:text-slate-300">Hero Portrait Alt Text</Label>
+                                        <Input
+                                          id="hero-image-alt"
+                                          placeholder="E.g., Sir Syed Ejaz Bukhari - Founder & Master English Coach"
+                                          value={generalHeroImageAlt}
+                                          onChange={(e) => setGeneralHeroImageAlt(e.target.value)}
+                                          className="rounded-xl border h-10 font-bold text-xs"
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* 3B. Courses Page Banner Settings Section */}
+                                  <div className="space-y-4 p-5 rounded-2xl bg-white dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
+                                    <div className="flex items-center justify-between">
+                                      <h3 className="text-xs font-black uppercase tracking-widest italic text-primary">
+                                        3B. Courses Page Top Banner Image (/courses)
+                                      </h3>
+                                      <Badge variant="outline" className="text-[10px] font-bold text-sky-600 bg-sky-50 dark:bg-sky-950/40">
+                                        Live on Courses Banner
+                                      </Badge>
+                                    </div>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                      Configure the wide promotional banner graphic displayed at the top of the Courses catalogue page (`/courses`).
+                                    </p>
+                                    <div className="grid grid-cols-1 gap-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="courses-banner-url" className="text-xs font-bold text-slate-705 dark:text-slate-300">
+                                          Courses Page Banner Image URL
+                                        </Label>
+                                        <div className="flex gap-2">
+                                          <Input
+                                            id="courses-banner-url"
+                                            placeholder="/level_up_skills_banner.jpg or https://..."
+                                            value={coursesBannerImageUrl}
+                                            onChange={(e) => setCoursesBannerImageUrl(e.target.value)}
+                                            className="rounded-xl border h-10 font-bold text-xs flex-1"
+                                          />
+                                          {coursesBannerImageUrl && coursesBannerImageUrl !== "/level_up_skills_banner.jpg" && (
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() => setCoursesBannerImageUrl("/level_up_skills_banner.jpg")}
+                                              className="text-[10px] font-bold h-10 px-3 whitespace-nowrap"
+                                              title="Reset to default Level Up Your Skills banner"
+                                            >
+                                              Reset
+                                            </Button>
+                                          )}
+                                        </div>
+                                        <span className="text-[10px] text-slate-400">
+                                          Controls the wide promotional banner displayed at the top of the Courses Page.
+                                        </span>
+                                      </div>
+
+                                      <div className="space-y-2">
+                                        <Label className="text-xs font-bold text-slate-705 dark:text-slate-300">Upload Courses Banner File</Label>
+                                        <div className="border border-dashed border-slate-250 dark:border-white/10 rounded-xl p-4 text-center cursor-pointer hover:bg-slate-50 transition relative flex flex-col items-center justify-center bg-white dark:bg-transparent">
+                                          <Upload className="w-6 h-6 text-slate-400 mb-2" />
+                                          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Click to upload courses banner graphic</span>
+                                          <span className="text-[10px] text-slate-400 mt-1">Converts automatically to Base64 URI</span>
+                                          <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => handleGeneralFileChange(e, "courses_banner")}
+                                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                          />
+                                        </div>
+                                      </div>
+
+                                      {/* Mini In-card Preview */}
+                                      {coursesBannerImageUrl && (
+                                        <div className="space-y-1.5 pt-1">
+                                          <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Current Courses Banner Preview</Label>
+                                          <div className="relative rounded-xl overflow-hidden aspect-video max-h-48 border border-slate-200 dark:border-white/10 bg-slate-950">
+                                            <img
+                                              src={coursesBannerImageUrl}
+                                              alt={coursesBannerImageAlt || "Courses banner preview"}
                                               className="w-full h-full object-cover"
                                               referrerPolicy="no-referrer"
                                               onError={(e) => {
@@ -9242,12 +9445,12 @@ export default function AdminDashboard() {
                                       )}
 
                                       <div className="space-y-2">
-                                        <Label htmlFor="hero-image-alt" className="text-xs font-bold text-slate-705 dark:text-slate-300">Hero Image Alternate Text (Alt)</Label>
+                                        <Label htmlFor="courses-banner-alt" className="text-xs font-bold text-slate-705 dark:text-slate-300">Courses Banner Alt Text</Label>
                                         <Input
-                                          id="hero-image-alt"
+                                          id="courses-banner-alt"
                                           placeholder="E.g., Level Up Your Skills with Syed Ejaz Bukhari"
-                                          value={generalHeroImageAlt}
-                                          onChange={(e) => setGeneralHeroImageAlt(e.target.value)}
+                                          value={coursesBannerImageAlt}
+                                          onChange={(e) => setCoursesBannerImageAlt(e.target.value)}
                                           className="rounded-xl border h-10 font-bold text-xs"
                                         />
                                       </div>

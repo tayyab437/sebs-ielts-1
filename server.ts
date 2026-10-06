@@ -740,7 +740,7 @@ async function startServer() {
   // Enable Gzip/Deflate compression for optimal transfer speeds
   app.use(compression());
 
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   // Canonical Domain Redirect (www.sebsinstitute.com -> sebsinstitute.com)
   app.use((req, res, next) => {
@@ -3131,8 +3131,10 @@ Sitemap: https://sebsinstitute.com/sitemap.xml
     }
   }));
 
-  // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
+  // Vite middleware for development vs Static serving for production
+  const isDev = process.env.NODE_ENV === "development" || (process.env.NODE_ENV !== "production" && !fs.existsSync(path.join(process.cwd(), "dist", "index.html")));
+
+  if (isDev) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",

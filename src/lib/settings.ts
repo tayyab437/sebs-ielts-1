@@ -128,8 +128,8 @@ export const defaultSettings: SiteSettings = {
   site_favicon_alt: "SEB's Institute Favicon",
   site_logo_url: "/sebs_official_logo_315.webp",
   site_logo_alt: "SEB's Institute Logo",
-  site_hero_image_url: "/level_up_skills_banner.jpg",
-  site_hero_image_alt: "Level Up Your Skills with Syed Ejaz Bukhari - SEB's Institute Course MasterClasses",
+  site_hero_image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuCiEeL_rvkeTN1WD6jaHqpjjT6Ax0o76N4V0pu0-U9-8L1-NmC3hc-k0EqLXXfB8w7S_JHA6uxlcJjT8HwJ71j-cNAM7_gbTUJWGN8laDVri0819emFvtVeJw9ECQhOkzQ3RMjUHwfzUzbRiBQjBA9pd6Akxy_LHqda19ke-kK_FnKsrOsty0qCAuANw2-QNsmrthXPUV2iOWueWW_foCUWkH5CGELRy807DzjiALnHmhKPMt_TPi8Fc37lfjxiLk5GbFg",
+  site_hero_image_alt: "Sir Syed Ejaz Bukhari - Founder & Master English Coach",
   courses_banner_image_url: "/level_up_skills_banner.jpg",
   courses_banner_image_alt: "Level Up Your Skills with Syed Ejaz Bukhari - SEB's Institute Course MasterClasses",
   site_bukhari_audio_url: "",
@@ -240,6 +240,9 @@ export async function fetchSiteSettings(bypassCache = false): Promise<SiteSettin
             if (sanitizedData.site_hero_image_url) {
               sanitizedData.site_hero_image_url = sanitizeAssetUrl(sanitizedData.site_hero_image_url, defaultSettings.site_hero_image_url);
             }
+            if (sanitizedData.courses_banner_image_url) {
+              sanitizedData.courses_banner_image_url = sanitizeAssetUrl(sanitizedData.courses_banner_image_url, defaultSettings.courses_banner_image_url);
+            }
             if (sanitizedData.carousel_slides && typeof sanitizedData.carousel_slides === "string") {
               try {
                 sanitizedData.carousel_slides = JSON.parse(sanitizedData.carousel_slides);
@@ -348,6 +351,8 @@ function getLocalSettings(): SiteSettings {
     site_logo_alt: localStorage.getItem("site_logo_alt") || defaultSettings.site_logo_alt,
     site_hero_image_url: sanitizeAssetUrl(localStorage.getItem("site_hero_image_url"), defaultSettings.site_hero_image_url),
     site_hero_image_alt: localStorage.getItem("site_hero_image_alt") || defaultSettings.site_hero_image_alt,
+    courses_banner_image_url: sanitizeAssetUrl(localStorage.getItem("courses_banner_image_url"), defaultSettings.courses_banner_image_url),
+    courses_banner_image_alt: localStorage.getItem("courses_banner_image_alt") || defaultSettings.courses_banner_image_alt,
     site_bukhari_audio_url: localStorage.getItem("site_bukhari_audio_url") || defaultSettings.site_bukhari_audio_url,
     site_bukhari_audio_transcript: localStorage.getItem("site_bukhari_audio_transcript") || defaultSettings.site_bukhari_audio_transcript,
     site_header_style: (localStorage.getItem("site_header_style") as "classic" | "iot") || "classic",

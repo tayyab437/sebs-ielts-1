@@ -313,10 +313,10 @@ function StudentCoursesInner({
 
   // Dynamic Course Hero Banner Image & Alt synced from General Settings
   const [courseBannerUrl, setCourseBannerUrl] = useState<string>(() => {
-    return localStorage.getItem("courses_banner_image_url") || localStorage.getItem("site_hero_image_url") || "/level_up_skills_banner.jpg";
+    return localStorage.getItem("courses_banner_image_url") || "/level_up_skills_banner.jpg";
   });
   const [courseBannerAlt, setCourseBannerAlt] = useState<string>(() => {
-    return localStorage.getItem("courses_banner_image_alt") || localStorage.getItem("site_hero_image_alt") || "Level Up Your Skills with Syed Ejaz Bukhari - SEB's Institute Course MasterClasses";
+    return localStorage.getItem("courses_banner_image_alt") || "Level Up Your Skills with Syed Ejaz Bukhari - SEB's Institute Course MasterClasses";
   });
 
   // Filter state for Skills, Media Courses, Academic and General Training
@@ -378,11 +378,11 @@ function StudentCoursesInner({
     const syncBannerSettings = () => {
       fetchSiteSettings().then((settings) => {
         if (settings) {
-          const heroUrl = settings.courses_banner_image_url || settings.site_hero_image_url || localStorage.getItem("site_hero_image_url");
+          const heroUrl = settings.courses_banner_image_url || localStorage.getItem("courses_banner_image_url") || "/level_up_skills_banner.jpg";
           if (heroUrl) {
             setCourseBannerUrl(heroUrl);
           }
-          const heroAlt = settings.courses_banner_image_alt || settings.site_hero_image_alt || localStorage.getItem("site_hero_image_alt");
+          const heroAlt = settings.courses_banner_image_alt || localStorage.getItem("courses_banner_image_alt") || "Level Up Your Skills with Syed Ejaz Bukhari - SEB's Institute Course MasterClasses";
           if (heroAlt) {
             setCourseBannerAlt(heroAlt);
           }
@@ -395,16 +395,16 @@ function StudentCoursesInner({
     syncBannerSettings();
 
     const handleSettingsUpdate = (e?: any) => {
-      if (e?.detail?.courses_banner_image_url || e?.detail?.site_hero_image_url) {
-        setCourseBannerUrl(e.detail.courses_banner_image_url || e.detail.site_hero_image_url);
+      if (e?.detail?.courses_banner_image_url) {
+        setCourseBannerUrl(e.detail.courses_banner_image_url);
       } else {
-        const stored = localStorage.getItem("courses_banner_image_url") || localStorage.getItem("site_hero_image_url");
+        const stored = localStorage.getItem("courses_banner_image_url");
         if (stored) setCourseBannerUrl(stored);
       }
-      if (e?.detail?.courses_banner_image_alt || e?.detail?.site_hero_image_alt) {
-        setCourseBannerAlt(e.detail.courses_banner_image_alt || e.detail.site_hero_image_alt);
+      if (e?.detail?.courses_banner_image_alt) {
+        setCourseBannerAlt(e.detail.courses_banner_image_alt);
       } else {
-        const storedAlt = localStorage.getItem("courses_banner_image_alt") || localStorage.getItem("site_hero_image_alt");
+        const storedAlt = localStorage.getItem("courses_banner_image_alt");
         if (storedAlt) setCourseBannerAlt(storedAlt);
       }
     };

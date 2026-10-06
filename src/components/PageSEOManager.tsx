@@ -75,6 +75,9 @@ export function PageSEOManager() {
       } else if (path === "/dashboard") {
         title = settings.meta_title_dashboard || defaultSettings.meta_title_dashboard;
         description = settings.meta_desc_dashboard || defaultSettings.meta_desc_dashboard;
+      } else if (path === "/ielts-writing" || path === "/ielts-writing/" || path === "/resources/ielts-writing") {
+        title = "IELTS Writing: Task 1, Task 2 & Computer-Based Guide | SEB's Institute";
+        description = "Master IELTS Writing with Task 1 and Task 2 strategies, computer-based IELTS guidance, writing topics, scoring criteria, practice questions and expert preparation from SEB's Institute.";
       } else if (path === "/dashboard/writing" || path.startsWith("/dashboard/writing/")) {
         title = settings.meta_title_writing || defaultSettings.meta_title_writing;
         description = settings.meta_desc_writing || defaultSettings.meta_desc_writing;
