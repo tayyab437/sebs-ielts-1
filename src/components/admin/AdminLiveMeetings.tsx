@@ -404,7 +404,7 @@ export default function AdminLiveMeetings() {
                                   onClick={handleConnectGoogle}
                                   className="h-6 px-2.5 rounded-lg bg-teal-500 hover:bg-teal-600 text-slate-950 font-black text-[9px] uppercase tracking-wider flex items-center gap-1"
                                 >
-                                   Authorize Meet (Open in New Tab if Popup Blocks)
+                                   Authorize Meet
                                 </button>
                              </div>
                           )}

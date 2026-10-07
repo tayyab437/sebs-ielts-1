@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; worker-src 'self' blob: data:; style-src 'self' 'unsafe-inline' https:; font-src 'self' https: data:; img-src 'self' data: blob: https: http:; media-src 'self' data: blob: https: http:; connect-src 'self' https: wss: ws: data: blob:; frame-src 'self' https: data: blob:; object-src 'none'; base-uri 'self';" />
+    
+    <!-- Critical LCP Hero Image Preload (0ms Resource Load Delay) -->
+    <link rel="preload" as="image" href="/syed_ejaz_bukhari_hero.webp" type="image/webp" fetchpriority="high" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
     <link rel="shortcut icon" href="/favicon.ico" />
@@ -36,9 +39,6 @@
     <noscript>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
     </noscript>
-
-    <!-- Preload Above-The-Fold Hero Image for High LCP Performance -->
-    <link rel="preload" as="image" href="/syed_ejaz_bukhari_hero.webp" type="image/webp" fetchpriority="high" />
     
     <!-- Open Graph / Facebook / WhatsApp / LinkedIn -->
     <meta property="og:type" content="website" />
