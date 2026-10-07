@@ -776,7 +776,7 @@ export default function MockTest({ defaultCategory }: MockTestProps = {}) {
     const parsed = parseTestPath(location.pathname);
 
     if (parsed && availableTests.length > 0) {
-      const formattedMonth = parsed.month.charAt(0).toUpperCase() + parsed.month.slice(1).toLowerCase();
+      const formattedMonth = parsed.month ? parsed.month.charAt(0).toUpperCase() + parsed.month.slice(1).toLowerCase() : "";
 
       if (parsed.testName) {
         const targetSlug = slugify(parsed.testName);

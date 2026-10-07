@@ -25,12 +25,16 @@ const CustomPageView = lazyWithRetry(() => import("./pages/public/CustomPageView
 const ContactPage = lazyWithRetry(() => import("./pages/public/Contact"));
 const AboutPage = lazyWithRetry(() => import("./pages/public/About"));
 const BooksPage = lazyWithRetry(() => import("./pages/public/Books"));
+const IeltsSpeakingPage = lazyWithRetry(() => import("./pages/public/IeltsSpeaking"));
+const IeltsWritingPage = lazyWithRetry(() => import("./pages/public/IeltsWriting"));
 const NotFoundPage = lazyWithRetry(() => import("./pages/public/NotFound"));
 
 // Intelligent prefetcher on hover/touch/idle
 export const prefetchRoute = (path: string) => {
   if (!path) return;
   if (path.startsWith("/courses")) import("./pages/public/Courses");
+  else if (path.startsWith("/ielts-speaking") || path.startsWith("/speaking") || path.startsWith("/ielts/ielts-speaking")) import("./pages/public/IeltsSpeaking");
+  else if (path.startsWith("/ielts-writing") || path.startsWith("/writing") || path.startsWith("/ielts/ielts-writing")) import("./pages/public/IeltsWriting");
   else if (path.startsWith("/mock-test") || path.startsWith("/academic") || path.startsWith("/general") || path.startsWith("/gt")) import("./pages/dashboard/MockTest");
   else if (path.startsWith("/pricing")) import("./pages/public/Pricing");
   else if (path.startsWith("/dashboard/writing")) import("./pages/dashboard/WritingModule");
@@ -631,6 +635,8 @@ function Navbar() {
     { name: "Home", path: "/" },
     { name: "Courses", path: "/courses", badge: "Live" },
     { name: "Mock Tests", path: "/mock-tests", badge: "IELTS" },
+    { name: "Speaking", path: "/ielts-speaking", badge: "2026" },
+    { name: "Writing", path: "/ielts-writing", badge: "Eval" },
     { name: "Pricing", path: "/pricing" },
   ];
 
@@ -702,7 +708,7 @@ function Navbar() {
                 <span className="font-black text-sm text-slate-900 dark:text-white tracking-wider hidden xl:inline">SEB's Institute</span>
               </Link>
 
-              <div className="hidden md:flex items-center space-x-5">
+              <div className="hidden md:flex items-center space-x-3 lg:space-x-4 xl:space-x-5">
                 {navLinks.map((link) => {
                   const isActive = location.pathname === link.path;
                   return (
@@ -863,8 +869,8 @@ function Navbar() {
           </Link>
 
           {/* Desktop Nav Items */}
-          <div className="hidden md:flex items-center space-x-8">
-            <div className="flex items-center space-x-7 bg-slate-100/50 dark:bg-white/5 border border-slate-200/30 dark:border-white/5 rounded-2xl px-5 py-2">
+          <div className="hidden md:flex items-center space-x-4 lg:space-x-8">
+            <div className="flex items-center space-x-3.5 lg:space-x-5 xl:space-x-6 bg-slate-100/50 dark:bg-white/5 border border-slate-200/30 dark:border-white/5 rounded-2xl px-3.5 lg:px-5 py-2">
               {navLinks.map((link) => {
                 const isActive = location.pathname === link.path;
                 return (
@@ -1354,6 +1360,16 @@ function AppContent() {
             <Route path="/ielts-mock-test-:year/:month/:testName" element={<MockTestPage />} />
             <Route path="/ielts-mock-test-:year/:month/:testName/:testType" element={<MockTestPage />} />
             <Route path="/test/:testId" element={<MockTestPage />} />
+            <Route path="/speaking" element={<IeltsSpeakingPage />} />
+            <Route path="/ielts-speaking" element={<IeltsSpeakingPage />} />
+            <Route path="/ielts-speaking/" element={<IeltsSpeakingPage />} />
+            <Route path="/ielts/ielts-speaking" element={<IeltsSpeakingPage />} />
+            <Route path="/dashboard/ielts-speaking" element={<IeltsSpeakingPage />} />
+            <Route path="/writing" element={<IeltsWritingPage />} />
+            <Route path="/ielts-writing" element={<IeltsWritingPage />} />
+            <Route path="/ielts-writing/" element={<IeltsWritingPage />} />
+            <Route path="/ielts/ielts-writing" element={<IeltsWritingPage />} />
+            <Route path="/dashboard/ielts-writing" element={<IeltsWritingPage />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/courses" element={<StudentCourses />} />
             <Route path="/courses/:examType/:testType/:testNumber" element={<StudentCourses />} />

@@ -43,6 +43,7 @@ export default defineConfig(() => {
           // Strictly limit initial modulepreload to essential entry scripts.
           // Defer all secondary page chunks (Courses, MockTest, Pricing, Admin, etc.) and heavy libraries.
           return deps.filter(dep => 
+            dep.includes('vendor-framework') ||
             dep.includes('vendor-icons') || 
             dep.includes('vendor-supabase')
           );
@@ -52,6 +53,20 @@ export default defineConfig(() => {
         output: {
           manualChunks(id) {
             if (id.includes('node_modules')) {
+              if (
+                (id.includes('react/') ||
+                 id.includes('react-dom/') ||
+                 id.includes('react-router') ||
+                 id.includes('clsx') ||
+                 id.includes('tailwind-merge') ||
+                 id.includes('scheduler') ||
+                 id.includes('use-sync-external-store') ||
+                 id.includes('react-is')) &&
+                !id.includes('recharts') &&
+                !id.includes('react-markdown')
+              ) {
+                return 'vendor-framework';
+              }
               if (id.includes('firebase')) return 'vendor-firebase';
               if (id.includes('@supabase')) return 'vendor-supabase';
               if (id.includes('@dnd-kit')) return 'vendor-dnd';

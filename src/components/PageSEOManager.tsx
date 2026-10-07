@@ -18,7 +18,7 @@ export function PageSEOManager() {
         const segments = path.replace(/^\/dashboard\//, "").split("/").filter(Boolean);
         if (segments.length >= 4) {
           const exam = segments[1].toUpperCase() === "GT" ? "General Training" : "Academic";
-          const skill = segments[2].charAt(0).toUpperCase() + segments[2].slice(1);
+          const skill = segments[2] ? segments[2].charAt(0).toUpperCase() + segments[2].slice(1) : "Module";
           const num = segments[3];
           title = `IELTS ${exam} ${skill} Test ${num} - Course Practice | SEB's Institute`;
           description = `Comprehensive IELTS ${exam} ${skill} interactive curriculum and practice module Test #${num} with step-by-step guidance.`;
@@ -57,6 +57,12 @@ export function PageSEOManager() {
       } else if (path.includes("general-training") || path.includes("gt-tests")) {
         title = "IELTS General Training Mock Tests | SEB's Institute";
         description = "Official standard IELTS General Training mock tests with comprehensive section feedback, audio playback, and scoring.";
+      } else if (path === "/ielts-speaking" || path === "/ielts-speaking/" || path === "/ielts/ielts-speaking" || path === "/dashboard/ielts-speaking") {
+        title = "IELTS Speaking: Questions, Topics, Tips & Test Format | SEBS";
+        description = "Learn the IELTS Speaking test format, Part 1, 2 and 3 questions, topics, scoring criteria, practice strategies and expert preparation tips from SEBS.";
+      } else if (path === "/ielts-writing" || path === "/ielts-writing/" || path === "/ielts/ielts-writing" || path === "/dashboard/ielts-writing") {
+        title = "IELTS Writing: Task 1, Task 2 & Computer-Based Guide | SEB's Institute";
+        description = "Master IELTS Writing Task 1 visual reports and Task 2 essays with scoring criteria, band descriptors, computer-based testing strategies, and expert model answers from SEBS.";
       } else if (path === "/pricing") {
         title = settings.meta_title_pricing || defaultSettings.meta_title_pricing;
         description = settings.meta_desc_pricing || defaultSettings.meta_desc_pricing;
@@ -108,6 +114,8 @@ export function PageSEOManager() {
       else if (path === "/login" && settings.meta_link_login) canonicalUrl = settings.meta_link_login;
       else if (path === "/signup" && settings.meta_link_signup) canonicalUrl = settings.meta_link_signup;
       else if (path === "/terms" && settings.meta_link_terms) canonicalUrl = settings.meta_link_terms;
+      else if (path === "/ielts-speaking" || path === "/ielts-speaking/" || path === "/ielts/ielts-speaking") canonicalUrl = "https://sebsinstitute.com/ielts-speaking/";
+      else if (path === "/ielts-writing" || path === "/ielts-writing/" || path === "/ielts/ielts-writing") canonicalUrl = "https://sebsinstitute.com/ielts-writing/";
       else if (path === "/privacy" && settings.meta_link_privacy) canonicalUrl = settings.meta_link_privacy;
       else if (path === "/dashboard" && settings.meta_link_dashboard) canonicalUrl = settings.meta_link_dashboard;
       else if ((path === "/dashboard/writing" || path.startsWith("/dashboard/writing/")) && settings.meta_link_writing) canonicalUrl = settings.meta_link_writing;

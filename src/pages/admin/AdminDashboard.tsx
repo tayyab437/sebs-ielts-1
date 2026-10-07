@@ -3197,9 +3197,7 @@ export default function AdminDashboard() {
                                     />
                                   ) : (
                                     <div className="w-10 h-10 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center font-black text-primary italic">
-                                      {course.title
-                                        ? (course?.title || "C").charAt(0)
-                                        : "C"}
+                                      {String(course?.title || "C").charAt(0) || "C"}
                                     </div>
                                   )}
                                   <div className="min-w-0 flex-1">
@@ -7946,7 +7944,7 @@ export default function AdminDashboard() {
                                       <div className="flex items-center gap-3">
                                         <div className="relative shrink-0">
                                           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center font-black text-primary text-sm">
-                                            {(student?.name || student?.full_name || student?.email || "S").charAt(0).toUpperCase()}
+                                            {String(student?.name || student?.full_name || student?.email || "S").charAt(0).toUpperCase() || "S"}
                                           </div>
                                           {getInterventionStatus(student).flagged && (
                                             <div className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center">
@@ -8084,7 +8082,7 @@ export default function AdminDashboard() {
 
                             <div className="flex items-center gap-4 relative z-10">
                               <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center font-black text-2xl text-white">
-                                {(selectedStudent?.name || selectedStudent?.full_name || selectedStudent?.email || "S").charAt(0).toUpperCase()}
+                                {String(selectedStudent?.name || selectedStudent?.full_name || selectedStudent?.email || "S").charAt(0).toUpperCase() || "S"}
                               </div>
                               <div className="min-w-0">
                                 <span className="text-[9px] font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full text-white/90 italic">
@@ -11241,7 +11239,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-between relative z-10">
                     <div className="flex items-center gap-4">
                       <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center font-black text-2xl text-white">
-                        {(selectedStudent?.name || selectedStudent?.full_name || selectedStudent?.email || "S").charAt(0).toUpperCase()}
+                        {String(selectedStudent?.name || selectedStudent?.full_name || selectedStudent?.email || "S").charAt(0).toUpperCase() || "S"}
                       </div>
                       <div className="min-w-0">
                         <span className="text-[9px] font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full text-white/90 italic">

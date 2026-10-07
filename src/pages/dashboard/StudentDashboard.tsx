@@ -2750,7 +2750,7 @@ export default function StudentDashboard() {
               <div className="p-4 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/70 dark:bg-white/5 shrink-0">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-indigo-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-md">
-                    {(user.name || "S").charAt(0).toUpperCase()}
+                    {String(user?.name || "S").charAt(0).toUpperCase() || "S"}
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-slate-900 dark:text-white truncate">

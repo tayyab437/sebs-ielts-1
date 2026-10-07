@@ -205,10 +205,12 @@ export function sanitizeAssetUrl(url: string | null | undefined, defaultUrl: str
 
 let activeFetchPromise: Promise<SiteSettings> | null = null;
 let cachedSettings: SiteSettings | null = typeof window !== "undefined" ? getLocalSettings() : defaultSettings;
+let hasTriggeredSync = false;
 
 export function invalidateSettingsCache() {
   cachedSettings = null;
   activeFetchPromise = null;
+  hasTriggeredSync = false;
 }
 
 export async function fetchSiteSettings(bypassCache = false): Promise<SiteSettings> {
@@ -217,29 +219,35 @@ export async function fetchSiteSettings(bypassCache = false): Promise<SiteSettin
     activeFetchPromise = null;
   } else if (cachedSettings) {
     // Return cached settings immediately to eliminate critical request chaining
-    // Trigger background sync silently without blocking
-    if (!activeFetchPromise && typeof window !== "undefined") {
-      activeFetchPromise = (async () => {
-        try {
-          const res = await fetch("/api/mysql/settings");
-          if (res.ok) {
-            const data = await res.json();
-            if (data && typeof data === "object" && Object.keys(data).length > 0) {
-              const sanitizedData = { ...data };
-              if (sanitizedData.site_logo_url) sanitizedData.site_logo_url = sanitizeAssetUrl(sanitizedData.site_logo_url, defaultSettings.site_logo_url);
-              if (sanitizedData.site_favicon_url) sanitizedData.site_favicon_url = sanitizeAssetUrl(sanitizedData.site_favicon_url, defaultSettings.site_favicon_url);
-              if (sanitizedData.site_hero_image_url) sanitizedData.site_hero_image_url = sanitizeAssetUrl(sanitizedData.site_hero_image_url, defaultSettings.site_hero_image_url);
-              if (sanitizedData.courses_banner_image_url) sanitizedData.courses_banner_image_url = sanitizeAssetUrl(sanitizedData.courses_banner_image_url, defaultSettings.courses_banner_image_url);
-              cachedSettings = { ...defaultSettings, ...sanitizedData };
+    // Trigger background sync during idle time without blocking initial page load
+    if (!hasTriggeredSync && typeof window !== "undefined") {
+      hasTriggeredSync = true;
+      const syncFn = () => {
+        (async () => {
+          try {
+            const res = await fetch("/api/mysql/settings");
+            if (res.ok) {
+              const data = await res.json();
+              if (data && typeof data === "object" && Object.keys(data).length > 0) {
+                const sanitizedData = { ...data };
+                if (sanitizedData.site_logo_url) sanitizedData.site_logo_url = sanitizeAssetUrl(sanitizedData.site_logo_url, defaultSettings.site_logo_url);
+                if (sanitizedData.site_favicon_url) sanitizedData.site_favicon_url = sanitizeAssetUrl(sanitizedData.site_favicon_url, defaultSettings.site_favicon_url);
+                if (sanitizedData.site_hero_image_url) sanitizedData.site_hero_image_url = sanitizeAssetUrl(sanitizedData.site_hero_image_url, defaultSettings.site_hero_image_url);
+                if (sanitizedData.courses_banner_image_url) sanitizedData.courses_banner_image_url = sanitizeAssetUrl(sanitizedData.courses_banner_image_url, defaultSettings.courses_banner_image_url);
+                cachedSettings = { ...defaultSettings, ...sanitizedData };
+              }
             }
+          } catch {
+            // Ignore background sync errors
           }
-        } catch {
-          // Ignore background sync errors
-        } finally {
-          activeFetchPromise = null;
-        }
-        return cachedSettings || defaultSettings;
-      })();
+        })();
+      };
+
+      if ("requestIdleCallback" in window) {
+        (window as any).requestIdleCallback(syncFn, { timeout: 4000 });
+      } else {
+        setTimeout(syncFn, 3500);
+      }
     }
     return cachedSettings;
   }
