@@ -987,6 +987,7 @@ export default function AdminDashboard() {
 
   // Intervention Helper
   const getInterventionStatus = (student: any) => {
+    if (!student) return { flagged: false, reason: "" };
     const studentSubmissions = (submissions || []).filter((sub: any) => {
       return (
         (sub.studentId && student.id && String(sub.studentId) === String(student.id)) ||
@@ -3197,7 +3198,7 @@ export default function AdminDashboard() {
                                   ) : (
                                     <div className="w-10 h-10 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center font-black text-primary italic">
                                       {course.title
-                                        ? course.title.charAt(0)
+                                        ? (course?.title || "C").charAt(0)
                                         : "C"}
                                     </div>
                                   )}
@@ -7945,7 +7946,7 @@ export default function AdminDashboard() {
                                       <div className="flex items-center gap-3">
                                         <div className="relative shrink-0">
                                           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center font-black text-primary text-sm">
-                                            {student.name.charAt(0)}
+                                            {(student?.name || student?.full_name || student?.email || "S").charAt(0).toUpperCase()}
                                           </div>
                                           {getInterventionStatus(student).flagged && (
                                             <div className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center">
@@ -7955,7 +7956,7 @@ export default function AdminDashboard() {
                                         </div>
                                         <div className="min-w-0">
                                           <div className="flex items-center gap-2">
-                                            <p className="text-sm font-black text-slate-800 dark:text-slate-100 truncate">{student.name}</p>
+                                            <p className="text-sm font-black text-slate-800 dark:text-slate-100 truncate">{student?.name || student?.full_name || "Student"}</p>
                                             {getInterventionStatus(student).flagged && (
                                               <Badge className="bg-rose-500/10 text-rose-600 dark:text-rose-400 border-none font-bold text-[7px] px-1 py-0 h-3 leading-none uppercase italic">
                                                 Flagged
@@ -8083,13 +8084,13 @@ export default function AdminDashboard() {
 
                             <div className="flex items-center gap-4 relative z-10">
                               <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center font-black text-2xl text-white">
-                                {selectedStudent.name.charAt(0)}
+                                {(selectedStudent?.name || selectedStudent?.full_name || selectedStudent?.email || "S").charAt(0).toUpperCase()}
                               </div>
                               <div className="min-w-0">
                                 <span className="text-[9px] font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full text-white/90 italic">
                                   Student File
                                 </span>
-                                <h3 className="text-xl font-black mt-1 truncate">{selectedStudent.name}</h3>
+                                <h3 className="text-xl font-black mt-1 truncate">{selectedStudent?.name || selectedStudent?.full_name || "Student"}</h3>
                                 <p className="text-[10px] text-white/80 font-medium font-mono tracking-tight mt-0.5 truncate">{selectedStudent.email}</p>
                               </div>
                             </div>
@@ -11240,13 +11241,13 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-between relative z-10">
                     <div className="flex items-center gap-4">
                       <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center font-black text-2xl text-white">
-                        {selectedStudent.name.charAt(0)}
+                        {(selectedStudent?.name || selectedStudent?.full_name || selectedStudent?.email || "S").charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0">
                         <span className="text-[9px] font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full text-white/90 italic">
                           Student File & Performance
                         </span>
-                        <h3 className="text-xl font-black mt-1 truncate">{selectedStudent.name}</h3>
+                        <h3 className="text-xl font-black mt-1 truncate">{selectedStudent?.name || selectedStudent?.full_name || "Student"}</h3>
                         <p className="text-[10px] text-white/80 font-medium font-mono tracking-tight mt-0.5 truncate">{selectedStudent.email}</p>
                       </div>
                     </div>
@@ -11400,7 +11401,7 @@ export default function AdminDashboard() {
                             size="sm" 
                             className="h-6 px-2 text-[8px] font-black uppercase bg-primary/10 text-primary hover:bg-primary/20 rounded-md"
                             onClick={() => {
-                              toast.success(`Advisory notes for ${selectedStudent.name} saved successfully.`);
+                              toast.success(`Advisory notes for ${selectedStudent?.name || selectedStudent?.full_name || "Student"} saved successfully.`);
                             }}
                           >
                             Save Note
@@ -11571,7 +11572,7 @@ export default function AdminDashboard() {
                   <div className="flex gap-2">
                     <Button
                       onClick={() => {
-                        toast.info(`Generating performance report for ${selectedStudent.name}...`);
+                        toast.info(`Generating performance report for ${selectedStudent?.name || selectedStudent?.full_name || "Student"}...`);
                         setTimeout(() => {
                           toast.success(`PDF Performance Report exported successfully.`);
                         }, 1500);
