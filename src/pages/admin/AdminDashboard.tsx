@@ -18,6 +18,7 @@ import CourseAccessTierPicker from "../../components/admin/CourseAccessTierPicke
 import { syncMockTestTierAccess, syncCourseTierAccess } from "@/src/lib/membershipService";
 import { mergeCoursesWithMedia, fetchAllMediaCourses } from "@/src/lib/mediaCourseAdapter";
 import SecureVideoPlayer from "@/src/components/common/SecureVideoPlayer";
+import { BlogManager } from "../../components/admin/blog/BlogManager";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -50,6 +51,7 @@ import {
   BookOpen,
   Layout,
   FileText,
+  Newspaper,
   Settings,
   Users,
   Save,
@@ -2926,6 +2928,11 @@ export default function AdminDashboard() {
                     value: "resources",
                     label: "Resource Library",
                     icon: <FileText className="w-4 h-4" />,
+                  },
+                  {
+                    value: "blog",
+                    label: "Blog CMS & SEO",
+                    icon: <Newspaper className="w-4 h-4 text-emerald-500" />,
                   },
                   {
                     value: "meetings",
@@ -8923,6 +8930,10 @@ export default function AdminDashboard() {
                       </div>
                     </Card>
                   </div>
+                </TabsContent>
+
+                <TabsContent value="blog" className="mt-0">
+                  <BlogManager />
                 </TabsContent>
 
                 <TabsContent value="settings" className="mt-0">

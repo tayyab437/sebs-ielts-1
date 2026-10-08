@@ -15,7 +15,13 @@ export const BlogJsonLd: React.FC<BlogJsonLdProps> = ({ post }) => {
     '@type': post.content_type === 'pillar' ? 'Article' : 'BlogPosting',
     headline: post.seo_title || post.title,
     description: post.meta_description || post.excerpt,
-    image: post.featured_image_url ? [`https://sebsinstitute.com${post.featured_image_url}`] : ['https://sebsinstitute.com/ielts_prep_banner_960.webp'],
+    image: ((post as any).featured_image_url || post.featured_image)
+      ? [
+          ((post as any).featured_image_url || post.featured_image).startsWith('http')
+            ? ((post as any).featured_image_url || post.featured_image)
+            : `https://sebsinstitute.com${(post as any).featured_image_url || post.featured_image}`
+        ]
+      : ['https://sebsinstitute.com/ielts_prep_banner_960.webp'],
     datePublished: publishedDate,
     dateModified: modifiedDate,
     mainEntityOfPage: {

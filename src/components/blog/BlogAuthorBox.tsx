@@ -51,8 +51,8 @@ export const BlogAuthorBox: React.FC<BlogAuthorBoxProps> = ({
         {author ? (
           <div className="flex items-start gap-4">
             <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
-              {author.avatar_url ? (
-                <img src={author.avatar_url} alt={author.name} className="w-full h-full object-cover" />
+              {author.profile_image || (author as any).avatar_url ? (
+                <img src={author.profile_image || (author as any).avatar_url} alt={author.name} className="w-full h-full object-cover" />
               ) : (
                 <User className="w-7 h-7 text-primary" />
               )}
@@ -66,11 +66,8 @@ export const BlogAuthorBox: React.FC<BlogAuthorBoxProps> = ({
                   {author.name}
                 </Link>
               </h4>
-              {author.designation && (
-                <p className="text-xs font-bold text-slate-600 dark:text-slate-300 mt-0.5">{author.designation}</p>
-              )}
-              {author.credentials && (
-                <p className="text-[11px] text-slate-500 italic mt-0.5">{author.credentials}</p>
+              {(author.credentials || (author as any).designation) && (
+                <p className="text-xs font-bold text-slate-600 dark:text-slate-300 mt-0.5">{author.credentials || (author as any).designation}</p>
               )}
               {author.bio && (
                 <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 line-clamp-3 leading-relaxed">
@@ -88,8 +85,8 @@ export const BlogAuthorBox: React.FC<BlogAuthorBoxProps> = ({
               <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                 Written By
               </span>
-              <h4 className="text-base font-black text-slate-900 dark:text-white mt-1">Tayyab Ashfaq</h4>
-              <p className="text-xs font-bold text-slate-600 dark:text-slate-300 mt-0.5">Educational Technology Lead & Senior Editor</p>
+              <h4 className="text-base font-black text-slate-900 dark:text-white mt-1">Syed Ejaz Bukhari</h4>
+              <p className="text-xs font-bold text-slate-600 dark:text-slate-300 mt-0.5">Founder & Principal English Mentor • SEBS Institute</p>
             </div>
           </div>
         )}

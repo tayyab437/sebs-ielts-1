@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Calendar, Clock, User, ShieldCheck, ArrowLeft, AlertCircle } from 'lucide-react';
-import { fetchPostBySlug, fetchAdminPostById } from '../../lib/blogApi';
+import { fetchPublicPostBySlug, fetchAdminPostById } from '../../lib/blogApi';
 import type { BlogPost } from '../../types/blog';
 import { BlogBreadcrumbs } from '../../components/blog/BlogBreadcrumbs';
 import { BlogJsonLd } from '../../components/blog/BlogJsonLd';
@@ -42,8 +42,12 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ isPreviewMode = fals
         })
         .finally(() => setLoading(false));
     } else if (slug) {
-      fetchPostBySlug(slug)
+      fetchPublicPostBySlug(slug)
         .then((data: any) => {
+          if (!data) {
+            setError('Article not found');
+            return;
+          }
           // If server issued a 301 redirect object
           if (data.redirect) {
             navigate(data.redirect.destination, { replace: true });
@@ -148,15 +152,15 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ isPreviewMode = fals
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
-                {post.author?.avatar_url ? (
-                  <img src={post.author.avatar_url} alt={post.author.name} className="w-full h-full object-cover" />
+                {post.author?.profile_image || (post.author as any)?.avatar_url ? (
+                  <img src={post.author?.profile_image || (post.author as any)?.avatar_url} alt={post.author?.name} className="w-full h-full object-cover" />
                 ) : (
                   <User className="w-4 h-4 text-primary" />
                 )}
               </div>
               <div>
                 <span className="text-[10px] uppercase text-slate-400 font-bold block leading-none">Author</span>
-                <span className="font-bold text-slate-900 dark:text-white">{post.author?.name || 'Tayyab Ashfaq'}</span>
+                <span className="font-bold text-slate-900 dark:text-white">{post.author?.name || 'Syed Ejaz Bukhari'}</span>
               </div>
             </div>
 
@@ -187,18 +191,18 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ isPreviewMode = fals
         </div>
 
         {/* 6. Featured Image */}
-        {post.featured_image_url && (
+        {(post.featured_image || (post as any).featured_image_url) && (
           <figure className="my-6">
             <div className="rounded-3xl overflow-hidden bg-slate-950 aspect-[16/9] shadow-xl border border-slate-200/80 dark:border-white/10">
               <img
-                src={post.featured_image_url}
+                src={post.featured_image || (post as any).featured_image_url}
                 alt={post.featured_image_alt || post.title}
                 className="w-full h-full object-cover"
               />
             </div>
-            {post.featured_image_caption && (
+            {(post as any).featured_image_caption && (
               <figcaption className="text-center text-xs text-slate-500 italic mt-2">
-                {post.featured_image_caption}
+                {(post as any).featured_image_caption}
               </figcaption>
             )}
           </figure>

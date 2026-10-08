@@ -1,0 +1,257 @@
+{
+  "settings": {
+    "blog_title": "SEB's Institute Academic Journal & IELTS Resource Hub",
+    "blog_description": "Authoritative educational articles, Band 8.5+ strategies, and exam research curated by Syed Ejaz Bukhari.",
+    "seo_title": "IELTS & English Learning Blog | SEBS Institute",
+    "meta_description": "Explore comprehensive guides on IELTS Academic & General Training, speaking fluency, essay structures, and British Council standards.",
+    "default_og_image": "/syed_ejaz_bukhari_hero.webp",
+    "default_author_id": "author-seb",
+    "posts_per_page": 9,
+    "auto_toc": true,
+    "show_reading_time": true,
+    "review_interval_days": 90
+  },
+  "categories": [
+    {
+      "id": "cat-ielts-writing",
+      "name": "IELTS Writing",
+      "slug": "ielts-writing",
+      "description": "In-depth guides for Task 1 reports/letters and Task 2 argumentative and discursive essays.",
+      "seo_title": "IELTS Writing Task 1 & 2 Guides | SEBS Institute",
+      "meta_description": "Master Band 8+ essay templates, coherence techniques, and lexical resources for Academic and GT.",
+      "indexable": true,
+      "display_order": 1,
+      "post_count": 5
+    },
+    {
+      "id": "cat-ielts-speaking",
+      "name": "IELTS Speaking",
+      "slug": "ielts-speaking",
+      "description": "Oral interview protocols, Part 2 cue card blueprints, and pronunciation phonetic retraining.",
+      "seo_title": "IELTS Speaking Practice & Cue Cards | SEBS Institute",
+      "meta_description": "Fluency tactics, Cambridge marking criteria, and model audio answers with Sir Ejaz Bukhari.",
+      "indexable": true,
+      "display_order": 2,
+      "post_count": 4
+    },
+    {
+      "id": "cat-exam-strategy",
+      "name": "Exam Strategy & Band Scoring",
+      "slug": "exam-strategy",
+      "description": "British Council and IDP scoring rubrics, computer-delivered vs paper test comparisons, and time management.",
+      "seo_title": "IELTS Exam Strategies & Band Descriptors | SEBS Institute",
+      "meta_description": "Understand raw-to-band conversions, test day protocol, and common score-deflating pitfalls.",
+      "indexable": true,
+      "display_order": 3,
+      "post_count": 3
+    },
+    {
+      "id": "cat-reading-listening",
+      "name": "Reading & Listening",
+      "slug": "reading-listening",
+      "description": "Speed reading methods, distractor avoidance, and audio transcript navigation.",
+      "seo_title": "IELTS Reading & Listening Techniques | SEBS Institute",
+      "meta_description": "Skimming, scanning, and active listening strategies for 40/40 test results.",
+      "indexable": true,
+      "display_order": 4,
+      "post_count": 2
+    }
+  ],
+  "authors": [
+    {
+      "id": "author-seb",
+      "name": "Syed Ejaz Bukhari",
+      "slug": "syed-ejaz-bukhari",
+      "profile_image": "/syed_ejaz_bukhari_hero.webp",
+      "bio": "Founder and Principal Mentor at SEBS Institute. Over 34 years of instructional leadership in English phonetics, linguistic retraining, and IELTS test coaching.",
+      "credentials": "Founder & Master English Coach • 34+ Years Experience • British Council Certified Instructor",
+      "organization": "SEBS Institute",
+      "expertise": ["IELTS Academic & GT", "Spoken English Fluency", "Phonetics & Accent Softening", "Advanced Discourse"],
+      "social_links": {
+        "linkedin": "https://linkedin.com",
+        "website": "https://sebsinstitute.com"
+      },
+      "indexable": true
+    },
+    {
+      "id": "author-za",
+      "name": "Zoha Ali",
+      "slug": "zoha-ali",
+      "bio": "Senior Linguistics Specialist and EFL mentor focusing on cognitive language processing and structured lexical acquisition.",
+      "credentials": "MS ELTL • CELTA Qualified • 10+ Years Pedagogy",
+      "organization": "SEBS Institute",
+      "expertise": ["EFL Pedagogy", "Grammatical Cohesion", "Cambridge Assessment Framework"],
+      "indexable": true
+    }
+  ],
+  "reviewers": [
+    {
+      "id": "reviewer-sz",
+      "name": "Syeda Zarnaz Gilani",
+      "slug": "syeda-zarnaz-gilani",
+      "bio": "Senior Academic Reviewer and IELTS examiner specialist. University of London graduate ensuring curriculum compliance with Cambridge Assessment English.",
+      "qualifications": "BA English (University of London) • AEO & British Council Master Trainer",
+      "organization": "SEBS Institute Assessment Board",
+      "expertise": ["Cambridge Examiner Protocols", "Criterion Scoring Validation", "Academic Lexis"],
+      "indexable": true
+    }
+  ],
+  "posts": [
+    {
+      "id": "post-ielts-master-guide-2026",
+      "title": "IELTS Complete Master Guide 2026: Format, Band Descriptors & 8.5 Strategy",
+      "slug": "ielts-complete-master-guide-2026",
+      "excerpt": "An exhaustive, verified breakdown of the IELTS exam in 2026. Explore module timings, raw-to-band conversions, computer-delivered nuances, and proven preparation timelines.",
+      "content": "<h2>The Modern IELTS Testing Ecosystem</h2><p>The International English Language Testing System (IELTS) continues to be the definitive global benchmark for English language proficiency, accepted by over 12,500 universities, immigration authorities, and professional accreditation boards worldwide. In 2026, understanding both the Academic and General Training formats is the prerequisite for achieving Band 8.0 or higher.</p><h2>Test Architecture & Module Breakdown</h2><table><thead><tr><th>Module</th><th>Duration</th><th>Question Count</th><th>Core Skill Measured</th></tr></thead><tbody><tr><td>Listening</td><td>30 mins (+ 10 mins transfer for paper)</td><td>40 Questions</td><td>Acoustic comprehension, accents, note-taking</td></tr><tr><td>Reading</td><td>60 mins</td><td>40 Questions</td><td>Skimming, scanning, critical inference</td></tr><tr><td>Writing</td><td>60 mins</td><td>2 Tasks</td><td>Synthesis, logical coherence, argumentative lexis</td></tr><tr><td>Speaking</td><td>11–14 mins</td><td>3 Parts</td><td>Oral fluency, phonetic precision, lexical range</td></tr></tbody></table><h2>The Four Pillars of Assessment</h2><p>Whether taking paper-based or computerized test formats, candidates must internalize the four standard descriptors: Fluency and Coherence, Lexical Resource, Grammatical Range and Accuracy, and Task Achievement / Response.</p><h2>Strategic Preparation Timeline</h2><p>A candidate starting at CEFR B2 level requires between 8 to 12 weeks of deliberate practice to cross into the C1/C2 (Band 8.0–8.5) tier. At SEBS Institute, our students engage in real-time diagnostic recording and rigorous examiner feedback drills to eliminate recurring grammatical errors before test day.</p>",
+      "content_format": "html",
+      "featured_image": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format,compress&fm=webp&w=1200&q=80",
+      "featured_image_alt": "IELTS complete preparation book and study desk with academic notes",
+      "status": "published",
+      "content_type": "pillar",
+      "category_id": "cat-exam-strategy",
+      "author_id": "author-seb",
+      "reviewer_id": "reviewer-sz",
+      "published_at": "2026-01-15T09:00:00Z",
+      "updated_at": "2026-03-01T14:30:00Z",
+      "last_reviewed_at": "2026-03-01T14:30:00Z",
+      "seo_title": "IELTS Complete Master Guide 2026: Format & 8.5 Strategy",
+      "meta_description": "Comprehensive 2026 IELTS handbook covering test format, band descriptors, computer-delivered vs paper nuances, and preparation roadmaps.",
+      "canonical_url": "https://sebsinstitute.com/blog/ielts-complete-master-guide-2026",
+      "robots_index": true,
+      "robots_follow": true,
+      "primary_keyword": "IELTS complete guide",
+      "search_intent": "informational",
+      "reading_time": 8,
+      "word_count": 1450,
+      "featured": true,
+      "direct_answer_question": "What is the primary difference between IELTS Academic and General Training?",
+      "direct_answer_text": "IELTS Academic evaluates English proficiency for higher education and university admissions through complex research texts and data synthesis. General Training assesses everyday communicative competence for migration and secondary employment using workplace memos and practical reading material.",
+      "key_takeaways": [
+        "Total exam duration is 2 hours 45 minutes across all four modules.",
+        "The Listening and Speaking modules are identical in both Academic and General Training.",
+        "Scores are reported on a 9-band scale in half-band increments.",
+        "IELTS results remain valid for exactly 2 years from test date."
+      ],
+      "important_note": "Always verify whether your target immigration authority or university requires Computer-Delivered (CD) or Paper-Delivered IELTS before booking your test date.",
+      "faqs": [
+        {
+          "question": "How long is my IELTS test result valid for?",
+          "answer": "IELTS Test Report Forms (TRFs) are valid for 2 years from the date of the examination."
+        },
+        {
+          "question": "Can I retake just one module if my score was low?",
+          "answer": "IELTS One Skill Retake (OSR) is available at select computer-delivered test centers worldwide within 60 days of the original test date."
+        }
+      ],
+      "sources": [
+        {
+          "title": "Cambridge English: IELTS Guide for Candidates",
+          "url": "https://www.cambridgeenglish.org/exams-and-tests/ielts/",
+          "publisher": "Cambridge University Press & Assessment"
+        },
+        {
+          "title": "British Council Global Testing Guidelines",
+          "url": "https://takeielts.britishcouncil.org/",
+          "publisher": "British Council"
+        }
+      ]
+    },
+    {
+      "id": "post-ielts-writing-task-2-band-8",
+      "title": "IELTS Writing Task 2: 7-Step Band 8 Essay Architecture & Model Structures",
+      "slug": "ielts-writing-task-2-band-8-essay-architecture",
+      "excerpt": "Learn how to structure discursive, opinion, and problem-solution essays that satisfy all four Cambridge marking descriptors with crystalline logical progression.",
+      "content": "<h2>The Core Formula for Band 8 Task Response</h2><p>The single most frequent mistake committed by Band 6.5 candidates is failing to present a clear, fully developed position throughout their essay. To secure Band 8 or higher, every paragraph must trace back to a singular thesis statement established in the introductory paragraph.</p><h2>The 4-Paragraph Canonical Blueprint</h2><ol><li><strong>Introduction (45 words):</strong> Background paraphrase + Explicit thesis statement with your two central contentions.</li><li><strong>Body Paragraph 1 (90 words):</strong> Topic sentence + Primary argument + Concrete real-world exemplification + Logical implication.</li><li><strong>Body Paragraph 2 (90 words):</strong> Counter-perspective or secondary argument + Elaboration + Contextual evidence + Analytical resolution.</li><li><strong>Conclusion (35 words):</strong> Synthesis of main arguments without introducing new extraneous claims.</li></ol><h2>Avoiding Over-Complicated Vocabulary</h2><p>Lexical Resource is not an invitation to insert archaic words. The British Council and IDP examiners look for precision and natural collocation. Using 'substantive ramifications' correctly will score far higher than forcing obscure synonyms that warp sentence meaning.</p>",
+      "content_format": "html",
+      "featured_image": "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format,compress&fm=webp&w=1200&q=80",
+      "featured_image_alt": "Fountain pen on handwritten essay notebook with scholarly draft",
+      "status": "published",
+      "content_type": "cluster",
+      "category_id": "cat-ielts-writing",
+      "author_id": "author-seb",
+      "reviewer_id": "reviewer-sz",
+      "published_at": "2026-02-10T10:00:00Z",
+      "updated_at": "2026-03-05T11:00:00Z",
+      "last_reviewed_at": "2026-03-05T11:00:00Z",
+      "seo_title": "IELTS Writing Task 2: Band 8 Essay Architecture",
+      "meta_description": "Master the 4-paragraph essay formula for IELTS Writing Task 2 with model templates, coherence connectors, and Band 8 band descriptors.",
+      "canonical_url": "https://sebsinstitute.com/blog/ielts-writing-task-2-band-8-essay-architecture",
+      "robots_index": true,
+      "robots_follow": true,
+      "primary_keyword": "IELTS writing task 2 band 8",
+      "search_intent": "informational",
+      "reading_time": 6,
+      "word_count": 1100,
+      "featured": false,
+      "key_takeaways": [
+        "Task 2 accounts for 66% (two-thirds) of your overall Writing band score.",
+        "Aim for 260–280 words; writing under 250 words incurs a severe penalty.",
+        "Spend no more than 40 minutes on Task 2, leaving 5 minutes for careful proofreading."
+      ],
+      "faqs": [
+        {
+          "question": "Should I write more than 300 words in Task 2?",
+          "answer": "No. Writing excessively long essays increases grammatical error density and leaves insufficient time for Task 1 and final editing."
+        }
+      ]
+    },
+    {
+      "id": "post-ielts-speaking-part-2-cue-cards",
+      "title": "IELTS Speaking Part 2 Cue Cards: 1-Minute Brainstorming Blueprint",
+      "slug": "ielts-speaking-part-2-cue-cards-brainstorming",
+      "excerpt": "Turn your 60 seconds of prep time into a fluent 2-minute monologue without freezing, repeating ideas, or losing grammatical control.",
+      "content": "<h2>The Anatomy of the Speaking Cue Card</h2><p>Part 2 of the IELTS Speaking interview is the candidate's individual long turn. The examiner provides a task card, paper, and pencil, granting precisely 60 seconds of preparation before prompting you to speak for between 1 and 2 minutes.</p><h2>The PAST-PRESENT-FUTURE Narrative Anchor</h2><p>Instead of jotting isolated words that you struggle to assemble while speaking, organize your scratchpad into three chronological nodes: How this event started (Past), How it manifested and what you did (Action), and Why it continues to hold resonance for your life today (Reflection). This naturally introduces diverse tense structures required for Band 8 Grammatical Range.</p>",
+      "content_format": "html",
+      "featured_image": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format,compress&fm=webp&w=1200&q=80",
+      "featured_image_alt": "Candidate in oral speaking practice session with coach",
+      "status": "published",
+      "content_type": "supporting",
+      "category_id": "cat-ielts-speaking",
+      "author_id": "author-za",
+      "reviewer_id": "reviewer-sz",
+      "published_at": "2026-02-24T08:30:00Z",
+      "updated_at": "2026-03-02T09:00:00Z",
+      "last_reviewed_at": "2026-03-02T09:00:00Z",
+      "seo_title": "IELTS Speaking Part 2 Cue Cards: 1-Minute Blueprint",
+      "meta_description": "Master the 60-second preparation strategy for IELTS Speaking Part 2 cue cards with narrative frameworks and phonetic fluency drills.",
+      "canonical_url": "https://sebsinstitute.com/blog/ielts-speaking-part-2-cue-cards-brainstorming",
+      "robots_index": true,
+      "robots_follow": true,
+      "primary_keyword": "IELTS speaking part 2 cue cards",
+      "search_intent": "informational",
+      "reading_time": 5,
+      "word_count": 850,
+      "featured": false,
+      "key_takeaways": [
+        "The examiner will interrupt you gently at 2 minutes — this is normal and not a score penalty.",
+        "Use your 1 minute to outline structural milestones rather than full sentences.",
+        "Vary intonation and pace to demonstrate natural discourse flow."
+      ]
+    }
+  ],
+  "redirects": [],
+  "revisions": [],
+  "media": [
+    {
+      "id": "media-1",
+      "url": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format,compress&fm=webp&w=1200&q=80",
+      "title": "IELTS Complete Preparation Book",
+      "alt_text": "IELTS study materials on library desk",
+      "created_at": "2026-01-15T09:00:00Z"
+    },
+    {
+      "id": "media-2",
+      "url": "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format,compress&fm=webp&w=1200&q=80",
+      "title": "Academic Essay Writing Notebook",
+      "alt_text": "Fountain pen writing draft essay",
+      "created_at": "2026-02-10T10:00:00Z"
+    },
+    {
+      "id": "media-3",
+      "url": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format,compress&fm=webp&w=1200&q=80",
+      "title": "Speaking Practice Session",
+      "alt_text": "Students discussing oral presentation",
+      "created_at": "2026-02-24T08:30:00Z"
+    }
+  ]
+}

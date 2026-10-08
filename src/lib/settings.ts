@@ -203,6 +203,64 @@ export function sanitizeAssetUrl(url: string | null | undefined, defaultUrl: str
   return trimmed;
 }
 
+export function applyAndPersistSettings(data: Record<string, any>): SiteSettings {
+  if (!data || typeof data !== "object") return cachedSettings || defaultSettings;
+  const sanitizedData = { ...data };
+  if (sanitizedData.site_logo_url) {
+    sanitizedData.site_logo_url = sanitizeAssetUrl(sanitizedData.site_logo_url, defaultSettings.site_logo_url);
+  }
+  if (sanitizedData.site_favicon_url) {
+    sanitizedData.site_favicon_url = sanitizeAssetUrl(sanitizedData.site_favicon_url, defaultSettings.site_favicon_url);
+  }
+  if (sanitizedData.site_hero_image_url) {
+    sanitizedData.site_hero_image_url = sanitizeAssetUrl(sanitizedData.site_hero_image_url, defaultSettings.site_hero_image_url);
+  }
+  if (sanitizedData.courses_banner_image_url) {
+    sanitizedData.courses_banner_image_url = sanitizeAssetUrl(sanitizedData.courses_banner_image_url, defaultSettings.courses_banner_image_url);
+  }
+  if (sanitizedData.carousel_slides && typeof sanitizedData.carousel_slides === "string") {
+    try {
+      sanitizedData.carousel_slides = JSON.parse(sanitizedData.carousel_slides);
+    } catch (e) {
+      sanitizedData.carousel_slides = defaultCarouselSlides;
+    }
+  }
+  if (sanitizedData.carousel_timer) {
+    sanitizedData.carousel_timer = Number(sanitizedData.carousel_timer) || defaultSettings.carousel_timer;
+  }
+
+  const merged = { ...defaultSettings, ...sanitizedData };
+  cachedSettings = merged;
+
+  if (typeof window !== "undefined") {
+    try {
+      Object.keys(merged).forEach((key) => {
+        const val = (merged as any)[key];
+        if (val !== undefined && val !== null) {
+          if (typeof val === "object") {
+            localStorage.setItem(key, JSON.stringify(val));
+          } else {
+            localStorage.setItem(key, String(val));
+          }
+        }
+      });
+    } catch (e) {
+      // Storage restriction or quota
+    }
+
+    if (merged.site_favicon_url) {
+      updateDocumentFavicon(merged.site_favicon_url);
+    }
+
+    try {
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new CustomEvent("site_settings_updated", { detail: merged }));
+    } catch (e) {}
+  }
+
+  return merged;
+}
+
 let activeFetchPromise: Promise<SiteSettings> | null = null;
 let cachedSettings: SiteSettings | null = typeof window !== "undefined" ? getLocalSettings() : defaultSettings;
 let hasTriggeredSync = false;
@@ -217,97 +275,57 @@ export async function fetchSiteSettings(bypassCache = false): Promise<SiteSettin
   if (bypassCache) {
     cachedSettings = null;
     activeFetchPromise = null;
-  } else if (cachedSettings) {
-    // Return cached settings immediately to eliminate critical request chaining
-    // Trigger background sync during idle time without blocking initial page load
-    if (!hasTriggeredSync && typeof window !== "undefined") {
-      hasTriggeredSync = true;
-      const syncFn = () => {
-        (async () => {
-          try {
-            const res = await fetch("/api/mysql/settings");
-            if (res.ok) {
-              const data = await res.json();
-              if (data && typeof data === "object" && Object.keys(data).length > 0) {
-                const sanitizedData = { ...data };
-                if (sanitizedData.site_logo_url) sanitizedData.site_logo_url = sanitizeAssetUrl(sanitizedData.site_logo_url, defaultSettings.site_logo_url);
-                if (sanitizedData.site_favicon_url) sanitizedData.site_favicon_url = sanitizeAssetUrl(sanitizedData.site_favicon_url, defaultSettings.site_favicon_url);
-                if (sanitizedData.site_hero_image_url) sanitizedData.site_hero_image_url = sanitizeAssetUrl(sanitizedData.site_hero_image_url, defaultSettings.site_hero_image_url);
-                if (sanitizedData.courses_banner_image_url) sanitizedData.courses_banner_image_url = sanitizeAssetUrl(sanitizedData.courses_banner_image_url, defaultSettings.courses_banner_image_url);
-                cachedSettings = { ...defaultSettings, ...sanitizedData };
-              }
-            }
-          } catch {
-            // Ignore background sync errors
-          }
-        })();
-      };
-
-      if ("requestIdleCallback" in window) {
-        (window as any).requestIdleCallback(syncFn, { timeout: 4000 });
-      } else {
-        setTimeout(syncFn, 3500);
-      }
-    }
-    return cachedSettings;
   }
 
-  if (activeFetchPromise) {
+  if (!cachedSettings) {
+    cachedSettings = typeof window !== "undefined" ? getLocalSettings() : defaultSettings;
+  }
+
+  if ((!hasTriggeredSync || bypassCache) && typeof window !== "undefined") {
+    hasTriggeredSync = true;
+    const syncFn = async () => {
+      try {
+        const res = await fetch("/api/mysql/settings");
+        if (res.ok) {
+          const contentType = res.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const data = await res.json();
+            if (data && typeof data === "object" && Object.keys(data).length > 0) {
+              applyAndPersistSettings(data);
+            }
+          }
+        }
+      } catch (err) {
+        // Ignore background sync errors
+      }
+    };
+    setTimeout(syncFn, 0);
+  }
+
+  if (bypassCache) {
+    if (activeFetchPromise) return activeFetchPromise;
+    activeFetchPromise = (async () => {
+      try {
+        const res = await fetch("/api/mysql/settings");
+        if (res.ok) {
+          const contentType = res.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const data = await res.json();
+            if (data && typeof data === "object" && Object.keys(data).length > 0) {
+              return applyAndPersistSettings(data);
+            }
+          }
+        }
+      } catch (_err) {
+      } finally {
+        activeFetchPromise = null;
+      }
+      return getLocalSettings();
+    })();
     return activeFetchPromise;
   }
 
-  activeFetchPromise = (async () => {
-    try {
-      const res = await fetch("/api/mysql/settings");
-      if (res.ok) {
-        const contentType = res.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const data = await res.json();
-          if (data && typeof data === "object" && Object.keys(data).length > 0) {
-            const sanitizedData = { ...data };
-            if (sanitizedData.site_logo_url) {
-              sanitizedData.site_logo_url = sanitizeAssetUrl(sanitizedData.site_logo_url, defaultSettings.site_logo_url);
-            }
-            if (sanitizedData.site_favicon_url) {
-              sanitizedData.site_favicon_url = sanitizeAssetUrl(sanitizedData.site_favicon_url, defaultSettings.site_favicon_url);
-            }
-            if (sanitizedData.site_hero_image_url) {
-              sanitizedData.site_hero_image_url = sanitizeAssetUrl(sanitizedData.site_hero_image_url, defaultSettings.site_hero_image_url);
-            }
-            if (sanitizedData.courses_banner_image_url) {
-              sanitizedData.courses_banner_image_url = sanitizeAssetUrl(sanitizedData.courses_banner_image_url, defaultSettings.courses_banner_image_url);
-            }
-            if (sanitizedData.carousel_slides && typeof sanitizedData.carousel_slides === "string") {
-              try {
-                sanitizedData.carousel_slides = JSON.parse(sanitizedData.carousel_slides);
-              } catch (e) {
-                sanitizedData.carousel_slides = defaultCarouselSlides;
-              }
-            }
-            if (sanitizedData.carousel_timer) {
-              sanitizedData.carousel_timer = Number(sanitizedData.carousel_timer) || defaultSettings.carousel_timer;
-            }
-            cachedSettings = { ...defaultSettings, ...sanitizedData };
-            if (cachedSettings.site_favicon_url) {
-              updateDocumentFavicon(cachedSettings.site_favicon_url);
-            }
-            return cachedSettings;
-          }
-        }
-      }
-    } catch (_err) {
-      // Network/initialization transient error during cold start; safely return fallback
-    } finally {
-      activeFetchPromise = null;
-    }
-    const local = getLocalSettings();
-    if (local.site_favicon_url) {
-      updateDocumentFavicon(local.site_favicon_url);
-    }
-    return local;
-  })();
-
-  return activeFetchPromise;
+  return cachedSettings;
 }
 
 export async function saveSiteSettings(settings: Partial<SiteSettings>): Promise<void> {

@@ -2013,6 +2013,299 @@ async function startServer() {
     }
   });
 
+  // --- Persistent Blog CMS & SEO API ---
+  const BLOG_DATA_FILE = path.join(process.cwd(), "blog_data.json");
+  
+  const readBlogData = () => {
+    try {
+      if (fs.existsSync(BLOG_DATA_FILE)) {
+        return JSON.parse(fs.readFileSync(BLOG_DATA_FILE, "utf-8") || "{}");
+      }
+    } catch (e) {
+      console.warn("Could not read blog_data.json:", e);
+    }
+    return { posts: [], categories: [], authors: [], reviewers: [], settings: {}, redirects: [], revisions: [], media: [] };
+  };
+
+  const writeBlogData = (data: any) => {
+    try {
+      fs.writeFileSync(BLOG_DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
+    } catch (e) {
+      console.error("Could not write blog_data.json:", e);
+    }
+  };
+
+  // 1. Public Posts List with Category, Search, & Pagination
+  app.get("/api/blog/posts", (req, res) => {
+    const data = readBlogData();
+    const { category, search, page = "1", limit = "9" } = req.query;
+    let posts = (data.posts || []).filter((p: any) => p.status === "published");
+
+    if (category) {
+      posts = posts.filter((p: any) => p.category_id === category || p.category?.slug === category);
+    }
+    if (search) {
+      const q = String(search).toLowerCase();
+      posts = posts.filter((p: any) =>
+        (p.title && p.title.toLowerCase().includes(q)) ||
+        (p.excerpt && p.excerpt.toLowerCase().includes(q)) ||
+        (p.primary_keyword && p.primary_keyword.toLowerCase().includes(q))
+      );
+    }
+
+    const pageNum = parseInt(String(page)) || 1;
+    const limitNum = parseInt(String(limit)) || 9;
+    const total = posts.length;
+    const totalPages = Math.ceil(total / limitNum) || 1;
+    const start = (pageNum - 1) * limitNum;
+    const paginated = posts.slice(start, start + limitNum);
+
+    const populated = paginated.map((p: any) => ({
+      ...p,
+      category: (data.categories || []).find((c: any) => c.id === p.category_id),
+      author: (data.authors || []).find((a: any) => a.id === p.author_id),
+      reviewer: (data.reviewers || []).find((r: any) => r.id === p.reviewer_id)
+    }));
+
+    res.json({ posts: populated, total, page: pageNum, totalPages });
+  });
+
+  // 2. Single Post by Slug or ID
+  app.get("/api/blog/posts/:slug", (req, res) => {
+    const data = readBlogData();
+    const slug = req.params.slug;
+
+    const redirectRule = (data.redirects || []).find((r: any) => r.active && (r.source_url === `/blog/${slug}` || r.source_url === slug));
+    if (redirectRule) {
+      return res.json({ redirect: { destination: redirectRule.destination_url, status: redirectRule.status_code || 301 } });
+    }
+
+    const post = (data.posts || []).find((p: any) => p.slug === slug || p.id === slug);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    const fullPost = {
+      ...post,
+      category: (data.categories || []).find((c: any) => c.id === post.category_id),
+      author: (data.authors || []).find((a: any) => a.id === post.author_id),
+      reviewer: (data.reviewers || []).find((r: any) => r.id === post.reviewer_id)
+    };
+    res.json(fullPost);
+  });
+
+  // 3. Public Categories
+  app.get("/api/blog/categories", (_req, res) => {
+    const data = readBlogData();
+    res.json(data.categories || []);
+  });
+
+  // 4. Public Authors
+  app.get("/api/blog/authors", (_req, res) => {
+    const data = readBlogData();
+    res.json(data.authors || []);
+  });
+
+  // 5. Public Reviewers
+  app.get("/api/blog/reviewers", (_req, res) => {
+    const data = readBlogData();
+    res.json(data.reviewers || []);
+  });
+
+  // 6. Public Settings
+  app.get("/api/blog/settings", (_req, res) => {
+    const data = readBlogData();
+    res.json(data.settings || {});
+  });
+
+  // 7. Admin Posts List
+  app.get("/api/blog/admin/posts", (req, res) => {
+    const data = readBlogData();
+    const { status, search, category } = req.query;
+    let posts = data.posts || [];
+    if (status && status !== "all") {
+      posts = posts.filter((p: any) => p.status === status);
+    }
+    if (category) {
+      posts = posts.filter((p: any) => p.category_id === category);
+    }
+    if (search) {
+      const q = String(search).toLowerCase();
+      posts = posts.filter((p: any) => p.title?.toLowerCase().includes(q) || p.slug?.toLowerCase().includes(q));
+    }
+    const populated = posts.map((p: any) => ({
+      ...p,
+      category: (data.categories || []).find((c: any) => c.id === p.category_id),
+      author: (data.authors || []).find((a: any) => a.id === p.author_id),
+      reviewer: (data.reviewers || []).find((r: any) => r.id === p.reviewer_id)
+    }));
+    res.json(populated);
+  });
+
+  // 8. Admin Post by ID
+  app.get("/api/blog/admin/posts/:id", (req, res) => {
+    const data = readBlogData();
+    const post = (data.posts || []).find((p: any) => p.id === req.params.id);
+    if (!post) return res.status(404).json({ error: "Post not found" });
+    res.json(post);
+  });
+
+  // 9. Admin Create Post
+  app.post("/api/blog/admin/posts", (req, res) => {
+    const data = readBlogData();
+    const newPost = {
+      ...req.body,
+      id: req.body.id || `post-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    if (!data.posts) data.posts = [];
+    data.posts.unshift(newPost);
+    writeBlogData(data);
+    res.json(newPost);
+  });
+
+  // 10. Admin Update Post
+  app.put("/api/blog/admin/posts/:id", (req, res) => {
+    const data = readBlogData();
+    const idx = (data.posts || []).findIndex((p: any) => p.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: "Post not found" });
+
+    if (!data.revisions) data.revisions = [];
+    data.revisions.unshift({
+      id: `rev-${Date.now()}`,
+      post_id: req.params.id,
+      editor_name: "Admin",
+      timestamp: new Date().toISOString(),
+      content_snapshot: data.posts[idx].content || "",
+      metadata_snapshot: { title: data.posts[idx].title, excerpt: data.posts[idx].excerpt }
+    });
+
+    data.posts[idx] = {
+      ...data.posts[idx],
+      ...req.body,
+      updated_at: new Date().toISOString()
+    };
+    writeBlogData(data);
+    res.json(data.posts[idx]);
+  });
+
+  // 11. Admin Delete Post
+  app.delete("/api/blog/admin/posts/:id", (req, res) => {
+    const data = readBlogData();
+    data.posts = (data.posts || []).filter((p: any) => p.id !== req.params.id);
+    writeBlogData(data);
+    res.json({ success: true });
+  });
+
+  // 12. Admin Categories CRUD
+  app.post("/api/blog/admin/categories", (req, res) => {
+    const data = readBlogData();
+    if (!data.categories) data.categories = [];
+    const existingIdx = data.categories.findIndex((c: any) => c.id === req.body.id);
+    if (existingIdx !== -1) {
+      data.categories[existingIdx] = { ...data.categories[existingIdx], ...req.body };
+      writeBlogData(data);
+      return res.json(data.categories[existingIdx]);
+    }
+    const newCat = { ...req.body, id: req.body.id || `cat-${Date.now()}` };
+    data.categories.push(newCat);
+    writeBlogData(data);
+    res.json(newCat);
+  });
+
+  app.delete("/api/blog/admin/categories/:id", (req, res) => {
+    const data = readBlogData();
+    data.categories = (data.categories || []).filter((c: any) => c.id !== req.params.id);
+    writeBlogData(data);
+    res.json({ success: true });
+  });
+
+  // 13. Admin Stats
+  app.get("/api/blog/stats", (_req, res) => {
+    const data = readBlogData();
+    const posts = data.posts || [];
+    res.json({
+      total_posts: posts.length,
+      published_posts: posts.filter((p: any) => p.status === "published").length,
+      draft_posts: posts.filter((p: any) => p.status === "draft").length,
+      pending_posts: posts.filter((p: any) => p.status === "pending_review").length,
+      archived_posts: posts.filter((p: any) => p.status === "archived").length,
+      total_categories: (data.categories || []).length,
+      total_authors: (data.authors || []).length,
+      total_reviewers: (data.reviewers || []).length,
+      stale_reviews_count: 0
+    });
+  });
+
+  // 14. Admin SEO Audits
+  app.get("/api/blog/audits", (_req, res) => {
+    const data = readBlogData();
+    const audits: any[] = [];
+    (data.posts || []).forEach((p: any) => {
+      if (!p.meta_description) {
+        audits.push({
+          id: `audit-meta-${p.id}`,
+          type: "warning",
+          code: "MISSING_META_DESC",
+          title: "Missing Meta Description",
+          description: `Post "${p.title}" lacks a search-optimized meta description.`,
+          affected_url: `/blog/${p.slug}`,
+          suggested_action: "Add 140-160 character meta description in SEO tab.",
+          status: "open"
+        });
+      }
+      if (!p.primary_keyword) {
+        audits.push({
+          id: `audit-kw-${p.id}`,
+          type: "info",
+          code: "NO_FOCUS_KEYWORD",
+          title: "No Primary Focus Keyword",
+          description: `Post "${p.title}" has no primary keyword assigned.`,
+          affected_url: `/blog/${p.slug}`,
+          suggested_action: "Specify primary target keyword.",
+          status: "open"
+        });
+      }
+    });
+    res.json(audits);
+  });
+
+  // 15. Redirects
+  app.get("/api/blog/redirects", (_req, res) => {
+    const data = readBlogData();
+    res.json(data.redirects || []);
+  });
+
+  app.post("/api/blog/redirects", (req, res) => {
+    const data = readBlogData();
+    if (!data.redirects) data.redirects = [];
+    const newRedir = { ...req.body, id: `redir-${Date.now()}`, created_at: new Date().toISOString(), active: true };
+    data.redirects.push(newRedir);
+    writeBlogData(data);
+    res.json(newRedir);
+  });
+
+  app.delete("/api/blog/redirects/:id", (req, res) => {
+    const data = readBlogData();
+    data.redirects = (data.redirects || []).filter((r: any) => r.id !== req.params.id);
+    writeBlogData(data);
+    res.json({ success: true });
+  });
+
+  // 16. Revisions
+  app.get("/api/blog/admin/posts/:postId/revisions", (req, res) => {
+    const data = readBlogData();
+    const revs = (data.revisions || []).filter((r: any) => r.post_id === req.params.postId);
+    res.json(revs);
+  });
+
+  // 17. Media
+  app.get("/api/blog/admin/media", (_req, res) => {
+    const data = readBlogData();
+    res.json(data.media || []);
+  });
+
   app.post("/api/gemini/evaluate-writing", async (req, res) => {
     try {
       const { essay, taskType, userId } = req.body;

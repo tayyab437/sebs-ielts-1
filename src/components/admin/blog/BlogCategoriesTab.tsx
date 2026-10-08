@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { fetchAdminCategories, createAdminCategory, updateAdminCategory, deleteAdminCategory } from '../../../lib/blogApi';
 import type { BlogCategory } from '../../../types/blog';
-import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
-import { Textarea } from '../../ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Layers, Plus, Edit, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export const BlogCategoriesTab: React.FC = () => {

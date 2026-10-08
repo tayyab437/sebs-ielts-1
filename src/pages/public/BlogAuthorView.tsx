@@ -5,10 +5,11 @@ import { fetchAuthorBySlug, fetchPublicPosts } from '../../lib/blogApi';
 import type { BlogAuthor, BlogPost } from '../../types/blog';
 import { BlogArticleCard } from '../../components/blog/BlogArticleCard';
 import { BlogBreadcrumbs } from '../../components/blog/BlogBreadcrumbs';
-import { Button } from '../../components/ui/button';
+import { Button } from '@/components/ui/button';
 
 export const BlogAuthorView: React.FC = () => {
-  const { authorSlug } = useParams<{ authorSlug: string }>();
+  const params = useParams<{ authorSlug?: string; slug?: string }>();
+  const authorSlug = params.authorSlug || params.slug;
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
 
@@ -25,15 +26,15 @@ export const BlogAuthorView: React.FC = () => {
 
     fetchAuthorBySlug(authorSlug)
       .then((auth) => {
+        if (!auth) throw new Error('Author not found');
         setAuthor(auth);
-        return fetchPublicPosts({ page, limit: 9 });
+        return fetchPublicPosts({ page, limit: 12 }).then((res) => ({ auth, res }));
       })
-      .then((res) => {
-        if (res && author) {
-          // Filter by author ID client/server side
-          const authPosts = res.posts.filter((p) => p.author?.id === author.id || p.author_id === author.id);
+      .then(({ auth, res }) => {
+        if (res && auth) {
+          const authPosts = res.posts.filter((p) => p.author?.id === auth.id || p.author_id === auth.id || p.author?.slug === auth.slug);
           setPosts(authPosts);
-          setPagination({ ...res.pagination, total: authPosts.length });
+          setPagination({ page: res.page, limit: 9, total: authPosts.length, totalPages: Math.ceil(authPosts.length / 9) || 1 });
         }
       })
       .catch((err) => {

@@ -27,6 +27,10 @@ const AboutPage = lazyWithRetry(() => import("./pages/public/About"));
 const BooksPage = lazyWithRetry(() => import("./pages/public/Books"));
 const IeltsSpeakingPage = lazyWithRetry(() => import("./pages/public/IeltsSpeaking"));
 const IeltsWritingPage = lazyWithRetry(() => import("./pages/public/IeltsWriting"));
+const BlogHomePage = lazyWithRetry(() => import("./pages/public/BlogHome").then(m => ({ default: m.BlogHome })));
+const BlogPostViewPage = lazyWithRetry(() => import("./pages/public/BlogPostView").then(m => ({ default: m.BlogPostView })));
+const BlogCategoryViewPage = lazyWithRetry(() => import("./pages/public/BlogCategoryView").then(m => ({ default: m.BlogCategoryView })));
+const BlogAuthorViewPage = lazyWithRetry(() => import("./pages/public/BlogAuthorView").then(m => ({ default: m.BlogAuthorView })));
 const NotFoundPage = lazyWithRetry(() => import("./pages/public/NotFound"));
 
 // Intelligent prefetcher on hover/touch/idle
@@ -35,6 +39,10 @@ export const prefetchRoute = (path: string) => {
   if (path.startsWith("/courses")) import("./pages/public/Courses");
   else if (path.startsWith("/ielts-speaking") || path.startsWith("/speaking") || path.startsWith("/ielts/ielts-speaking")) import("./pages/public/IeltsSpeaking");
   else if (path.startsWith("/ielts-writing") || path.startsWith("/writing") || path.startsWith("/ielts/ielts-writing")) import("./pages/public/IeltsWriting");
+  else if (path.startsWith("/blog")) {
+    import("./pages/public/BlogHome");
+    import("./pages/public/BlogPostView");
+  }
   else if (path.startsWith("/mock-test") || path.startsWith("/academic") || path.startsWith("/general") || path.startsWith("/gt")) import("./pages/dashboard/MockTest");
   else if (path.startsWith("/pricing")) import("./pages/public/Pricing");
   else if (path.startsWith("/dashboard/writing")) import("./pages/dashboard/WritingModule");
@@ -200,6 +208,15 @@ function Footer() {
               Resources & Info
             </h3>
             <ul className="space-y-1 text-xs font-semibold text-slate-600 dark:text-slate-400">
+              <li>
+                <Link 
+                  to="/blog" 
+                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[38px] py-1.5 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                >
+                  <span className="group-hover:translate-x-1 transition-transform">Blog & Research</span>
+                  <span className="text-[8px] uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400 font-mono">Guides</span>
+                </Link>
+              </li>
               <li>
                 <Link 
                   to="/contact" 
@@ -637,6 +654,7 @@ function Navbar() {
     { name: "Mock Tests", path: "/mock-tests", badge: "IELTS" },
     { name: "Speaking", path: "/ielts-speaking", badge: "2026" },
     { name: "Writing", path: "/ielts-writing", badge: "Eval" },
+    { name: "Blog", path: "/blog" },
     { name: "Pricing", path: "/pricing" },
   ];
 
@@ -1377,6 +1395,16 @@ function AppContent() {
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
+            {/* Blog & Academic Resource Hub */}
+            <Route path="/blog" element={<BlogHomePage />} />
+            <Route path="/blog/" element={<BlogHomePage />} />
+            <Route path="/blog/preview/:id" element={<BlogPostViewPage isPreviewMode={true} />} />
+            <Route path="/blog/category/:categorySlug" element={<BlogCategoryViewPage />} />
+            <Route path="/blog/category/:slug" element={<BlogCategoryViewPage />} />
+            <Route path="/blog/author/:authorSlug" element={<BlogAuthorViewPage />} />
+            <Route path="/blog/author/:slug" element={<BlogAuthorViewPage />} />
+            <Route path="/blog/:slug" element={<BlogPostViewPage />} />
+
             <Route path="/pages/:slug" element={<CustomPageView />} />
             <Route path="/page/:slug" element={<CustomPageView />} />
             <Route path="*" element={<NotFoundPage />} />

@@ -153,8 +153,10 @@ export default function IeltsWritingPage() {
       </div>
 
       {/* HERO SECTION */}
-      <section className="relative bg-slate-900 text-white pt-12 pb-16 lg:pb-20 px-4 sm:px-6 lg:px-8 border-b border-slate-800 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 via-transparent to-cyan-500/5 pointer-events-none" />
+      <section className="relative bg-[#f8fafc] text-slate-900 pt-12 pb-16 lg:pb-20 px-4 sm:px-6 lg:px-8 border-b border-slate-200 overflow-hidden">
+        {/* Soft Ambient Glows */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-cyan-100/60 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-20 left-10 w-[450px] h-[450px] rounded-full bg-sky-100/70 blur-3xl pointer-events-none" />
         
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
@@ -162,39 +164,39 @@ export default function IeltsWritingPage() {
             {/* Left Hero Details */}
             <div className="lg:col-span-7 flex flex-col gap-5">
               <div className="inline-flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded bg-[#00a8cc]/10 text-[#00a8cc] border border-[#00a8cc]/30 text-xs font-black uppercase tracking-widest">
+                <span className="px-2.5 py-1 rounded bg-[#00a8cc]/10 text-[#007a99] border border-[#00a8cc]/30 text-xs font-black uppercase tracking-widest">
                   IELTS WRITING • ACADEMIC &amp; GENERAL TRAINING
                 </span>
-                <span className="text-slate-400 text-xs flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-slate-600 text-xs flex items-center gap-1 font-semibold">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                   Official 4-Pillar Scoring
                 </span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
-                IELTS Writing: Complete Guide to Task 1, Task 2 &amp; Computer-Based Tests
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+                IELTS Writing: <span className="text-[#00a8cc]">Complete Guide</span> to Task 1, Task 2 &amp; Computer-Based Tests
               </h1>
 
-              <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-2xl font-normal">
+              <p className="text-slate-600 text-base sm:text-lg leading-relaxed max-w-2xl font-normal">
                 Master Academic visual reports and General Training correspondence. Structure authoritative 250-word Task 2 discursive essays, master typing velocities in computer-delivered simulations, and decode the exact 4-criterion grading matrix used across global testing centers.
               </p>
 
               {/* Key Metrics Grid */}
-              <div className="grid grid-cols-3 gap-3 pt-2 text-slate-300">
-                <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800">
-                  <span className="block text-[10px] text-slate-400 uppercase font-mono">Total Duration</span>
-                  <span className="block text-lg font-black text-white mt-0.5">60 Minutes</span>
-                  <span className="block text-[11px] text-slate-400">Strict time ceiling</span>
+              <div className="grid grid-cols-3 gap-3 pt-2 text-slate-600">
+                <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                  <span className="block text-[10px] text-slate-500 uppercase font-mono font-semibold">Total Duration</span>
+                  <span className="block text-lg font-black text-slate-900 mt-0.5">60 Minutes</span>
+                  <span className="block text-[11px] text-slate-500">Strict time ceiling</span>
                 </div>
-                <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800">
-                  <span className="block text-[10px] text-slate-400 uppercase font-mono">Task Composition</span>
+                <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                  <span className="block text-[10px] text-slate-500 uppercase font-mono font-semibold">Task Composition</span>
                   <span className="block text-lg font-black text-[#00a8cc] mt-0.5">2 Modules</span>
-                  <span className="block text-[11px] text-slate-400">Task 1 (1/3) + Task 2 (2/3)</span>
+                  <span className="block text-[11px] text-slate-500">Task 1 (1/3) + Task 2 (2/3)</span>
                 </div>
-                <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800">
-                  <span className="block text-[10px] text-slate-400 uppercase font-mono">Assessment Pillars</span>
-                  <span className="block text-lg font-black text-emerald-400 mt-0.5">4 Criteria</span>
-                  <span className="block text-[11px] text-slate-400">25% equal allocation</span>
+                <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                  <span className="block text-[10px] text-slate-500 uppercase font-mono font-semibold">Assessment Pillars</span>
+                  <span className="block text-lg font-black text-emerald-600 mt-0.5">4 Criteria</span>
+                  <span className="block text-[11px] text-slate-500">25% equal allocation</span>
                 </div>
               </div>
 
@@ -203,7 +205,7 @@ export default function IeltsWritingPage() {
                 <Link
                   to="/dashboard/writing"
                   onClick={() => prefetchRoute("/dashboard/writing")}
-                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#00a8cc] to-sky-500 hover:from-sky-400 hover:to-[#00a8cc] text-slate-950 font-black text-xs uppercase tracking-wider shadow-xl transition-all hover:-translate-y-0.5"
+                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-[#00a8cc] hover:bg-[#0096b7] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-cyan-500/20 transition-all hover:-translate-y-0.5"
                 >
                   <PenTool className="w-4 h-4" />
                   <span>Start Timed Writing Simulator</span>
@@ -211,9 +213,9 @@ export default function IeltsWritingPage() {
 
                 <a
                   href="#question-bank"
-                  className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider border border-slate-700 transition-colors"
+                  className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs uppercase tracking-wider border border-slate-300 shadow-sm transition-colors"
                 >
-                  <BookOpen className="w-4 h-4 text-sky-400" />
+                  <BookOpen className="w-4 h-4 text-[#00a8cc]" />
                   <span>Explore Writing Questions</span>
                 </a>
 
@@ -221,7 +223,7 @@ export default function IeltsWritingPage() {
                   href="https://wa.me/923304541573"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 text-xs font-extrabold uppercase tracking-wider px-3 py-3"
+                  className="inline-flex items-center gap-1.5 text-[#00a8cc] hover:text-[#008ba8] text-xs font-extrabold uppercase tracking-wider px-3 py-3"
                 >
                   <span>Speak with IELTS Advisor &rarr;</span>
                 </a>
@@ -230,15 +232,15 @@ export default function IeltsWritingPage() {
 
             {/* Right Hero: Computer-Delivered Split Interface Mockup */}
             <div className="lg:col-span-5">
-              <div className="bg-slate-950/95 rounded-2xl border border-slate-800 shadow-2xl overflow-hidden backdrop-blur-md">
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xl overflow-hidden">
                 {/* Header Simulator Bar */}
-                <div className="bg-slate-900 text-slate-100 px-4 py-3 flex items-center justify-between text-xs border-b border-slate-800">
+                <div className="bg-slate-50 text-slate-800 px-4 py-3 flex items-center justify-between text-xs border-b border-slate-200">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
-                    <span className="font-mono font-bold tracking-wider text-[11px]">SEBS EXAM ENGINE v4.2</span>
+                    <span className="font-mono font-bold tracking-wider text-[11px] text-slate-700">SEBS EXAM ENGINE v4.2</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 font-mono text-xs bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 text-emerald-400">
+                    <span className="inline-flex items-center gap-1 font-mono text-xs bg-white px-2.5 py-1 rounded-lg border border-slate-200 text-emerald-600 shadow-sm">
                       <Timer className="w-3.5 h-3.5" />
                       <span>38:45 REMAINING</span>
                     </span>
@@ -246,49 +248,49 @@ export default function IeltsWritingPage() {
                 </div>
 
                 {/* Task Header */}
-                <div className="bg-slate-900/60 px-4 py-2 border-b border-slate-800 flex items-center justify-between text-xs">
+                <div className="bg-slate-50/70 px-4 py-2 border-b border-slate-200 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded bg-[#00a8cc]/10 text-[#00a8cc] font-mono text-[10px] font-bold">TASK 2</span>
-                    <span className="text-slate-300 font-bold">Academic Discursive Essay</span>
+                    <span className="px-2 py-0.5 rounded bg-[#00a8cc]/10 text-[#007a99] font-mono text-[10px] font-bold">TASK 2</span>
+                    <span className="text-slate-700 font-bold">Academic Discursive Essay</span>
                   </div>
-                  <span className="text-emerald-400 font-mono text-xs font-bold">Word Count: 274 / 250</span>
+                  <span className="text-emerald-600 font-mono text-xs font-bold">Word Count: 274 / 250</span>
                 </div>
 
                 {/* Prompt Box */}
-                <div className="p-4 bg-slate-900/40 border-b border-slate-800 text-xs text-slate-300">
-                  <p className="font-bold text-slate-400 text-[10px] uppercase mb-1">Essay Prompt:</p>
-                  <p className="italic leading-relaxed text-slate-200">
+                <div className="p-4 bg-slate-50/50 border-b border-slate-200 text-xs text-slate-600">
+                  <p className="font-bold text-slate-500 text-[10px] uppercase mb-1">Essay Prompt:</p>
+                  <p className="italic leading-relaxed text-slate-800">
                     "Some experts argue that remote digital learning will soon replace traditional physical universities entirely. To what extent do you agree or disagree?"
                   </p>
                 </div>
 
                 {/* Simulated Typing Box */}
-                <div className="p-4 relative bg-slate-950 text-xs text-slate-300 leading-relaxed font-sans min-h-[140px]">
+                <div className="p-4 relative bg-white text-xs text-slate-700 leading-relaxed font-sans min-h-[140px]">
                   <p>
                     While online tertiary education affords unprecedented geographical accessibility and temporal autonomy, asserting that it will entirely supplant conventional campus-based institutions overlooks the fundamental experiential and collaborative nature of higher academia...
                   </p>
-                  <div className="absolute bottom-3 right-3 flex items-center gap-1.5 px-2 py-1 bg-slate-900 rounded-md text-[10px] font-mono text-slate-400 border border-slate-800">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <div className="absolute bottom-3 right-3 flex items-center gap-1.5 px-2 py-1 bg-slate-50 rounded-md text-[10px] font-mono text-slate-500 border border-slate-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     Auto-saved 4s ago
                   </div>
                 </div>
 
                 {/* Instant Band Diagnostic Tags */}
-                <div className="p-3 bg-slate-900 border-t border-slate-800 grid grid-cols-4 gap-2 text-center text-[10px] font-mono">
-                  <div className="p-1.5 rounded bg-slate-950 border border-slate-800">
-                    <span className="block text-slate-400">TR</span>
+                <div className="p-3 bg-slate-50 border-t border-slate-200 grid grid-cols-4 gap-2 text-center text-[10px] font-mono">
+                  <div className="p-1.5 rounded bg-white border border-slate-200 shadow-sm">
+                    <span className="block text-slate-500">TR</span>
                     <span className="font-bold text-[#00a8cc]">Band 7.5</span>
                   </div>
-                  <div className="p-1.5 rounded bg-slate-950 border border-slate-800">
-                    <span className="block text-slate-400">CC</span>
+                  <div className="p-1.5 rounded bg-white border border-slate-200 shadow-sm">
+                    <span className="block text-slate-500">CC</span>
                     <span className="font-bold text-[#00a8cc]">Band 8.0</span>
                   </div>
-                  <div className="p-1.5 rounded bg-slate-950 border border-slate-800">
-                    <span className="block text-slate-400">LR</span>
+                  <div className="p-1.5 rounded bg-white border border-slate-200 shadow-sm">
+                    <span className="block text-slate-500">LR</span>
                     <span className="font-bold text-[#00a8cc]">Band 7.5</span>
                   </div>
-                  <div className="p-1.5 rounded bg-slate-950 border border-slate-800">
-                    <span className="block text-slate-400">GRA</span>
+                  <div className="p-1.5 rounded bg-white border border-slate-200 shadow-sm">
+                    <span className="block text-slate-500">GRA</span>
                     <span className="font-bold text-[#00a8cc]">Band 7.0</span>
                   </div>
                 </div>

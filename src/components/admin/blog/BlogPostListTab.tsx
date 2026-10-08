@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { fetchAdminPosts, duplicateAdminPost, deleteAdminPost, updateAdminPostStatus, fetchAdminCategories } from '../../../lib/blogApi';
 import type { BlogPost, BlogCategory } from '../../../types/blog';
-import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Search, Plus, Edit, Copy, Eye, Archive, Trash2, Filter, CheckCircle2, Clock, FileEdit, AlertCircle } from 'lucide-react';
 
 interface BlogPostListTabProps {
@@ -31,9 +31,14 @@ export const BlogPostListTab: React.FC<BlogPostListTabProps> = ({ onEditPost, on
       category_id: categoryFilter,
       search
     })
-      .then((res) => {
-        setPosts(res.posts);
-        setPagination(res.pagination);
+      .then((res: any) => {
+        if (Array.isArray(res)) {
+          setPosts(res);
+          setPagination({ page: 1, limit: 15, total: res.length, totalPages: Math.ceil(res.length / 15) || 1 });
+        } else if (res && res.posts) {
+          setPosts(res.posts);
+          setPagination(res.pagination || { page: 1, limit: 15, total: res.posts.length, totalPages: Math.ceil(res.posts.length / 15) || 1 });
+        }
       })
       .catch((err) => {
         setError(err.message || 'Failed to load posts');
@@ -73,8 +78,8 @@ export const BlogPostListTab: React.FC<BlogPostListTabProps> = ({ onEditPost, on
     if (!window.confirm('Are you sure you want to delete this article permanently?')) return;
     try {
       const res = await deleteAdminPost(id);
-      if (res.wasPublished) {
-        alert(`Article deleted. Note: This article was previously published at /blog/${res.slug}. Consider adding a 301 redirect in Redirects Manager.`);
+      if (typeof res === 'object' && (res as any)?.wasPublished) {
+        alert(`Article deleted. Note: This article was previously published at /blog/${(res as any).slug}. Consider adding a 301 redirect in Redirects Manager.`);
       }
       loadPosts();
     } catch (err: any) {

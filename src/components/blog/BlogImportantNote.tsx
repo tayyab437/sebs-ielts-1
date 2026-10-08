@@ -3,13 +3,18 @@ import { AlertCircle, Info, AlertTriangle, Lightbulb } from 'lucide-react';
 import type { BlogImportantNote as BlogImportantNoteType } from '../../types/blog';
 
 interface BlogImportantNoteProps {
-  note: BlogImportantNoteType;
+  note: BlogImportantNoteType | string;
 }
 
 export const BlogImportantNote: React.FC<BlogImportantNoteProps> = ({ note }) => {
-  if (!note || (!note.title && !note.content)) return null;
+  if (!note) return null;
+  const noteObj: BlogImportantNoteType = typeof note === 'string' 
+    ? { title: 'Important Note', content: note, type: 'Important' } 
+    : note;
 
-  const type = note.type || 'Important';
+  if (!noteObj.title && !noteObj.content) return null;
+
+  const type = noteObj.type || 'Important';
 
   const styles = {
     Note: {
@@ -42,10 +47,10 @@ export const BlogImportantNote: React.FC<BlogImportantNoteProps> = ({ note }) =>
     <aside className={`my-8 p-6 ${styles.bg} border-l-4 ${styles.border} rounded-2xl shadow-sm text-left`}>
       <div className="flex items-center gap-2 mb-2 font-black text-xs uppercase tracking-wider">
         {styles.icon}
-        <span className={styles.text}>{note.title || type}</span>
+        <span className={styles.text}>{noteObj.title || type}</span>
       </div>
       <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 leading-relaxed pl-7">
-        {note.content}
+        {noteObj.content}
       </p>
     </aside>
   );

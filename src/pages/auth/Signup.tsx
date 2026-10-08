@@ -38,7 +38,11 @@ export default function SignupPage() {
       setLogoAlt(localStorage.getItem("site_logo_alt") || "SEB's Institute Logo");
     };
     window.addEventListener("storage", syncLogo);
-    return () => window.removeEventListener("storage", syncLogo);
+    window.addEventListener("site_settings_updated", syncLogo);
+    return () => {
+      window.removeEventListener("storage", syncLogo);
+      window.removeEventListener("site_settings_updated", syncLogo);
+    };
   }, []);
 
   const handleSignup = async (e: React.FormEvent) => {

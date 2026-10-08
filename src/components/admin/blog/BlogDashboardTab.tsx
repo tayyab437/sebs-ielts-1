@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchAdminStats } from '../../../lib/blogApi';
 import { FileText, CheckCircle2, FileEdit, Clock, Archive, Layers, Users, ShieldCheck, ArrowRight, Plus } from 'lucide-react';
-import { Button } from '../../ui/button';
+import { Button } from '@/components/ui/button';
 
 interface BlogDashboardTabProps {
   onNavigate: (view: string) => void;

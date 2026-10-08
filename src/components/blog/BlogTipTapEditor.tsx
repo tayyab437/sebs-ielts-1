@@ -1,22 +1,13 @@
-import React, { useCallback, useState, useEffect } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import LinkExtension from '@tiptap/extension-link';
-import ImageExtension from '@tiptap/extension-image';
-import TableExtension from '@tiptap/extension-table';
-import TableRowExtension from '@tiptap/extension-table-row';
-import TableHeaderExtension from '@tiptap/extension-table-header';
-import TableCellExtension from '@tiptap/extension-table-cell';
-import UnderlineExtension from '@tiptap/extension-underline';
-import PlaceholderExtension from '@tiptap/extension-placeholder';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import {
-  Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, Heading3,
+  Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading2, Heading3, Heading4,
   List, ListOrdered, Quote, Minus, Table as TableIcon, Link as LinkIcon, Image as ImageIcon,
-  Undo, Redo, Sparkles, AlertCircle, HelpCircle, BookOpen, ExternalLink, ArrowRight
+  Undo, Redo, Sparkles, HelpCircle, ExternalLink, AlignLeft, AlignCenter, AlignRight,
+  Code, Eraser
 } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 interface BlogTipTapEditorProps {
   content: string;
@@ -31,67 +22,45 @@ export const BlogTipTapEditor: React.FC<BlogTipTapEditorProps> = ({
   placeholder = 'Write or paste your master article content here...',
   onOpenMediaLibrary
 }) => {
+  const editorRef = useRef<HTMLDivElement>(null);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
+  const [linkText, setLinkText] = useState('');
   const [searchLinkQuery, setSearchLinkQuery] = useState('');
   const [linkSearchResults, setLinkSearchResults] = useState<Array<{ title: string; slug: string }>>([]);
+  const [tableDialogOpen, setTableDialogOpen] = useState(false);
+  const [tableRows, setTableRows] = useState(3);
+  const [tableCols, setTableCols] = useState(3);
+  const [wordCount, setWordCount] = useState(0);
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: {
-          levels: [2, 3, 4]
-        }
-      }),
-      UnderlineExtension,
-      LinkExtension.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: 'text-primary font-bold underline decoration-primary/30 underline-offset-4 hover:decoration-primary'
-        }
-      }),
-      ImageExtension.configure({
-        HTMLAttributes: {
-          class: 'rounded-2xl max-w-full h-auto my-6 shadow-md border border-slate-200 dark:border-white/10'
-        }
-      }),
-      TableExtension.configure({
-        resizable: true,
-        HTMLAttributes: {
-          class: 'w-full my-6 border-collapse border border-slate-200 dark:border-slate-800 text-sm'
-        }
-      }),
-      TableRowExtension,
-      TableHeaderExtension.configure({
-        HTMLAttributes: {
-          class: 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 font-bold text-left'
-        }
-      }),
-      TableCellExtension.configure({
-        HTMLAttributes: {
-          class: 'border border-slate-200 dark:border-slate-800 p-3'
-        }
-      }),
-      PlaceholderExtension.configure({
-        placeholder
-      })
-    ],
-    content: content || '',
-    onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      const json = JSON.stringify(editor.getJSON());
-      onChange(html, json);
-    }
-  });
-
-  // Sync content if changed externally
+  // Sync internal HTML with external content prop
   useEffect(() => {
-    if (editor && content !== undefined && editor.getHTML() !== content) {
-      editor.commands.setContent(content || '');
+    if (editorRef.current && editorRef.current.innerHTML !== content) {
+      editorRef.current.innerHTML = content || '';
+      updateWordCount(content || '');
     }
-  }, [content, editor]);
+  }, [content]);
 
-  // Handle internal link search
+  const updateWordCount = (html: string) => {
+    const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    const words = text ? text.split(/\s+/).length : 0;
+    setWordCount(words);
+  };
+
+  const handleInput = () => {
+    if (!editorRef.current) return;
+    const html = editorRef.current.innerHTML;
+    updateWordCount(html);
+    onChange(html, JSON.stringify({ type: 'doc', html }));
+  };
+
+  const execCommand = (command: string, value: string | undefined = undefined) => {
+    editorRef.current?.focus();
+    document.execCommand(command, false, value);
+    handleInput();
+  };
+
+  // Internal Link Search
   useEffect(() => {
     if (!searchLinkQuery.trim()) {
       setLinkSearchResults([]);
@@ -101,7 +70,7 @@ export const BlogTipTapEditor: React.FC<BlogTipTapEditorProps> = ({
       fetch(`/api/blog/posts?search=${encodeURIComponent(searchLinkQuery)}&limit=5`)
         .then((res) => res.json())
         .then((data) => {
-          if (data && data.posts) {
+          if (data && Array.isArray(data.posts)) {
             setLinkSearchResults(data.posts.map((p: any) => ({ title: p.title, slug: `/blog/${p.slug}` })));
           }
         })
@@ -110,298 +79,394 @@ export const BlogTipTapEditor: React.FC<BlogTipTapEditorProps> = ({
     return () => clearTimeout(timer);
   }, [searchLinkQuery]);
 
-  const setLink = useCallback(() => {
-    if (!editor) return;
-    const previousUrl = editor.getAttributes('link').href;
-    setLinkUrl(previousUrl || '');
+  const handleOpenLinkDialog = () => {
+    const selection = window.getSelection();
+    if (selection && selection.toString()) {
+      setLinkText(selection.toString());
+    } else {
+      setLinkText('');
+    }
+    setLinkUrl('');
     setLinkDialogOpen(true);
-  }, [editor]);
+  };
 
   const applyLink = () => {
-    if (!editor) return;
-    if (linkUrl.trim() === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+    editorRef.current?.focus();
+    if (!linkUrl.trim()) {
+      document.execCommand('unlink', false);
     } else {
-      editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl.trim() }).run();
+      const selected = window.getSelection()?.toString();
+      if (!selected && linkText.trim()) {
+        const linkHtml = `<a href="${linkUrl.trim()}" class="text-primary font-bold underline underline-offset-4 decoration-primary/40 hover:decoration-primary" target="_blank" rel="noopener noreferrer">${linkText.trim()}</a>`;
+        document.execCommand('insertHTML', false, linkHtml);
+      } else {
+        document.execCommand('createLink', false, linkUrl.trim());
+      }
     }
+    handleInput();
     setLinkDialogOpen(false);
   };
 
-  const addImage = useCallback(() => {
+  const handleInsertImage = useCallback(() => {
     if (onOpenMediaLibrary) {
       onOpenMediaLibrary((url, alt) => {
-        if (editor && url) {
-          editor.chain().focus().setImage({ src: url, alt: alt || '' }).run();
+        if (url) {
+          editorRef.current?.focus();
+          const imgHtml = `<figure class="my-6 text-center"><img src="${url}" alt="${alt || ''}" class="rounded-2xl max-w-full h-auto mx-auto shadow-md border border-slate-200 dark:border-white/10" />${alt ? `<figcaption class="text-xs text-slate-500 mt-2">${alt}</figcaption>` : ''}</figure><p><br></p>`;
+          document.execCommand('insertHTML', false, imgHtml);
+          handleInput();
         }
       });
     } else {
-      const url = window.prompt('Enter Image URL');
-      if (url && editor) {
-        editor.chain().focus().setImage({ src: url }).run();
+      const url = window.prompt('Enter Image URL:');
+      if (url) {
+        editorRef.current?.focus();
+        const imgHtml = `<figure class="my-6 text-center"><img src="${url}" alt="Article image" class="rounded-2xl max-w-full h-auto mx-auto shadow-md" /></figure><p><br></p>`;
+        document.execCommand('insertHTML', false, imgHtml);
+        handleInput();
       }
     }
-  }, [editor, onOpenMediaLibrary]);
+  }, [onOpenMediaLibrary]);
 
-  if (!editor) {
-    return (
-      <div className="border border-slate-200 dark:border-white/10 rounded-2xl p-8 text-center text-slate-400 font-bold animate-pulse">
-        Loading TipTap Rich Text Editor...
-      </div>
-    );
-  }
+  const handleInsertTable = () => {
+    let tableHtml = `<table class="w-full my-6 border-collapse border border-slate-300 dark:border-slate-700 text-sm"><thead><tr>`;
+    for (let c = 0; c < tableCols; c++) {
+      tableHtml += `<th class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 p-3 font-bold text-left">Header ${c + 1}</th>`;
+    }
+    tableHtml += `</tr></thead><tbody>`;
+    for (let r = 0; r < tableRows - 1; r++) {
+      tableHtml += `<tr>`;
+      for (let c = 0; c < tableCols; c++) {
+        tableHtml += `<td class="border border-slate-300 dark:border-slate-700 p-3">Cell data</td>`;
+      }
+      tableHtml += `</tr>`;
+    }
+    tableHtml += `</tbody></table><p><br></p>`;
+    editorRef.current?.focus();
+    document.execCommand('insertHTML', false, tableHtml);
+    handleInput();
+    setTableDialogOpen(false);
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    // Standard clipboard paste behavior preserved
+  };
 
   return (
-    <div className="border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
-      {/* Editor Toolbar */}
-      <div className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-950/90 backdrop-blur border-b border-slate-200 dark:border-white/10 p-2.5 flex flex-wrap items-center gap-1">
-        {/* Formatting Group */}
-        <div className="flex items-center gap-0.5 border-r border-slate-200 dark:border-white/10 pr-2">
-          <Button
+    <div className="border border-slate-200/90 dark:border-white/10 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 shadow-sm flex flex-col">
+      {/* Sticky Top Formatting Toolbar */}
+      <div className="flex flex-wrap items-center gap-1 p-2 bg-slate-50 dark:bg-slate-950 border-b border-slate-200/80 dark:border-white/10 select-none">
+        {/* Headings */}
+        <div className="flex items-center gap-0.5 border-r border-slate-200 dark:border-white/10 pr-1.5 mr-1">
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().toggleBold().run()}
-            className={`h-8 w-8 p-0 rounded-lg ${editor.isActive('bold') ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300'}`}
-            title="Bold"
+            title="Heading 2"
+            onClick={() => execCommand('formatBlock', '<h2>')}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-black text-xs"
+          >
+            <Heading2 className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            title="Heading 3"
+            onClick={() => execCommand('formatBlock', '<h3>')}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-black text-xs"
+          >
+            <Heading3 className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            title="Heading 4"
+            onClick={() => execCommand('formatBlock', '<h4>')}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-black text-xs"
+          >
+            <Heading4 className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            title="Paragraph"
+            onClick={() => execCommand('formatBlock', '<p>')}
+            className="px-2 py-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs"
+          >
+            P
+          </button>
+        </div>
+
+        {/* Inline Formatting */}
+        <div className="flex items-center gap-0.5 border-r border-slate-200 dark:border-white/10 pr-1.5 mr-1">
+          <button
+            type="button"
+            title="Bold (Ctrl+B)"
+            onClick={() => execCommand('bold')}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
           >
             <Bold className="w-4 h-4" />
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={`h-8 w-8 p-0 rounded-lg ${editor.isActive('italic') ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300'}`}
-            title="Italic"
+            title="Italic (Ctrl+I)"
+            onClick={() => execCommand('italic')}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
           >
             <Italic className="w-4 h-4" />
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().toggleUnderline().run()}
-            className={`h-8 w-8 p-0 rounded-lg ${editor.isActive('underline') ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300'}`}
-            title="Underline"
+            title="Underline (Ctrl+U)"
+            onClick={() => execCommand('underline')}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
           >
             <UnderlineIcon className="w-4 h-4" />
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().toggleStrike().run()}
-            className={`h-8 w-8 p-0 rounded-lg ${editor.isActive('strike') ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300'}`}
             title="Strikethrough"
+            onClick={() => execCommand('strikeThrough')}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
           >
             <Strikethrough className="w-4 h-4" />
-          </Button>
+          </button>
+          <button
+            type="button"
+            title="Inline Code"
+            onClick={() => execCommand('formatBlock', '<pre>')}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+          >
+            <Code className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* Headings */}
-        <div className="flex items-center gap-0.5 border-r border-slate-200 dark:border-white/10 pr-2">
-          <Button
+        {/* Lists & Quotes */}
+        <div className="flex items-center gap-0.5 border-r border-slate-200 dark:border-white/10 pr-1.5 mr-1">
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-            className={`h-8 px-2 rounded-lg font-black text-xs ${editor.isActive('heading', { level: 2 }) ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300'}`}
-            title="Heading 2 (Section)"
-          >
-            H2
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-            className={`h-8 px-2 rounded-lg font-black text-xs ${editor.isActive('heading', { level: 3 }) ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300'}`}
-            title="Heading 3 (Sub-section)"
-          >
-            H3
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().toggleHeading({ level: 4 }).run()}
-            className={`h-8 px-2 rounded-lg font-black text-xs ${editor.isActive('heading', { level: 4 }) ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300'}`}
-            title="Heading 4"
-          >
-            H4
-          </Button>
-        </div>
-
-        {/* Lists & Blocks */}
-        <div className="flex items-center gap-0.5 border-r border-slate-200 dark:border-white/10 pr-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-            className={`h-8 w-8 p-0 rounded-lg ${editor.isActive('bulletList') ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300'}`}
             title="Bullet List"
+            onClick={() => execCommand('insertUnorderedList')}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
           >
             <List className="w-4 h-4" />
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().toggleOrderedList().run()}
-            className={`h-8 w-8 p-0 rounded-lg ${editor.isActive('orderedList') ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300'}`}
             title="Numbered List"
+            onClick={() => execCommand('insertOrderedList')}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
           >
             <ListOrdered className="w-4 h-4" />
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            className={`h-8 w-8 p-0 rounded-lg ${editor.isActive('blockquote') ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300'}`}
             title="Blockquote"
+            onClick={() => execCommand('formatBlock', '<blockquote>')}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
           >
             <Quote className="w-4 h-4" />
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().setHorizontalRule().run()}
-            className="h-8 w-8 p-0 rounded-lg text-slate-600 dark:text-slate-300"
             title="Divider Line"
+            onClick={() => execCommand('insertHorizontalRule')}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
           >
             <Minus className="w-4 h-4" />
-          </Button>
+          </button>
         </div>
 
-        {/* Link & Media */}
-        <div className="flex items-center gap-0.5 border-r border-slate-200 dark:border-white/10 pr-2">
-          <Button
+        {/* Alignment */}
+        <div className="flex items-center gap-0.5 border-r border-slate-200 dark:border-white/10 pr-1.5 mr-1">
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
-            onClick={setLink}
-            className={`h-8 w-8 p-0 rounded-lg ${editor.isActive('link') ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-300'}`}
-            title="Insert / Edit Link"
+            title="Align Left"
+            onClick={() => execCommand('justifyLeft')}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+          >
+            <AlignLeft className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            title="Align Center"
+            onClick={() => execCommand('justifyCenter')}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+          >
+            <AlignCenter className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            title="Align Right"
+            onClick={() => execCommand('justifyRight')}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+          >
+            <AlignRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Links, Media & Table */}
+        <div className="flex items-center gap-0.5 border-r border-slate-200 dark:border-white/10 pr-1.5 mr-1">
+          <button
+            type="button"
+            title="Insert or Edit Link"
+            onClick={handleOpenLinkDialog}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
           >
             <LinkIcon className="w-4 h-4" />
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
-            onClick={addImage}
-            className="h-8 w-8 p-0 rounded-lg text-slate-600 dark:text-slate-300 hover:text-primary"
             title="Insert Image (Media Library)"
+            onClick={handleInsertImage}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
           >
             <ImageIcon className="w-4 h-4" />
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-            className="h-8 w-8 p-0 rounded-lg text-slate-600 dark:text-slate-300"
-            title="Insert Data Table"
+            title="Insert Table"
+            onClick={() => setTableDialogOpen(true)}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
           >
             <TableIcon className="w-4 h-4" />
-          </Button>
+          </button>
         </div>
 
-        {/* History Undo / Redo */}
+        {/* Clean Formatting & History */}
         <div className="flex items-center gap-0.5 ml-auto">
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().undo().run()}
-            disabled={!editor.can().undo()}
-            className="h-8 w-8 p-0 rounded-lg text-slate-600 dark:text-slate-300 disabled:opacity-30"
+            title="Clear Formatting"
+            onClick={() => execCommand('removeFormat')}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500"
+          >
+            <Eraser className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
             title="Undo"
+            onClick={() => execCommand('undo')}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
           >
             <Undo className="w-4 h-4" />
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().redo().run()}
-            disabled={!editor.can().redo()}
-            className="h-8 w-8 p-0 rounded-lg text-slate-600 dark:text-slate-300 disabled:opacity-30"
             title="Redo"
+            onClick={() => execCommand('redo')}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
           >
             <Redo className="w-4 h-4" />
-          </Button>
+          </button>
         </div>
       </div>
 
-      {/* Editor Main Content Editing Canvas */}
-      <div className="p-6 md:p-10 min-h-[420px] max-w-none prose dark:prose-invert prose-slate focus:outline-none font-sans text-slate-800 dark:text-slate-200">
-        <EditorContent editor={editor} />
+      {/* Editable Canvas */}
+      <div
+        ref={editorRef}
+        contentEditable
+        onInput={handleInput}
+        onPaste={handlePaste}
+        data-placeholder={placeholder}
+        className="p-6 sm:p-8 min-h-[380px] focus:outline-none prose dark:prose-invert prose-slate max-w-none text-left leading-relaxed empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 empty:before:pointer-events-none"
+      />
+
+      {/* Editor Footer / Word Count */}
+      <div className="px-6 py-2.5 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-200/80 dark:border-white/10 flex items-center justify-between text-xs text-slate-500">
+        <div className="flex items-center gap-4">
+          <span>Words: <strong className="text-slate-800 dark:text-slate-200">{wordCount}</strong></span>
+          <span>Reading Time: <strong className="text-slate-800 dark:text-slate-200">{Math.max(1, Math.ceil(wordCount / 200))} min</strong></span>
+        </div>
+        <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400">
+          <Sparkles className="w-3.5 h-3.5 text-primary" />
+          <span>SEO-Structured WYSIWYG Engine</span>
+        </div>
       </div>
 
       {/* Link Dialog */}
       <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
-        <DialogContent className="max-w-md rounded-2xl">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-lg font-black flex items-center gap-2">
-              <LinkIcon className="w-5 h-5 text-primary" />
-              Insert Hyperlink
-            </DialogTitle>
+            <DialogTitle>Insert Link</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 block">
-                Destination URL
-              </label>
+              <label className="text-xs font-bold text-slate-500 block mb-1">Target URL</label>
               <Input
-                placeholder="https://... or /blog/article-slug"
+                placeholder="https://... or /courses"
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value)}
-                className="rounded-xl"
               />
             </div>
-
             <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 block">
-                Search Internal SEBS Content
-              </label>
+              <label className="text-xs font-bold text-slate-500 block mb-1">Display Text (optional)</label>
               <Input
-                placeholder="Type article title to find internal URL..."
+                placeholder="Anchor text"
+                value={linkText}
+                onChange={(e) => setLinkText(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-500 block mb-1">Search Internal Articles</label>
+              <Input
+                placeholder="Search blog post title..."
                 value={searchLinkQuery}
                 onChange={(e) => setSearchLinkQuery(e.target.value)}
-                className="rounded-xl text-xs"
               />
               {linkSearchResults.length > 0 && (
-                <div className="mt-2 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden divide-y divide-slate-100 dark:divide-white/5 bg-slate-50 dark:bg-slate-900 max-h-40 overflow-y-auto">
-                  {linkSearchResults.map((res) => (
+                <div className="mt-2 border rounded-xl divide-y max-h-36 overflow-y-auto">
+                  {linkSearchResults.map((item, idx) => (
                     <button
-                      key={res.slug}
+                      key={idx}
                       type="button"
                       onClick={() => {
-                        setLinkUrl(res.slug);
-                        setSearchLinkQuery('');
-                        setLinkSearchResults([]);
+                        setLinkUrl(item.slug);
+                        if (!linkText) setLinkText(item.title);
                       }}
-                      className="w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex items-center justify-between font-bold text-slate-700 dark:text-slate-200"
+                      className="w-full text-left p-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between"
                     >
-                      <span className="truncate">{res.title}</span>
-                      <span className="text-[10px] text-primary shrink-0 ml-2">{res.slug}</span>
+                      <span className="font-semibold truncate">{item.title}</span>
+                      <ExternalLink className="w-3 h-3 text-slate-400 shrink-0 ml-2" />
                     </button>
                   ))}
                 </div>
               )}
             </div>
           </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setLinkDialogOpen(false)} className="rounded-xl">
-              Cancel
-            </Button>
-            <Button onClick={applyLink} className="rounded-xl bg-primary text-white font-bold">
-              Apply Link
-            </Button>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLinkDialogOpen(false)}>Cancel</Button>
+            <Button onClick={applyLink}>Insert Link</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Table Insertion Dialog */}
+      <Dialog open={tableDialogOpen} onOpenChange={setTableDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Insert Table</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-3">
+            <div>
+              <label className="text-xs font-bold text-slate-500 block mb-1">Rows</label>
+              <Input
+                type="number"
+                min={2}
+                max={10}
+                value={tableRows}
+                onChange={(e) => setTableRows(parseInt(e.target.value) || 2)}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-500 block mb-1">Columns</label>
+              <Input
+                type="number"
+                min={1}
+                max={6}
+                value={tableCols}
+                onChange={(e) => setTableCols(parseInt(e.target.value) || 2)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTableDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleInsertTable}>Insert Table</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

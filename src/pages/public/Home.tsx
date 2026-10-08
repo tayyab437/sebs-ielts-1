@@ -28,20 +28,26 @@ function DeferredSection({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Guarantee loading on initial load after initial paint (100ms) even if IntersectionObserver doesn't trigger
+    const fallbackTimer = setTimeout(() => {
+      setIsVisible(true);
+    }, 100);
+
     if (typeof window === "undefined" || !("IntersectionObserver" in window)) {
       setIsVisible(true);
-      return;
+      return () => clearTimeout(fallbackTimer);
     }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsVisible(true);
+          clearTimeout(fallbackTimer);
           observer.disconnect();
         }
       },
       {
-        rootMargin: "500px 0px", // Pre-render 500px before scrolling into view for seamless appearance
+        rootMargin: "800px 0px",
       }
     );
 
@@ -49,7 +55,10 @@ function DeferredSection({
       observer.observe(containerRef.current);
     }
 
-    return () => observer.disconnect();
+    return () => {
+      clearTimeout(fallbackTimer);
+      observer.disconnect();
+    };
   }, []);
 
   return (
@@ -65,7 +74,7 @@ function DeferredSection({
 
 export default function HomePage() {
   return (
-    <div className="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased overflow-x-hidden">
+    <div className="bg-white text-slate-900 min-h-screen font-sans antialiased overflow-x-hidden">
       {/* 1. Hero Section (Above the fold - mounts immediately for instant LCP) */}
       <HeroSection />
 

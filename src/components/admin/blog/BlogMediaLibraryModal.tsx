@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { fetchAdminMedia, uploadAdminMedia, deleteAdminMedia } from '../../../lib/blogApi';
 import type { BlogMedia } from '../../../types/blog';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../ui/dialog';
-import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Image as ImageIcon, Upload, Search, Trash2, Check, AlertCircle } from 'lucide-react';
 
 interface BlogMediaLibraryModalProps {

@@ -4,9 +4,9 @@ import type { BlogPost, BlogCategory, BlogAuthor, BlogReviewer, BlogFaq, BlogSou
 import { BlogTipTapEditor } from '../../blog/BlogTipTapEditor';
 import { BlogMediaLibraryModal } from './BlogMediaLibraryModal';
 import { BlogRevisionsModal } from './BlogRevisionsModal';
-import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
-import { Textarea } from '../../ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   FileText, Sparkles, Layers, User, ShieldCheck, Search, Globe, Calendar, Clock, CheckCircle2,
   AlertCircle, History, Eye, Save, Plus, Trash2, ArrowLeft, Image as ImageIcon, HelpCircle
@@ -67,7 +67,7 @@ export const BlogPostEditorTab: React.FC<BlogPostEditorTabProps> = ({
     meta_description: '',
     canonical_url: '',
     primary_keyword: '',
-    search_intent: 'Informational',
+    search_intent: 'informational',
     robots_index: true,
     robots_follow: true,
     og_title: '',
@@ -87,20 +87,22 @@ export const BlogPostEditorTab: React.FC<BlogPostEditorTabProps> = ({
       setReviewers(r);
       if (!formData.reviewer_id && r.length > 0) setFormData((prev) => ({ ...prev, reviewer_id: r[0].id }));
     }).catch(() => {});
-    fetchAdminPosts({ limit: 50 }).then((res) => setAllPosts(res.posts)).catch(() => {});
+    fetchAdminPosts().then((res: any) => setAllPosts(Array.isArray(res) ? res : res.posts || [])).catch(() => {});
 
     if (postId) {
       setLoading(true);
       fetchAdminPostById(postId)
         .then((data) => {
-          setFormData({
-            ...data,
-            key_takeaways: Array.isArray(data.key_takeaways) ? data.key_takeaways : [],
-            faqs: Array.isArray(data.faqs) ? data.faqs : [],
-            sources: Array.isArray(data.sources) ? data.sources : [],
-            important_note: data.important_note || { title: '', content: '', type: 'Important' },
-            cta: data.cta || { enabled: true, heading: '', description: '', buttonText: '', buttonUrl: '' }
-          });
+          if (data) {
+            setFormData({
+              ...data,
+              key_takeaways: Array.isArray(data.key_takeaways) ? data.key_takeaways : [],
+              faqs: Array.isArray(data.faqs) ? data.faqs : [],
+              sources: Array.isArray(data.sources) ? data.sources : [],
+              important_note: data.important_note || ('Important note' as any),
+              cta: (data.cta as any) || { enabled: true, heading: '', description: '', buttonText: '', buttonUrl: '' }
+            });
+          }
         })
         .catch((err) => setError(err.message || 'Failed to load post for editing'))
         .finally(() => setLoading(false));
@@ -125,9 +127,9 @@ export const BlogPostEditorTab: React.FC<BlogPostEditorTabProps> = ({
     setSuccessMsg(null);
 
     try {
-      const payload = {
+      const payload: Partial<BlogPost> = {
         ...formData,
-        status: overrideStatus || formData.status || 'draft'
+        status: (overrideStatus || formData.status || 'draft') as any
       };
 
       let resultId = postId;
@@ -850,7 +852,7 @@ export const BlogPostEditorTab: React.FC<BlogPostEditorTabProps> = ({
         open={mediaModalOpen}
         onOpenChange={setMediaLibraryOpen}
         onSelectMedia={(item) => {
-          if (mediaSelectCallback) mediaSelectCallback(item.file_url, item.alt_text || '');
+          if (mediaSelectCallback) mediaSelectCallback(item.file_url || item.url || '', item.alt_text || '');
         }}
       />
 

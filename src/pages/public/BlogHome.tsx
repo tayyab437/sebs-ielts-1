@@ -4,8 +4,8 @@ import { Search, Sparkles, BookOpen, Layers, ArrowRight, Filter, FileText } from
 import { BlogArticleCard } from '../../components/blog/BlogArticleCard';
 import { fetchPublicPosts, fetchCategories, fetchPublicBlogSettings } from '../../lib/blogApi';
 import type { BlogPost, BlogCategory, BlogSettings } from '../../types/blog';
-import { Input } from '../../components/ui/input';
-import { Button } from '../../components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export const BlogHome: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -59,7 +59,12 @@ export const BlogHome: React.FC = () => {
     })
       .then((res) => {
         setPosts(res.posts);
-        setPagination(res.pagination);
+        setPagination({
+          page: res.page,
+          limit: settings?.posts_per_page || 9,
+          total: res.total,
+          totalPages: res.totalPages
+        });
       })
       .catch((err) => {
         setError(err.message || 'Failed to load blog articles');
@@ -93,22 +98,23 @@ export const BlogHome: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans pb-20">
-      {/* Hero Banner Section */}
-      <section className="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white pt-16 pb-20 px-4 sm:px-6 lg:px-8 border-b border-white/10 relative overflow-hidden text-center">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans pb-20 text-left">
+      {/* Hero Banner Section (Clean Light Theme) */}
+      <section className="bg-[#f8fafc] text-slate-900 pt-16 pb-20 px-4 sm:px-6 lg:px-8 border-b border-slate-200 relative overflow-hidden text-center">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-cyan-100/60 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-20 left-10 w-[450px] h-[450px] rounded-full bg-sky-100/70 blur-3xl pointer-events-none" />
 
         <div className="max-w-4xl mx-auto relative z-10 space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/20 text-emerald-300 text-xs font-black uppercase tracking-widest border border-primary/30">
-            <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#00a8cc]/10 text-[#007a99] text-xs font-black uppercase tracking-widest border border-[#00a8cc]/30">
+            <Sparkles className="w-4 h-4 text-[#00a8cc] animate-pulse" />
             <span>SEB's Institute Official Academic Blog</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
-            IELTS Preparation & <span className="text-primary underline decoration-primary/30 underline-offset-8">English Linguistics</span> Heuristics
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight text-slate-900">
+            IELTS Preparation & <span className="text-[#00a8cc] underline decoration-[#00a8cc]/30 underline-offset-8">English Linguistics</span> Heuristics
           </h1>
 
-          <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed font-normal">
+          <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal">
             Authoritative test strategies, speaking cue cards, band 9 writing templates, and exam insights verified by Syed Ejaz Bukhari.
           </p>
 
@@ -121,11 +127,11 @@ export const BlogHome: React.FC = () => {
                 placeholder="Search articles, IELTS Task 2 topics, cue cards, grammar..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-white/10 rounded-2xl pl-12 pr-28 py-6 text-sm text-slate-900 dark:text-white font-medium focus:ring-4 focus:ring-primary/20 shadow-xl"
+                className="w-full bg-white border-2 border-slate-300 rounded-2xl pl-12 pr-28 py-6 text-sm text-slate-900 font-medium focus:ring-4 focus:ring-primary/20 shadow-md"
               />
               <Button
                 type="submit"
-                className="absolute right-2 bg-primary hover:bg-primary/90 text-white font-black text-xs uppercase px-5 py-3.5 rounded-xl shadow-md cursor-pointer"
+                className="absolute right-2 bg-[#00a8cc] hover:bg-[#0096b7] text-white font-black text-xs uppercase px-5 py-3.5 rounded-xl shadow-md cursor-pointer border-none"
               >
                 Search
               </Button>

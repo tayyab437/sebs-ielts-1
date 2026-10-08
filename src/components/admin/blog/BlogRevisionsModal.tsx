@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { fetchPostRevisions, restorePostRevision } from '../../../lib/blogApi';
 import type { BlogRevision } from '../../../types/blog';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../ui/dialog';
-import { Button } from '../../ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { History, RotateCcw, Clock, User } from 'lucide-react';
 
 interface BlogRevisionsModalProps {
@@ -35,7 +35,8 @@ export const BlogRevisionsModal: React.FC<BlogRevisionsModalProps> = ({
 
   const handleRestore = async () => {
     if (!selectedRev) return;
-    const confirm = window.confirm(`Are you sure you want to restore the revision from ${new Date(selectedRev.created_at).toLocaleString()}? This will replace the current draft content.`);
+    const revDate = selectedRev.timestamp || (selectedRev as any).created_at;
+    const confirm = window.confirm(`Are you sure you want to restore the revision from ${revDate ? new Date(revDate).toLocaleString() : 'saved snapshot'}? This will replace the current draft content.`);
     if (!confirm) return;
 
     setRestoring(true);

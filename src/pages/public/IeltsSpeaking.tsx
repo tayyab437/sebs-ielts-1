@@ -287,34 +287,38 @@ export default function IeltsSpeakingPage() {
       </div>
 
       {/* 2. HERO SECTION */}
-      <section className="w-full bg-slate-900 text-white py-12 lg:py-16 border-b border-slate-800 relative overflow-hidden">
+      <section className="w-full bg-[#f8fafc] text-slate-900 py-12 lg:py-16 border-b border-slate-200 relative overflow-hidden">
+        {/* Soft Ambient Glows */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-cyan-100/60 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-20 left-10 w-[450px] h-[450px] rounded-full bg-sky-100/70 blur-3xl pointer-events-none" />
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             
             {/* Left Hero Details */}
             <div className="lg:col-span-7 flex flex-col gap-5">
               <div className="inline-flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded bg-[#00a8cc]/10 text-[#00a8cc] border border-[#00a8cc]/30 text-xs font-black uppercase tracking-widest">
+                <span className="px-2.5 py-1 rounded bg-[#00a8cc]/10 text-[#007a99] border border-[#00a8cc]/30 text-xs font-black uppercase tracking-widest">
                   ACADEMIC &amp; GENERAL TRAINING MODULE
                 </span>
-                <span className="text-slate-400 text-xs flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-slate-600 text-xs flex items-center gap-1 font-semibold">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                   CEFR Levels B2 • C1 • C2
                 </span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
-                IELTS Speaking: Complete Guide to the Test, Questions &amp; Practice
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+                IELTS Speaking: <span className="text-[#00a8cc]">Complete Guide</span> to the Test, Questions &amp; Practice
               </h1>
 
-              <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-2xl font-normal">
+              <p className="text-slate-600 text-base sm:text-lg leading-relaxed max-w-2xl font-normal">
                 Understand the IELTS Speaking test from Part 1 to Part 3, explore authentic exam questions and topical themes, dissect certified Cambridge marking criteria, and master tactical fluency heuristics calibrated by Syed Ejaz Bukhari over 34 years of instructional leadership.
               </p>
 
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <a 
                   href="#practice" 
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#00a8cc] to-sky-500 hover:from-sky-400 hover:to-[#00a8cc] text-slate-950 font-black text-xs uppercase tracking-wider shadow-xl transition-all hover:-translate-y-0.5"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#00a8cc] hover:bg-[#0096b7] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-cyan-500/20 transition-all hover:-translate-y-0.5"
                 >
                   <Mic className="w-4 h-4" />
                   <span>Start Speaking Practice</span>
@@ -322,56 +326,56 @@ export default function IeltsSpeakingPage() {
                 
                 <a 
                   href="#test-format" 
-                  className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider border border-slate-700 transition-colors"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs uppercase tracking-wider border border-slate-300 shadow-sm transition-colors"
                 >
-                  <Layers className="w-4 h-4 text-sky-400" />
+                  <Layers className="w-4 h-4 text-[#00a8cc]" />
                   <span>Explore Test Format</span>
                 </a>
 
                 <a 
                   href="#mock-test" 
-                  className="inline-flex items-center justify-center gap-1.5 text-cyan-400 hover:text-cyan-300 text-xs font-extrabold uppercase tracking-wider px-3 py-3"
+                  className="inline-flex items-center justify-center gap-1.5 text-[#00a8cc] hover:text-[#008ba8] text-xs font-extrabold uppercase tracking-wider px-3 py-3"
                 >
                   <span>Take Free Timed Diagnostic &rarr;</span>
                 </a>
               </div>
 
-              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-800 text-slate-300">
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-200 text-slate-600">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-mono block">Assessment Window</span>
-                  <span className="text-lg font-black text-white">11–14 Mins</span>
+                  <span className="text-[10px] text-slate-500 uppercase font-mono block font-semibold">Assessment Window</span>
+                  <span className="text-lg font-black text-slate-900">11–14 Mins</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-mono block">Examination Segments</span>
-                  <span className="text-lg font-black text-white">3 Distinct Parts</span>
+                  <span className="text-[10px] text-slate-500 uppercase font-mono block font-semibold">Examination Segments</span>
+                  <span className="text-lg font-black text-slate-900">3 Distinct Parts</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-mono block">Global Acceptance</span>
-                  <span className="text-lg font-black text-emerald-400">12,500+ Institutions</span>
+                  <span className="text-[10px] text-slate-500 uppercase font-mono block font-semibold">Global Acceptance</span>
+                  <span className="text-lg font-black text-emerald-600">12,500+ Institutions</span>
                 </div>
               </div>
             </div>
 
             {/* Right Hero Visual Interactive Simulator */}
             <div className="lg:col-span-5 relative">
-              <div className="bg-slate-950/90 rounded-2xl shadow-2xl border border-slate-800 p-6 relative backdrop-blur-md">
-                <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+              <div className="bg-white rounded-2xl shadow-xl border border-slate-200/90 p-6 relative">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
-                    <span className="text-xs font-black uppercase tracking-wider text-slate-200">Live Oral Assessment Room</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-800">Live Oral Assessment Room</span>
                   </div>
-                  <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px] font-mono">Simulated Examiner UI</span>
+                  <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-mono">Simulated Examiner UI</span>
                 </div>
 
                 {/* Candidate Task Card Display */}
-                <div className="my-5 bg-slate-900 rounded-xl p-5 border border-slate-800/80">
+                <div className="my-5 bg-[#f8fafc] rounded-xl p-5 border border-slate-200">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="px-2.5 py-0.5 rounded bg-[#00a8cc]/10 text-[#00a8cc] border border-[#00a8cc]/30 text-[10px] font-black uppercase">Candidate Task Card • Part 2</span>
-                    <span className="text-[11px] font-mono text-slate-400">Topic ID: #CUE-804</span>
+                    <span className="px-2.5 py-0.5 rounded bg-[#00a8cc]/10 text-[#007a99] border border-[#00a8cc]/30 text-[10px] font-black uppercase">Candidate Task Card • Part 2</span>
+                    <span className="text-[11px] font-mono text-slate-500">Topic ID: #CUE-804</span>
                   </div>
-                  <h4 className="text-sm font-bold text-white mb-2 leading-snug">Describe a person who has influenced you in your personal or academic life.</h4>
-                  <p className="text-xs text-slate-400 mb-2">You should say:</p>
-                  <ul className="text-xs text-slate-300 space-y-1.5 pl-4 list-disc">
+                  <h4 className="text-sm font-bold text-slate-900 mb-2 leading-snug">Describe a person who has influenced you in your personal or academic life.</h4>
+                  <p className="text-xs text-slate-500 mb-2">You should say:</p>
+                  <ul className="text-xs text-slate-700 space-y-1.5 pl-4 list-disc">
                     <li>Who this person is and how you know them</li>
                     <li>What qualities, decisions, or traits define them</li>
                     <li>What specific influence they exerted over your path</li>
@@ -381,29 +385,29 @@ export default function IeltsSpeakingPage() {
 
                 {/* Audio Recording & Timer State */}
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between bg-slate-900 p-3 rounded-lg border border-slate-800 text-xs font-mono">
-                    <div className="flex items-center gap-2 text-rose-400">
+                  <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-slate-200 text-xs font-mono shadow-sm">
+                    <div className="flex items-center gap-2 text-rose-600">
                       <Timer className="w-4 h-4" />
-                      <span>Prep: <strong className="text-white">01:00</strong></span>
+                      <span>Prep: <strong className="text-slate-900">01:00</strong></span>
                     </div>
-                    <div className="flex items-center gap-2 text-emerald-400">
+                    <div className="flex items-center gap-2 text-emerald-600">
                       <Mic className="w-4 h-4" />
-                      <span>Speaking: <strong className="text-white">02:00</strong></span>
+                      <span>Speaking: <strong className="text-slate-900">02:00</strong></span>
                     </div>
                   </div>
 
-                  <div className="p-3 bg-slate-900 rounded-lg flex items-center justify-between">
+                  <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-sm flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <button 
                         type="button"
                         onClick={() => setIsRecording(!isRecording)}
-                        className="w-8 h-8 rounded-full bg-[#00a8cc] hover:bg-[#0096b7] text-slate-950 flex items-center justify-center transition-colors"
+                        className="w-8 h-8 rounded-full bg-[#00a8cc] hover:bg-[#0096b7] text-white flex items-center justify-center transition-colors"
                       >
                         {isRecording ? <Square className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
                       </button>
                       <div className="flex flex-col">
-                        <span className="text-[10px] text-slate-400 font-mono">Voice Track Capture</span>
-                        <span className="text-xs font-bold text-white font-mono">01:42 / 02:00</span>
+                        <span className="text-[10px] text-slate-500 font-mono">Voice Track Capture</span>
+                        <span className="text-xs font-bold text-slate-900 font-mono">01:42 / 02:00</span>
                       </div>
                     </div>
 
@@ -415,8 +419,8 @@ export default function IeltsSpeakingPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-                  <span className="flex items-center gap-1 text-emerald-400 font-medium">
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                  <span className="flex items-center gap-1 text-emerald-600 font-medium">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     Cambridge Assessment Model
                   </span>

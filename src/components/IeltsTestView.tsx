@@ -114,7 +114,11 @@ export default function IeltsTestView({
     };
     syncLogo();
     window.addEventListener("storage", syncLogo);
-    return () => window.removeEventListener("storage", syncLogo);
+    window.addEventListener("site_settings_updated", syncLogo);
+    return () => {
+      window.removeEventListener("storage", syncLogo);
+      window.removeEventListener("site_settings_updated", syncLogo);
+    };
   }, []);
 
   // Speaking countdown timer for "Time to Think"

@@ -5,10 +5,11 @@ import { fetchCategoryBySlug, fetchPublicPosts } from '../../lib/blogApi';
 import type { BlogCategory, BlogPost } from '../../types/blog';
 import { BlogArticleCard } from '../../components/blog/BlogArticleCard';
 import { BlogBreadcrumbs } from '../../components/blog/BlogBreadcrumbs';
-import { Button } from '../../components/ui/button';
+import { Button } from '@/components/ui/button';
 
 export const BlogCategoryView: React.FC = () => {
-  const { categorySlug } = useParams<{ categorySlug: string }>();
+  const params = useParams<{ categorySlug?: string; slug?: string }>();
+  const categorySlug = params.categorySlug || params.slug;
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
 
@@ -25,13 +26,14 @@ export const BlogCategoryView: React.FC = () => {
 
     fetchCategoryBySlug(categorySlug)
       .then((cat) => {
+        if (!cat) throw new Error('Category not found');
         setCategory(cat);
-        return fetchPublicPosts({ category: cat.slug, page, limit: 9 });
+        return fetchPublicPosts({ category: cat.slug || cat.id, page, limit: 9 });
       })
       .then((res) => {
         if (res) {
           setPosts(res.posts);
-          setPagination(res.pagination);
+          setPagination({ page: res.page, limit: 9, total: res.total, totalPages: res.totalPages });
         }
       })
       .catch((err) => {

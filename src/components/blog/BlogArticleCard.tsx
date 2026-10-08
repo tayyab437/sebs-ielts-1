@@ -22,7 +22,7 @@ export const BlogArticleCard: React.FC<BlogArticleCardProps> = ({ post, featured
       <article className="group relative bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 grid grid-cols-1 lg:grid-cols-12 gap-0">
         <div className="lg:col-span-7 relative min-h-[280px] lg:min-h-[420px] overflow-hidden bg-slate-950">
           <img
-            src={post.featured_image_url || '/ielts_prep_banner_960.webp'}
+            src={(post as any).featured_image_url || post.featured_image || '/ielts_prep_banner_960.webp'}
             alt={post.featured_image_alt || post.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
             loading="lazy"
@@ -67,15 +67,15 @@ export const BlogArticleCard: React.FC<BlogArticleCardProps> = ({ post, featured
           <div className="pt-6 mt-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center overflow-hidden shrink-0">
-                {post.author?.avatar_url ? (
-                  <img src={post.author.avatar_url} alt={post.author.name} className="w-full h-full object-cover" />
+                {post.author?.profile_image || (post.author as any)?.avatar_url ? (
+                  <img src={post.author?.profile_image || (post.author as any)?.avatar_url} alt={post.author?.name} className="w-full h-full object-cover" />
                 ) : (
                   <User className="w-4 h-4 text-primary" />
                 )}
               </div>
               <div className="text-left">
                 <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
-                  {post.author?.name || 'Tayyab Ashfaq'}
+                  {post.author?.name || 'Syed Ejaz Bukhari'}
                 </p>
                 {post.reviewer && (
                   <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 mt-0.5">
@@ -102,7 +102,7 @@ export const BlogArticleCard: React.FC<BlogArticleCardProps> = ({ post, featured
       <div>
         <div className="relative aspect-[16/9] overflow-hidden bg-slate-950">
           <img
-            src={post.featured_image_url || '/ielts_prep_banner_960.webp'}
+            src={(post as any).featured_image_url || post.featured_image || '/ielts_prep_banner_960.webp'}
             alt={post.featured_image_alt || post.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
@@ -147,14 +147,14 @@ export const BlogArticleCard: React.FC<BlogArticleCardProps> = ({ post, featured
       <div className="px-5 sm:px-6 pb-5 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
           <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
-            {post.author?.avatar_url ? (
-              <img src={post.author.avatar_url} alt={post.author.name} className="w-full h-full object-cover" />
+            {post.author?.profile_image || (post.author as any)?.avatar_url ? (
+              <img src={post.author?.profile_image || (post.author as any)?.avatar_url} alt={post.author?.name} className="w-full h-full object-cover" />
             ) : (
               <User className="w-3.5 h-3.5 text-primary" />
             )}
           </div>
           <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">
-            {post.author?.name || 'Tayyab Ashfaq'}
+            {post.author?.name || 'Syed Ejaz Bukhari'}
           </span>
         </div>
 
