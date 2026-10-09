@@ -18,10 +18,6 @@ const isPlaceholder = (url?: string, key?: string) => {
 
 const isValid = !isPlaceholder(supabaseUrl, supabaseAnonKey);
 
-if (!isValid) {
-  console.warn('Supabase credentials are not configured or are set to placeholder values. Custom Hostinger MySQL database engine is active.');
-}
-
 // Custom Chainable Query Builder for MySQL Proxy
 class SupabaseQueryBuilder {
   private table: string;
