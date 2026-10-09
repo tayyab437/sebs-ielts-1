@@ -128,7 +128,8 @@ function Footer() {
                 height={87}
                 loading="lazy"
                 decoding="async"
-                className="h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105" 
+                style={{ aspectRatio: "160 / 87" }}
+                className="h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105 aspect-[160/87]" 
                 referrerPolicy="no-referrer"
                 onError={(e) => {
                   const target = e.currentTarget;
@@ -312,11 +313,15 @@ function Footer() {
                 <div className="relative">
                   <input
                     type="email"
+                    id="newsletter-email"
+                    name="email"
+                    autoComplete="email"
                     placeholder="name@address.com"
                     value={emailValue}
                     onChange={(e) => setEmailValue(e.target.value)}
                     className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 focus:border-emerald-500 rounded-xl h-10 px-4 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none placeholder-slate-400 dark:placeholder-slate-500 pr-10 shadow-xs"
                     disabled={isSubmitting}
+                    aria-label="Email address for weekly newsletter"
                   />
                   <button
                     type="submit"
@@ -761,10 +766,14 @@ function Navbar() {
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
+                  id="header-search-query"
+                  name="searchQuery"
+                  autoComplete="off"
                   placeholder="Search IELTS tests..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full pl-9 pr-4 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/50"
+                  aria-label="Search IELTS tests"
                 />
               </div>
             </div>

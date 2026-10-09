@@ -3440,6 +3440,7 @@ Sitemap: https://sebsinstitute.com/sitemap.xml
       server: {
         middlewareMode: true,
         allowedHosts: true,
+        hmr: false,
       },
       appType: "spa",
     });

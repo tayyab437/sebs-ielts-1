@@ -5,11 +5,17 @@ import './index.css';
 import { ThemeProvider } from './components/theme-provider';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
-// Suppress known Supabase errors from showing up in the UI or crashing the app
+// Suppress Vite HMR / WebSocket and known harmless network errors from bubbling up to UI
 window.addEventListener("unhandledrejection", (event) => {
   const msg = event.reason?.message || event.reason?.toString() || "";
-  if (msg.includes("Failed to fetch") || msg.includes("Refresh Token") || msg.includes("network") || msg.includes("Load failed")) {
-    console.warn("Suppressed known network/auth error:", msg);
+  if (
+    msg.includes("WebSocket") ||
+    msg.includes("closed without opened") ||
+    msg.includes("Failed to fetch") ||
+    msg.includes("Refresh Token") ||
+    msg.includes("network") ||
+    msg.includes("Load failed")
+  ) {
     event.preventDefault();
   }
 });

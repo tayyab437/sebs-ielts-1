@@ -1,10 +1,9 @@
-import React, { useState, useRef, useEffect, Suspense } from "react";
+import React, { useState, useRef, useEffect, lazy, Suspense } from "react";
 import { ArrowUpRight, VolumeX, Volume2, Play } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { fetchSiteSettings } from "../lib/settings";
-import { lazyWithRetry } from "../lib/lazyWithRetry";
+import { fetchSiteSettings } from "@/src/lib/settings";
 
-const SecureVideoPlayer = lazyWithRetry(() => import("./common/SecureVideoPlayer"));
+const SecureVideoPlayer = lazy(() => import("@/src/components/common/SecureVideoPlayer"));
 
 const FALLBACK_YOUTUBE_EMBED = "https://www.youtube-nocookie.com/embed/yY-7o-q9M7U?autoplay=1&mute=1&loop=1&playlist=yY-7o-q9M7U&controls=1&modestbranding=1&rel=0";
 
@@ -132,8 +131,9 @@ export default function MockTestCollectionSection() {
                 decoding="async"
                 width={600}
                 height={338}
+                style={{ aspectRatio: "16 / 9" }}
                 referrerPolicy="no-referrer"
-                className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-50 transition-opacity"
+                className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-50 transition-opacity aspect-video"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
               <div className="relative z-10 flex flex-col items-center gap-3 text-center px-4">

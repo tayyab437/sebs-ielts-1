@@ -113,14 +113,15 @@ export default function LiveLessonsSection() {
               </div>
 
               {/* Card Image */}
-              <div className="relative h-[180px] w-full overflow-hidden bg-slate-100">
+              <div className="relative h-[180px] w-full overflow-hidden bg-slate-100 aspect-[19/9]">
                 <OptimizedImage
                   src={resource.imageSrc}
                   alt={resource.title}
                   width={380}
                   height={180}
+                  aspectRatio="19/9"
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 aspect-[19/9]"
                 />
               </div>
 

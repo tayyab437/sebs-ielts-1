@@ -75,6 +75,7 @@ export function OptimizedImage({
   const targetW = typeof width === "number" ? width : 500;
   const optimizedSrc = isUnsplash ? getOptimizedImageUrl(imgSrc, targetW, "webp") : imgSrc;
   const srcSet = isUnsplash ? generateUnsplashSrcSet(imgSrc) : undefined;
+  const computedAspectRatio = aspectRatio || (width && height ? `${width} / ${height}` : undefined);
 
   return (
     <img
@@ -89,7 +90,10 @@ export function OptimizedImage({
       // @ts-ignore fetchPriority is natively supported in modern browsers
       fetchPriority={priority ? "high" : "low"}
       referrerPolicy="no-referrer"
-      style={aspectRatio ? { aspectRatio, ...props.style } : props.style}
+      style={{
+        ...(computedAspectRatio ? { aspectRatio: computedAspectRatio } : {}),
+        ...props.style
+      }}
       className={`object-cover transition-opacity duration-300 ${className}`}
       onError={(e) => {
         if (!hasError && fallbackSrc) {

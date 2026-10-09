@@ -34,8 +34,9 @@ export default function StudentTrustBannerSection() {
           decoding="async"
           width={150}
           height={75}
+          style={{ aspectRatio: "2 / 1" }}
           referrerPolicy="no-referrer"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover aspect-[2/1]"
         />
       </div>
     );

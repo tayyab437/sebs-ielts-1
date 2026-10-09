@@ -4,25 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; worker-src 'self' blob: data:; style-src 'self' 'unsafe-inline' https:; font-src 'self' https: data:; img-src 'self' data: blob: https: http:; media-src 'self' data: blob: https: http:; connect-src 'self' https: wss: ws: data: blob:; frame-src 'self' https: data: blob:; object-src 'none'; base-uri 'self';" />
-    <meta name="google-site-verification" content="9boolrWw7Q5IK0E_Zg3VGcR5Bwvo0Y04cMqXnrkrJxo" />
-    <!-- Dynamic Global Favicon & Settings Pre-hydration -->
     <script>
-      (function() {
-        try {
-          var fav = localStorage.getItem("site_favicon_url") || "https://i.ibb.co/Xxg75WQc/image-1.jpg";
-          if (fav) {
-            var links = document.querySelectorAll("link[rel*='icon']");
-            links.forEach(function(l) { l.href = fav; });
-          }
-        } catch(e) {}
-      })();
+      window.addEventListener('unhandledrejection', function(e) {
+        var msg = (e.reason && (e.reason.message || e.reason.toString())) || '';
+        if (msg.indexOf('WebSocket') !== -1 || msg.indexOf('closed without opened') !== -1) {
+          e.preventDefault();
+        }
+      });
     </script>
+    <meta name="google-site-verification" content="9boolrWw7Q5IK0E_Zg3VGcR5Bwvo0Y04cMqXnrkrJxo" />
     <!-- Critical LCP Hero Image Preload (0ms Resource Load Delay) -->
     <link rel="preload" as="image" href="/syed_ejaz_bukhari_hero.webp" type="image/webp" fetchpriority="high" />
-    <link rel="icon" type="image/x-icon" href="https://i.ibb.co/Xxg75WQc/image-1.jpg" />
-    <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co/Xxg75WQc/image-1.jpg" />
-    <link rel="shortcut icon" href="https://i.ibb.co/Xxg75WQc/image-1.jpg" />
-    <link rel="apple-touch-icon" href="https://i.ibb.co/Xxg75WQc/image-1.jpg" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
     <link rel="canonical" href="https://sebsinstitute.com/" />
     <title>SEB's Institute | Syed Ejaz Bukhari | IELTS Band 8.5+ &amp; Spoken English Mastery</title>
     <meta name="description" content="Join Syed Ejaz Bukhari at SEB's Institute for world-class IELTS preparation, interactive AI mock tests, expert band evaluation, and masterly spoken English coaching." />

@@ -121,8 +121,9 @@ export default function TakeFreeTestSection() {
                           decoding="async"
                           width={500}
                           height={80}
+                          style={{ aspectRatio: "25 / 4" }}
                           referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover aspect-[25/4]"
                         />
                         <div className="absolute inset-0 bg-slate-900/40 p-2 flex items-end">
                           <span className="text-white font-extrabold text-[10px] leading-tight">

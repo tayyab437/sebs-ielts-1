@@ -127,7 +127,11 @@ export default function HeroSection() {
                   <img
                     src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&h=100&q=80"
                     alt="Student Sara Khan"
-                    className="w-full h-full object-cover"
+                    width={36}
+                    height={36}
+                    decoding="async"
+                    style={{ aspectRatio: "1 / 1" }}
+                    className="w-full h-full object-cover aspect-square"
                     loading="lazy"
                     referrerPolicy="no-referrer"
                   />
@@ -136,7 +140,11 @@ export default function HeroSection() {
                   <img
                     src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=100&h=100&q=80"
                     alt="Student Ali Malik"
-                    className="w-full h-full object-cover"
+                    width={36}
+                    height={36}
+                    decoding="async"
+                    style={{ aspectRatio: "1 / 1" }}
+                    className="w-full h-full object-cover aspect-square"
                     loading="lazy"
                     referrerPolicy="no-referrer"
                   />
@@ -145,7 +153,11 @@ export default function HeroSection() {
                   <img
                     src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=100&h=100&q=80"
                     alt="Student Fatima Ahmed"
-                    className="w-full h-full object-cover"
+                    width={36}
+                    height={36}
+                    decoding="async"
+                    style={{ aspectRatio: "1 / 1" }}
+                    className="w-full h-full object-cover aspect-square"
                     loading="lazy"
                     referrerPolicy="no-referrer"
                   />
@@ -154,7 +166,11 @@ export default function HeroSection() {
                   <img
                     src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&h=100&q=80"
                     alt="Student Hamza Tariq"
-                    className="w-full h-full object-cover"
+                    width={36}
+                    height={36}
+                    decoding="async"
+                    style={{ aspectRatio: "1 / 1" }}
+                    className="w-full h-full object-cover aspect-square"
                     loading="lazy"
                     referrerPolicy="no-referrer"
                   />
