@@ -20,18 +20,12 @@ export function lazyWithRetry<T extends ComponentType<any>>(
     } catch (error: any) {
       console.warn("Dynamic import failed, attempting retry...", error);
 
-      // Attempt 1 retry after 500ms
+      // Attempt 1 retry after 400ms
       try {
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 400));
         return await componentImport();
       } catch (retryError) {
-        if (!pageHasAlreadyBeenForceRefreshed) {
-          // Assuming that the user is not on latest version of our application
-          window.sessionStorage.setItem("page-has-been-force-refreshed", "true");
-          window.location.reload();
-          return { default: (() => null) as unknown as T };
-        }
-        // The page has already been reloaded, assuming it's a genuine error
+        console.error("Dynamic import failed after retry:", retryError);
         throw retryError;
       }
     }

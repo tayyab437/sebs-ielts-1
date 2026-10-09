@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { fetchSiteSettings, sanitizeAssetUrl } from "../../lib/settings";
+import { fetchSiteSettings, sanitizeAssetUrl, defaultSettings } from "../../lib/settings";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -18,8 +18,8 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const [logoUrl, setLogoUrl] = useState(() => sanitizeAssetUrl(localStorage.getItem("site_logo_url"), "/sebs_official_logo_315.webp"));
-  const [logoAlt, setLogoAlt] = useState(() => localStorage.getItem("site_logo_alt") || "SEB's Institute Logo");
+  const [logoUrl, setLogoUrl] = useState(() => sanitizeAssetUrl(localStorage.getItem("site_logo_url"), defaultSettings.site_logo_url));
+  const [logoAlt, setLogoAlt] = useState(() => localStorage.getItem("site_logo_alt") || defaultSettings.site_logo_alt);
 
   useEffect(() => {
     // Fetch global settings
@@ -31,8 +31,8 @@ export default function LoginPage() {
     });
 
     const syncLogo = () => {
-      setLogoUrl(sanitizeAssetUrl(localStorage.getItem("site_logo_url"), "/sebs_official_logo_315.webp"));
-      setLogoAlt(localStorage.getItem("site_logo_alt") || "SEB's Institute Logo");
+      setLogoUrl(sanitizeAssetUrl(localStorage.getItem("site_logo_url"), defaultSettings.site_logo_url));
+      setLogoAlt(localStorage.getItem("site_logo_alt") || defaultSettings.site_logo_alt);
     };
     window.addEventListener("storage", syncLogo);
     window.addEventListener("site_settings_updated", syncLogo);

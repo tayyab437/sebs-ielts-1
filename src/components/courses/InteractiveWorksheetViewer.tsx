@@ -16,7 +16,7 @@ import {
   getLoggedInStudentInfo
 } from "@/src/lib/worksheetService";
 import { supabase } from "@/src/lib/supabaseClient";
-import { fetchSiteSettings, sanitizeAssetUrl } from "@/src/lib/settings";
+import { fetchSiteSettings, sanitizeAssetUrl, defaultSettings } from "@/src/lib/settings";
 import { WorksheetEvaluationResult, WorksheetSubmission } from "@/src/types/worksheet";
 import { 
   X, Check, Sparkles, Award, ChevronLeft, ChevronRight, 
@@ -58,22 +58,22 @@ export default function InteractiveWorksheetViewer({
   
   // Official SEBS Logo state
   const [logoUrl, setLogoUrl] = useState<string>(() => {
-    return sanitizeAssetUrl(localStorage.getItem("site_logo_url"), "/sebs_official_logo_315.webp");
+    return sanitizeAssetUrl(localStorage.getItem("site_logo_url"), defaultSettings.site_logo_url);
   });
 
   useEffect(() => {
-    const syncLogo = () => {
-      fetchSiteSettings(true).then((settings) => {
-        if (settings?.site_logo_url) {
-          setLogoUrl(sanitizeAssetUrl(settings.site_logo_url, "/sebs_official_logo_315.webp"));
+    const syncLogo = (e?: any) => {
+      if (e?.detail?.site_logo_url) {
+        setLogoUrl(sanitizeAssetUrl(e.detail.site_logo_url, defaultSettings.site_logo_url));
+      } else {
+        const stored = localStorage.getItem("site_logo_url");
+        if (stored) {
+          setLogoUrl(sanitizeAssetUrl(stored, defaultSettings.site_logo_url));
         }
-      }).catch(() => {});
+      }
     };
-    syncLogo();
-    window.addEventListener("storage", syncLogo);
     window.addEventListener("site_settings_updated", syncLogo);
     return () => {
-      window.removeEventListener("storage", syncLogo);
       window.removeEventListener("site_settings_updated", syncLogo);
     };
   }, []);
@@ -269,17 +269,15 @@ export default function InteractiveWorksheetViewer({
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="flex items-center justify-center shrink-0">
             <img
-              src={logoUrl || "/sebs_official_logo_315.webp"}
+              src={logoUrl || defaultSettings.site_logo_url}
               alt="SEBS Official Logo"
               width={160}
               height={87}
               className="h-11 sm:h-14 w-auto max-h-14 object-contain filter drop-shadow-sm transition-all"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
-                if (!target.src.includes("sebs_official_logo_315.webp")) {
-                  target.src = "/sebs_official_logo_315.webp";
-                } else if (!target.src.includes("sebs_official_logo_v2_1780389206872.png")) {
-                  target.src = "/sebs_official_logo_v2_1780389206872.png";
+                if (target.src !== defaultSettings.site_logo_url) {
+                  target.src = defaultSettings.site_logo_url;
                 }
               }}
             />
@@ -400,15 +398,13 @@ export default function InteractiveWorksheetViewer({
               <div className="flex flex-col items-center">
                 <div className="flex items-center justify-center">
                   <img
-                    src={logoUrl || "/sebs_official_logo_315.webp"}
+                    src={logoUrl || defaultSettings.site_logo_url}
                     alt="SEBS Institute Official Logo"
                     className="h-14 sm:h-16 w-auto max-w-[170px] sm:max-w-[210px] object-contain drop-shadow-xs"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      if (!target.src.includes("sebs_official_logo_315.webp")) {
-                        target.src = "/sebs_official_logo_315.webp";
-                      } else if (!target.src.includes("sebs_official_logo_v2_1780389206872.png")) {
-                        target.src = "/sebs_official_logo_v2_1780389206872.png";
+                      if (target.src !== defaultSettings.site_logo_url) {
+                        target.src = defaultSettings.site_logo_url;
                       }
                     }}
                   />

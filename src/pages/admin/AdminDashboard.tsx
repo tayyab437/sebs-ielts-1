@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/src/lib/supabaseClient";
 import { safeGetItemAndParse } from "@/src/lib/safeStorage";
-import { fetchSiteSettings, saveSiteSettings, updateDocumentFavicon } from "@/src/lib/settings";
+import { fetchSiteSettings, saveSiteSettings, updateDocumentFavicon, defaultSettings } from "@/src/lib/settings";
 import { flattenQuestionsToIndividual, countTotalQuestions } from "@/src/utils/questionFlattener";
 import { CourseDesignerComponent } from "../../components/course-designer";
 import AdminLiveMeetings from "../../components/admin/AdminLiveMeetings";
@@ -377,10 +377,10 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
 
   // General Settings States
-  const [generalFaviconUrl, setGeneralFaviconUrl] = useState(() => localStorage.getItem("site_favicon_url") || "/sebs_official_logo_315.webp");
-  const [generalFaviconAlt, setGeneralFaviconAlt] = useState(() => localStorage.getItem("site_favicon_alt") || "SEB's Institute Favicon");
-  const [generalLogoUrl, setGeneralLogoUrl] = useState(() => localStorage.getItem("site_logo_url") || "/sebs_official_logo_315.webp");
-  const [generalLogoAlt, setGeneralLogoAlt] = useState(() => localStorage.getItem("site_logo_alt") || "SEB's Institute Logo");
+  const [generalFaviconUrl, setGeneralFaviconUrl] = useState(() => localStorage.getItem("site_favicon_url") || defaultSettings.site_favicon_url);
+  const [generalFaviconAlt, setGeneralFaviconAlt] = useState(() => localStorage.getItem("site_favicon_alt") || defaultSettings.site_favicon_alt);
+  const [generalLogoUrl, setGeneralLogoUrl] = useState(() => localStorage.getItem("site_logo_url") || defaultSettings.site_logo_url);
+  const [generalLogoAlt, setGeneralLogoAlt] = useState(() => localStorage.getItem("site_logo_alt") || defaultSettings.site_logo_alt);
   const [generalHeroImageUrl, setGeneralHeroImageUrl] = useState(() => localStorage.getItem("site_hero_image_url") || "https://lh3.googleusercontent.com/aida-public/AB6AXuCiEeL_rvkeTN1WD6jaHqpjjT6Ax0o76N4V0pu0-U9-8L1-NmC3hc-k0EqLXXfB8w7S_JHA6uxlcJjT8HwJ71j-cNAM7_gbTUJWGN8laDVri0819emFvtVeJw9ECQhOkzQ3RMjUHwfzUzbRiBQjBA9pd6Akxy_LHqda19ke-kK_FnKsrOsty0qCAuANw2-QNsmrthXPUV2iOWueWW_foCUWkH5CGELRy807DzjiALnHmhKPMt_TPi8Fc37lfjxiLk5GbFg");
   const [generalHeroImageAlt, setGeneralHeroImageAlt] = useState(() => localStorage.getItem("site_hero_image_alt") || "Sir Syed Ejaz Bukhari - Founder & Master English Coach");
   const [coursesBannerImageUrl, setCoursesBannerImageUrl] = useState(() => localStorage.getItem("courses_banner_image_url") || "/level_up_skills_banner.jpg");

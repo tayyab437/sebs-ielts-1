@@ -1,5 +1,6 @@
 import React from 'react';
 import type { BlogPost } from '../../types/blog';
+import { defaultSettings } from '../../lib/settings';
 
 interface BlogJsonLdProps {
   post: BlogPost;
@@ -34,7 +35,7 @@ export const BlogJsonLd: React.FC<BlogJsonLdProps> = ({ post }) => {
       url: 'https://sebsinstitute.com',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://sebsinstitute.com/sebs_official_logo_315.webp'
+        url: localStorage.getItem('site_logo_url') || defaultSettings.site_logo_url
       }
     }
   };

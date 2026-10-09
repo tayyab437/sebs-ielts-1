@@ -124,9 +124,9 @@ export const defaultCarouselSlides: CarouselSlide[] = [
 ];
 
 export const defaultSettings: SiteSettings = {
-  site_favicon_url: "/sebs_official_logo_315.webp",
+  site_favicon_url: "https://i.ibb.co/Xxg75WQc/image-1.jpg",
   site_favicon_alt: "SEB's Institute Favicon",
-  site_logo_url: "/sebs_official_logo_315.webp",
+  site_logo_url: "https://i.ibb.co/Xxg75WQc/image-1.jpg",
   site_logo_alt: "SEB's Institute Logo",
   site_hero_image_url: "/syed_ejaz_bukhari_hero.webp",
   site_hero_image_alt: "Sir Syed Ejaz Bukhari - Founder & Master English Coach",
@@ -196,69 +196,11 @@ export function updateDocumentFavicon(faviconUrl: string) {
 export function sanitizeAssetUrl(url: string | null | undefined, defaultUrl: string): string {
   if (!url) return defaultUrl;
   const trimmed = url.trim();
-  if (!trimmed) return defaultUrl;
+  if (!trimmed || trimmed === "/sebs_official_logo_315.webp") return defaultUrl;
   if (trimmed.startsWith("/src/assets/images/")) {
     return trimmed.replace("/src/assets/images/", "/");
   }
   return trimmed;
-}
-
-export function applyAndPersistSettings(data: Record<string, any>): SiteSettings {
-  if (!data || typeof data !== "object") return cachedSettings || defaultSettings;
-  const sanitizedData = { ...data };
-  if (sanitizedData.site_logo_url) {
-    sanitizedData.site_logo_url = sanitizeAssetUrl(sanitizedData.site_logo_url, defaultSettings.site_logo_url);
-  }
-  if (sanitizedData.site_favicon_url) {
-    sanitizedData.site_favicon_url = sanitizeAssetUrl(sanitizedData.site_favicon_url, defaultSettings.site_favicon_url);
-  }
-  if (sanitizedData.site_hero_image_url) {
-    sanitizedData.site_hero_image_url = sanitizeAssetUrl(sanitizedData.site_hero_image_url, defaultSettings.site_hero_image_url);
-  }
-  if (sanitizedData.courses_banner_image_url) {
-    sanitizedData.courses_banner_image_url = sanitizeAssetUrl(sanitizedData.courses_banner_image_url, defaultSettings.courses_banner_image_url);
-  }
-  if (sanitizedData.carousel_slides && typeof sanitizedData.carousel_slides === "string") {
-    try {
-      sanitizedData.carousel_slides = JSON.parse(sanitizedData.carousel_slides);
-    } catch (e) {
-      sanitizedData.carousel_slides = defaultCarouselSlides;
-    }
-  }
-  if (sanitizedData.carousel_timer) {
-    sanitizedData.carousel_timer = Number(sanitizedData.carousel_timer) || defaultSettings.carousel_timer;
-  }
-
-  const merged = { ...defaultSettings, ...sanitizedData };
-  cachedSettings = merged;
-
-  if (typeof window !== "undefined") {
-    try {
-      Object.keys(merged).forEach((key) => {
-        const val = (merged as any)[key];
-        if (val !== undefined && val !== null) {
-          if (typeof val === "object") {
-            localStorage.setItem(key, JSON.stringify(val));
-          } else {
-            localStorage.setItem(key, String(val));
-          }
-        }
-      });
-    } catch (e) {
-      // Storage restriction or quota
-    }
-
-    if (merged.site_favicon_url) {
-      updateDocumentFavicon(merged.site_favicon_url);
-    }
-
-    try {
-      window.dispatchEvent(new Event("storage"));
-      window.dispatchEvent(new CustomEvent("site_settings_updated", { detail: merged }));
-    } catch (e) {}
-  }
-
-  return merged;
 }
 
 let activeFetchPromise: Promise<SiteSettings> | null = null;
@@ -272,60 +214,118 @@ export function invalidateSettingsCache() {
 }
 
 export async function fetchSiteSettings(bypassCache = false): Promise<SiteSettings> {
+  const syncSettingsToStorage = (settingsObj: SiteSettings) => {
+    if (typeof window !== "undefined") {
+      try {
+        Object.keys(settingsObj).forEach((key) => {
+          const val = (settingsObj as any)[key];
+          if (val !== undefined && val !== null) {
+            if (typeof val === "object") {
+              localStorage.setItem(key, JSON.stringify(val));
+            } else {
+              localStorage.setItem(key, String(val));
+            }
+          }
+        });
+        if (settingsObj.site_favicon_url || settingsObj.site_logo_url) {
+          updateDocumentFavicon(settingsObj.site_favicon_url || settingsObj.site_logo_url);
+        }
+      } catch (e) {}
+    }
+  };
+
   if (bypassCache) {
     cachedSettings = null;
     activeFetchPromise = null;
-  }
-
-  if (!cachedSettings) {
-    cachedSettings = typeof window !== "undefined" ? getLocalSettings() : defaultSettings;
-  }
-
-  if ((!hasTriggeredSync || bypassCache) && typeof window !== "undefined") {
-    hasTriggeredSync = true;
-    const syncFn = async () => {
-      try {
-        const res = await fetch("/api/mysql/settings");
-        if (res.ok) {
-          const contentType = res.headers.get("content-type");
-          if (contentType && contentType.includes("application/json")) {
-            const data = await res.json();
-            if (data && typeof data === "object" && Object.keys(data).length > 0) {
-              applyAndPersistSettings(data);
+  } else if (cachedSettings) {
+    if (!hasTriggeredSync && typeof window !== "undefined") {
+      hasTriggeredSync = true;
+      const syncFn = () => {
+        (async () => {
+          try {
+            const res = await fetch("/api/mysql/settings");
+            if (res.ok) {
+              const data = await res.json();
+              if (data && typeof data === "object" && Object.keys(data).length > 0) {
+                const sanitizedData = { ...data };
+                if (sanitizedData.site_logo_url) sanitizedData.site_logo_url = sanitizeAssetUrl(sanitizedData.site_logo_url, defaultSettings.site_logo_url);
+                if (sanitizedData.site_favicon_url) sanitizedData.site_favicon_url = sanitizeAssetUrl(sanitizedData.site_favicon_url, defaultSettings.site_favicon_url);
+                if (sanitizedData.site_hero_image_url) sanitizedData.site_hero_image_url = sanitizeAssetUrl(sanitizedData.site_hero_image_url, defaultSettings.site_hero_image_url);
+                if (sanitizedData.courses_banner_image_url) sanitizedData.courses_banner_image_url = sanitizeAssetUrl(sanitizedData.courses_banner_image_url, defaultSettings.courses_banner_image_url);
+                cachedSettings = { ...defaultSettings, ...sanitizedData };
+                syncSettingsToStorage(cachedSettings);
+              }
             }
+          } catch {
+            // Ignore background sync errors
           }
-        }
-      } catch (err) {
-        // Ignore background sync errors
+        })();
+      };
+
+      if ("requestIdleCallback" in window) {
+        (window as any).requestIdleCallback(syncFn, { timeout: 1000 });
+      } else {
+        setTimeout(syncFn, 500);
       }
-    };
-    setTimeout(syncFn, 0);
+    }
+    return cachedSettings;
   }
 
-  if (bypassCache) {
-    if (activeFetchPromise) return activeFetchPromise;
-    activeFetchPromise = (async () => {
-      try {
-        const res = await fetch("/api/mysql/settings");
-        if (res.ok) {
-          const contentType = res.headers.get("content-type");
-          if (contentType && contentType.includes("application/json")) {
-            const data = await res.json();
-            if (data && typeof data === "object" && Object.keys(data).length > 0) {
-              return applyAndPersistSettings(data);
-            }
-          }
-        }
-      } catch (_err) {
-      } finally {
-        activeFetchPromise = null;
-      }
-      return getLocalSettings();
-    })();
+  if (activeFetchPromise) {
     return activeFetchPromise;
   }
 
-  return cachedSettings;
+  activeFetchPromise = (async () => {
+    try {
+      const res = await fetch("/api/mysql/settings");
+      if (res.ok) {
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await res.json();
+          if (data && typeof data === "object" && Object.keys(data).length > 0) {
+            const sanitizedData = { ...data };
+            if (sanitizedData.site_logo_url) {
+              sanitizedData.site_logo_url = sanitizeAssetUrl(sanitizedData.site_logo_url, defaultSettings.site_logo_url);
+            }
+            if (sanitizedData.site_favicon_url) {
+              sanitizedData.site_favicon_url = sanitizeAssetUrl(sanitizedData.site_favicon_url, defaultSettings.site_favicon_url);
+            }
+            if (sanitizedData.site_hero_image_url) {
+              sanitizedData.site_hero_image_url = sanitizeAssetUrl(sanitizedData.site_hero_image_url, defaultSettings.site_hero_image_url);
+            }
+            if (sanitizedData.courses_banner_image_url) {
+              sanitizedData.courses_banner_image_url = sanitizeAssetUrl(sanitizedData.courses_banner_image_url, defaultSettings.courses_banner_image_url);
+            }
+            if (sanitizedData.carousel_slides && typeof sanitizedData.carousel_slides === "string") {
+              try {
+                sanitizedData.carousel_slides = JSON.parse(sanitizedData.carousel_slides);
+              } catch (e) {
+                sanitizedData.carousel_slides = defaultCarouselSlides;
+              }
+            }
+            if (sanitizedData.carousel_timer) {
+              sanitizedData.carousel_timer = Number(sanitizedData.carousel_timer) || defaultSettings.carousel_timer;
+            }
+            cachedSettings = { ...defaultSettings, ...sanitizedData };
+            syncSettingsToStorage(cachedSettings);
+            return cachedSettings;
+          }
+        }
+      }
+    } catch (_err) {
+      // Network/initialization transient error during cold start; safely return fallback
+    } finally {
+      activeFetchPromise = null;
+    }
+    const local = getLocalSettings();
+    cachedSettings = { ...defaultSettings, ...local };
+    if (cachedSettings.site_favicon_url || cachedSettings.site_logo_url) {
+      updateDocumentFavicon(cachedSettings.site_favicon_url || cachedSettings.site_logo_url);
+    }
+    return cachedSettings;
+  })();
+
+  return activeFetchPromise;
 }
 
 export async function saveSiteSettings(settings: Partial<SiteSettings>): Promise<void> {
@@ -355,7 +355,6 @@ export async function saveSiteSettings(settings: Partial<SiteSettings>): Promise
   
   // Realtime cross-tab and in-tab synchronization event dispatch
   try {
-    window.dispatchEvent(new Event("storage"));
     window.dispatchEvent(new CustomEvent("site_settings_updated", { detail: settings }));
   } catch (eventErr) {
     console.warn("Event dispatch notice:", eventErr);

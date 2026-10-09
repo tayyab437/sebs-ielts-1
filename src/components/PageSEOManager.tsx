@@ -7,13 +7,14 @@ export function PageSEOManager() {
 
   useEffect(() => {
     const updatePageSEO = (settings: SiteSettings) => {
+      const safeSettings = settings || defaultSettings;
       const path = location.pathname;
-      let title = settings.meta_title_home || defaultSettings.meta_title_home;
-      let description = settings.meta_desc_home || defaultSettings.meta_desc_home;
+      let title = safeSettings.meta_title_home || defaultSettings.meta_title_home;
+      let description = safeSettings.meta_desc_home || defaultSettings.meta_desc_home;
 
       if (path === "/courses" || path === "/dashboard/courses") {
-        title = settings.meta_title_courses || defaultSettings.meta_title_courses;
-        description = settings.meta_desc_courses || defaultSettings.meta_desc_courses;
+        title = safeSettings.meta_title_courses || defaultSettings.meta_title_courses;
+        description = safeSettings.meta_desc_courses || defaultSettings.meta_desc_courses;
       } else if (path.startsWith("/courses/") || path.startsWith("/dashboard/courses/")) {
         const segments = path.replace(/^\/dashboard\//, "").split("/").filter(Boolean);
         if (segments.length >= 4) {
@@ -23,12 +24,12 @@ export function PageSEOManager() {
           title = `IELTS ${exam} ${skill} Test ${num} - Course Practice | SEB's Institute`;
           description = `Comprehensive IELTS ${exam} ${skill} interactive curriculum and practice module Test #${num} with step-by-step guidance.`;
         } else {
-          title = settings.meta_title_courses || defaultSettings.meta_title_courses;
-          description = settings.meta_desc_courses || defaultSettings.meta_desc_courses;
+          title = safeSettings.meta_title_courses || defaultSettings.meta_title_courses;
+          description = safeSettings.meta_desc_courses || defaultSettings.meta_desc_courses;
         }
       } else if (path === "/mock-tests") {
-        title = settings.meta_title_mock_tests || defaultSettings.meta_title_mock_tests;
-        description = settings.meta_desc_mock_tests || defaultSettings.meta_desc_mock_tests;
+        title = safeSettings.meta_title_mock_tests || defaultSettings.meta_title_mock_tests;
+        description = safeSettings.meta_desc_mock_tests || defaultSettings.meta_desc_mock_tests;
       } else if (path.includes("ielts-mock-test-") || path.includes("/ielts-mock-test/")) {
         const segments = path.replace(/^\/dashboard\//, "").split("/").filter(Boolean);
         const yearMatch = (segments[0] || "").match(/\d{4}/);
@@ -64,26 +65,26 @@ export function PageSEOManager() {
         title = "IELTS Writing: Task 1, Task 2 & Computer-Based Guide | SEB's Institute";
         description = "Master IELTS Writing Task 1 visual reports and Task 2 essays with scoring criteria, band descriptors, computer-based testing strategies, and expert model answers from SEBS.";
       } else if (path === "/pricing") {
-        title = settings.meta_title_pricing || defaultSettings.meta_title_pricing;
-        description = settings.meta_desc_pricing || defaultSettings.meta_desc_pricing;
+        title = safeSettings.meta_title_pricing || defaultSettings.meta_title_pricing;
+        description = safeSettings.meta_desc_pricing || defaultSettings.meta_desc_pricing;
       } else if (path === "/login") {
-        title = settings.meta_title_login || defaultSettings.meta_title_login;
-        description = settings.meta_desc_login || defaultSettings.meta_desc_login;
+        title = safeSettings.meta_title_login || defaultSettings.meta_title_login;
+        description = safeSettings.meta_desc_login || defaultSettings.meta_desc_login;
       } else if (path === "/signup") {
-        title = settings.meta_title_signup || defaultSettings.meta_title_signup;
-        description = settings.meta_desc_signup || defaultSettings.meta_desc_signup;
+        title = safeSettings.meta_title_signup || defaultSettings.meta_title_signup;
+        description = safeSettings.meta_desc_signup || defaultSettings.meta_desc_signup;
       } else if (path === "/terms") {
-        title = settings.meta_title_terms || defaultSettings.meta_title_terms;
-        description = settings.meta_desc_terms || defaultSettings.meta_desc_terms;
+        title = safeSettings.meta_title_terms || defaultSettings.meta_title_terms;
+        description = safeSettings.meta_desc_terms || defaultSettings.meta_desc_terms;
       } else if (path === "/privacy") {
-        title = settings.meta_title_privacy || defaultSettings.meta_title_privacy;
-        description = settings.meta_desc_privacy || defaultSettings.meta_desc_privacy;
+        title = safeSettings.meta_title_privacy || defaultSettings.meta_title_privacy;
+        description = safeSettings.meta_desc_privacy || defaultSettings.meta_desc_privacy;
       } else if (path === "/dashboard") {
-        title = settings.meta_title_dashboard || defaultSettings.meta_title_dashboard;
-        description = settings.meta_desc_dashboard || defaultSettings.meta_desc_dashboard;
+        title = safeSettings.meta_title_dashboard || defaultSettings.meta_title_dashboard;
+        description = safeSettings.meta_desc_dashboard || defaultSettings.meta_desc_dashboard;
       } else if (path === "/dashboard/writing" || path.startsWith("/dashboard/writing/")) {
-        title = settings.meta_title_writing || defaultSettings.meta_title_writing;
-        description = settings.meta_desc_writing || defaultSettings.meta_desc_writing;
+        title = safeSettings.meta_title_writing || defaultSettings.meta_title_writing;
+        description = safeSettings.meta_desc_writing || defaultSettings.meta_desc_writing;
       } else if (path.startsWith("/admin")) {
         title = "Admin Console | SEB's Institute";
         description = "Administrative portal for Syed Ejaz Bukhari & SEB's Institute management team.";
@@ -107,18 +108,18 @@ export function PageSEOManager() {
 
       // Update or Create Canonical Link Tag
       let canonicalUrl = path === "/" ? "https://sebsinstitute.com/" : `https://sebsinstitute.com${path}`;
-      if (path === "/" && settings.meta_link_home) canonicalUrl = settings.meta_link_home;
-      else if (path === "/courses" && settings.meta_link_courses) canonicalUrl = settings.meta_link_courses;
-      else if (path === "/mock-tests" && settings.meta_link_mock_tests) canonicalUrl = settings.meta_link_mock_tests;
-      else if (path === "/pricing" && settings.meta_link_pricing) canonicalUrl = settings.meta_link_pricing;
-      else if (path === "/login" && settings.meta_link_login) canonicalUrl = settings.meta_link_login;
-      else if (path === "/signup" && settings.meta_link_signup) canonicalUrl = settings.meta_link_signup;
-      else if (path === "/terms" && settings.meta_link_terms) canonicalUrl = settings.meta_link_terms;
+      if (path === "/" && safeSettings.meta_link_home) canonicalUrl = safeSettings.meta_link_home;
+      else if (path === "/courses" && safeSettings.meta_link_courses) canonicalUrl = safeSettings.meta_link_courses;
+      else if (path === "/mock-tests" && safeSettings.meta_link_mock_tests) canonicalUrl = safeSettings.meta_link_mock_tests;
+      else if (path === "/pricing" && safeSettings.meta_link_pricing) canonicalUrl = safeSettings.meta_link_pricing;
+      else if (path === "/login" && safeSettings.meta_link_login) canonicalUrl = safeSettings.meta_link_login;
+      else if (path === "/signup" && safeSettings.meta_link_signup) canonicalUrl = safeSettings.meta_link_signup;
+      else if (path === "/terms" && safeSettings.meta_link_terms) canonicalUrl = safeSettings.meta_link_terms;
       else if (path === "/ielts-speaking" || path === "/ielts-speaking/" || path === "/ielts/ielts-speaking") canonicalUrl = "https://sebsinstitute.com/ielts-speaking/";
       else if (path === "/ielts-writing" || path === "/ielts-writing/" || path === "/ielts/ielts-writing") canonicalUrl = "https://sebsinstitute.com/ielts-writing/";
-      else if (path === "/privacy" && settings.meta_link_privacy) canonicalUrl = settings.meta_link_privacy;
-      else if (path === "/dashboard" && settings.meta_link_dashboard) canonicalUrl = settings.meta_link_dashboard;
-      else if ((path === "/dashboard/writing" || path.startsWith("/dashboard/writing/")) && settings.meta_link_writing) canonicalUrl = settings.meta_link_writing;
+      else if (path === "/privacy" && safeSettings.meta_link_privacy) canonicalUrl = safeSettings.meta_link_privacy;
+      else if (path === "/dashboard" && safeSettings.meta_link_dashboard) canonicalUrl = safeSettings.meta_link_dashboard;
+      else if ((path === "/dashboard/writing" || path.startsWith("/dashboard/writing/")) && safeSettings.meta_link_writing) canonicalUrl = safeSettings.meta_link_writing;
 
       let canonicalLinkTag: HTMLLinkElement | null = document.querySelector("link[rel='canonical']");
       if (!canonicalLinkTag) {
@@ -129,7 +130,7 @@ export function PageSEOManager() {
       canonicalLinkTag.href = canonicalUrl;
 
       // Open Graph & Social Media Tags
-      const rawImage = settings.site_hero_image_url || "/ielts_prep_banner_1781330535098.jpg";
+      const rawImage = safeSettings.site_hero_image_url || "/ielts_prep_banner_1781330535098.jpg";
       const imageUrl = rawImage.startsWith("http") ? rawImage : `https://sebsinstitute.com${rawImage.startsWith('/') ? rawImage : '/' + rawImage}`;
 
       const setMeta = (attrName: "property" | "name", attrValue: string, contentValue: string) => {
@@ -178,27 +179,25 @@ export function PageSEOManager() {
       });
 
       // Update Favicon Tags
-      if (settings.site_favicon_url) {
+      if (safeSettings.site_favicon_url) {
         const selectors = ["link[rel~='icon']", "link[rel='shortcut icon']", "link[rel='apple-touch-icon']"];
         selectors.forEach((sel) => {
           const existing = document.querySelectorAll<HTMLLinkElement>(sel);
           existing.forEach((el) => {
-            el.href = settings.site_favicon_url;
+            el.href = safeSettings.site_favicon_url;
           });
         });
       }
     };
 
-    const handleSync = (bypass = false) => {
-      fetchSiteSettings(typeof bypass === "boolean" ? bypass : false).then(updatePageSEO);
+    fetchSiteSettings(false).then(updatePageSEO);
+    const onSettingsUpdate = (e: any) => {
+      if (e?.detail && typeof e.detail === "object") {
+        updatePageSEO(e.detail);
+      }
     };
-
-    handleSync(false);
-    const onSettingsUpdate = () => handleSync(true);
-    window.addEventListener("storage", onSettingsUpdate);
     window.addEventListener("site_settings_updated", onSettingsUpdate);
     return () => {
-      window.removeEventListener("storage", onSettingsUpdate);
       window.removeEventListener("site_settings_updated", onSettingsUpdate);
     };
   }, [location.pathname]);

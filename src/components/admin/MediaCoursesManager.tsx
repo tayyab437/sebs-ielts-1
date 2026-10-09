@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { defaultSettings } from "../../lib/settings";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Film,
@@ -216,7 +217,7 @@ export default function MediaCoursesManager() {
       difficulty: "Intermediate",
       instructor: "Syed Ejaz Bukhari",
       instructorTitle: "Principal IELTS Director & Linguistic Expert",
-      instructorAvatar: "/sebs_official_logo_160.webp",
+      instructorAvatar: defaultSettings.site_logo_url,
       featuredImage: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80",
       status: "Draft",
       accessTier: "Free",
@@ -736,7 +737,7 @@ Return valid JSON only matching the schema:
         difficulty: (generatedData.difficulty as any) || "Advanced",
         instructor: "Syed Ejaz Bukhari",
         instructorTitle: "Principal IELTS Director & Linguistic Expert",
-        instructorAvatar: "/sebs_official_logo_160.webp",
+        instructorAvatar: defaultSettings.site_logo_url,
         featuredImage: aiMediaType === "audio" 
           ? "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=800&auto=format&fit=crop&q=80"
           : "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80",

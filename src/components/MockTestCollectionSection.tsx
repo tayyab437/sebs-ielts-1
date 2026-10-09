@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect, lazy, Suspense } from "react";
+import React, { useState, useRef, useEffect, Suspense } from "react";
 import { ArrowUpRight, VolumeX, Volume2, Play } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { fetchSiteSettings } from "@/src/lib/settings";
+import { fetchSiteSettings } from "../lib/settings";
+import { lazyWithRetry } from "../lib/lazyWithRetry";
 
-const SecureVideoPlayer = lazy(() => import("@/src/components/common/SecureVideoPlayer"));
+const SecureVideoPlayer = lazyWithRetry(() => import("./common/SecureVideoPlayer"));
 
 const FALLBACK_YOUTUBE_EMBED = "https://www.youtube-nocookie.com/embed/yY-7o-q9M7U?autoplay=1&mute=1&loop=1&playlist=yY-7o-q9M7U&controls=1&modestbranding=1&rel=0";
 

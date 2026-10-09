@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
-import HeroSection from "@/src/components/HeroSection";
-import LiveLessonsSection from "@/src/components/LiveLessonsSection";
+import React, { useState, useEffect, useRef, Suspense } from "react";
+import HeroSection from "../../components/HeroSection";
+import LiveLessonsSection from "../../components/LiveLessonsSection";
+import { lazyWithRetry } from "../../lib/lazyWithRetry";
 
-// Code-split below-the-fold sections to shrink initial JS payload
-const MockTestCollectionSection = lazy(() => import("@/src/components/MockTestCollectionSection"));
-const OfficialPracticeMaterialsSection = lazy(() => import("@/src/components/OfficialPracticeMaterialsSection"));
-const StudentTrustBannerSection = lazy(() => import("@/src/components/StudentTrustBannerSection"));
-const SixStepsSection = lazy(() => import("@/src/components/SixStepsSection"));
-const TakeFreeTestSection = lazy(() => import("@/src/components/TakeFreeTestSection"));
-const SeoOverviewContentSection = lazy(() => import("@/src/components/SeoOverviewContentSection"));
-const FaqSection = lazy(() => import("@/src/components/FaqSection"));
+// Code-split below-the-fold sections with automatic retry for resilience
+const MockTestCollectionSection = lazyWithRetry(() => import("../../components/MockTestCollectionSection"));
+const OfficialPracticeMaterialsSection = lazyWithRetry(() => import("../../components/OfficialPracticeMaterialsSection"));
+const StudentTrustBannerSection = lazyWithRetry(() => import("../../components/StudentTrustBannerSection"));
+const SixStepsSection = lazyWithRetry(() => import("../../components/SixStepsSection"));
+const TakeFreeTestSection = lazyWithRetry(() => import("../../components/TakeFreeTestSection"));
+const SeoOverviewContentSection = lazyWithRetry(() => import("../../components/SeoOverviewContentSection"));
+const FaqSection = lazyWithRetry(() => import("../../components/FaqSection"));
 
 /**
  * DeferredSection: Defers the creation and mounting of below-the-fold DOM nodes

@@ -111,7 +111,6 @@ export const CarouselManager: React.FC<CarouselManagerProps> = ({
       }
 
       window.dispatchEvent(new CustomEvent("site_settings_updated", { detail: payload }));
-      window.dispatchEvent(new Event("storage"));
 
       if (onSettingsSaved) {
         onSettingsSaved(newSlides, newTimer);

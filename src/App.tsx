@@ -57,11 +57,11 @@ export const prefetchRoute = (path: string) => {
 
 import { supabase } from "./lib/supabaseClient";
 import { MeetingsProvider } from "./context/MeetingsContext";
-import { fetchSiteSettings, sanitizeAssetUrl } from "./lib/settings";
+import { fetchSiteSettings, sanitizeAssetUrl, defaultSettings, updateDocumentFavicon } from "./lib/settings";
 import { PageSEOManager } from "./components/PageSEOManager";
 
 function Footer() {
-  const [logoUrl, setLogoUrl] = useState(() => sanitizeAssetUrl(localStorage.getItem("site_logo_url"), "/sebs_official_logo_315.webp"));
+  const [logoUrl, setLogoUrl] = useState(() => sanitizeAssetUrl(localStorage.getItem("site_logo_url"), defaultSettings.site_logo_url));
   const [logoAlt, setLogoAlt] = useState(() => localStorage.getItem("site_logo_alt") || "SEB's Institute Logo");
   const [emailValue, setEmailValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,18 +78,17 @@ function Footer() {
   }, []);
 
   useEffect(() => {
-    const handleFooterLogoSync = (bypass = false) => {
-      fetchSiteSettings(typeof bypass === "boolean" ? bypass : false).then(settings => {
-        if (settings?.site_logo_url) setLogoUrl(settings.site_logo_url);
-        if (settings?.site_logo_alt) setLogoAlt(settings.site_logo_alt);
-      });
+    fetchSiteSettings(false).then(settings => {
+      if (!settings) return;
+      if (settings.site_logo_url) setLogoUrl(settings.site_logo_url);
+      if (settings.site_logo_alt) setLogoAlt(settings.site_logo_alt);
+    });
+    const onSettingsUpdate = (e: any) => {
+      if (e?.detail?.site_logo_url) setLogoUrl(e.detail.site_logo_url);
+      if (e?.detail?.site_logo_alt) setLogoAlt(e.detail.site_logo_alt);
     };
-    handleFooterLogoSync(false);
-    const onSettingsUpdate = () => handleFooterLogoSync(true);
-    window.addEventListener("storage", onSettingsUpdate);
     window.addEventListener("site_settings_updated", onSettingsUpdate);
     return () => {
-      window.removeEventListener("storage", onSettingsUpdate);
       window.removeEventListener("site_settings_updated", onSettingsUpdate);
     };
   }, []);
@@ -123,21 +122,18 @@ function Footer() {
           <div className="lg:col-span-4 space-y-5">
             <Link to="/" className="inline-flex items-center space-x-2 group">
               <img 
-                src={logoUrl || "/sebs_official_logo_315.webp"} 
-                srcSet={(!logoUrl || logoUrl === "/sebs_official_logo_315.webp" || logoUrl === "/sebs_official_logo_160.webp") ? "/sebs_official_logo_160.webp 160w, /sebs_official_logo_315.webp 315w" : undefined}
-                sizes={(!logoUrl || logoUrl === "/sebs_official_logo_315.webp" || logoUrl === "/sebs_official_logo_160.webp") ? "(max-width: 640px) 130px, 160px" : undefined}
+                src={logoUrl || "https://i.ibb.co/Xxg75WQc/image-1.jpg"} 
                 alt={logoAlt} 
                 width={160}
                 height={87}
                 loading="lazy"
                 decoding="async"
-                className="h-14 w-auto object-contain dark:brightness-200 dark:invert transition-transform duration-300 group-hover:scale-105" 
+                className="h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105" 
                 referrerPolicy="no-referrer"
                 onError={(e) => {
                   const target = e.currentTarget;
-                  if (target.src !== "/sebs_official_logo_315.webp") {
-                    target.src = "/sebs_official_logo_315.webp";
-                  }
+                  target.onerror = null;
+                  target.src = "https://i.ibb.co/Xxg75WQc/image-1.jpg";
                 }}
               />
               <span className="text-xl font-black italic tracking-tighter text-slate-900 dark:text-white font-sans">
@@ -418,7 +414,7 @@ function Footer() {
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [logoUrl, setLogoUrl] = useState(() => sanitizeAssetUrl(localStorage.getItem("site_logo_url"), "/sebs_official_logo_315.webp"));
+  const [logoUrl, setLogoUrl] = useState(() => sanitizeAssetUrl(localStorage.getItem("site_logo_url"), defaultSettings.site_logo_url));
   const [logoAlt, setLogoAlt] = useState(() => localStorage.getItem("site_logo_alt") || "SEB's Institute Logo");
 
   // Header Style & Layout States
@@ -440,38 +436,45 @@ function Navbar() {
   const [isOfferBarDismissed, setIsOfferBarDismissed] = useState(() => sessionStorage.getItem("top_offer_bar_dismissed") === "true");
 
   useEffect(() => {
-    const handleStorageChange = (bypass = false) => {
-      fetchSiteSettings(typeof bypass === "boolean" ? bypass : false).then(settings => {
-        if (settings?.site_logo_url) setLogoUrl(settings.site_logo_url);
-        if (settings?.site_logo_alt) setLogoAlt(settings.site_logo_alt);
-        setHeaderStyle(settings.site_header_style || "classic");
-        setIotBannerText(settings.iot_banner_text || "Self-study to boost your IELTS Score to 6.5+");
-        setIotBannerSubtext(settings.iot_banner_subtext || "Designed for Learners at IELTS 5.0-5.5");
-        setIotBannerButtonText(settings.iot_banner_button_text || "Learn more");
-        setIotBannerLink(settings.iot_banner_link || "/courses");
-        setOfferBarActive(settings.top_offer_bar_active !== undefined ? settings.top_offer_bar_active : true);
-        setOfferBarText(settings.top_offer_bar_text || "Special Live Batches with Syed Ejaz Bukhari now recruiting • Genuine IELTS Band 8.5+ Syllabus");
-        setOfferBarLinkText(settings.top_offer_bar_link_text || "Claim Seats");
-        setOfferBarLink(settings.top_offer_bar_link || "/courses");
-        
-        const favUrl = settings.site_favicon_url;
-        if (favUrl) {
-          const selectors = ["link[rel~='icon']", "link[rel='shortcut icon']", "link[rel='apple-touch-icon']"];
-          selectors.forEach((sel) => {
-            const existing = document.querySelectorAll<HTMLLinkElement>(sel);
-            existing.forEach((el) => {
-              el.href = favUrl;
-            });
-          });
-        }
-      });
+    fetchSiteSettings(false).then(settings => {
+      if (!settings) return;
+      if (settings.site_logo_url) setLogoUrl(settings.site_logo_url);
+      if (settings.site_logo_alt) setLogoAlt(settings.site_logo_alt);
+      setHeaderStyle(settings.site_header_style || "classic");
+      setIotBannerText(settings.iot_banner_text || "Self-study to boost your IELTS Score to 6.5+");
+      setIotBannerSubtext(settings.iot_banner_subtext || "Designed for Learners at IELTS 5.0-5.5");
+      setIotBannerButtonText(settings.iot_banner_button_text || "Learn more");
+      setIotBannerLink(settings.iot_banner_link || "/courses");
+      setOfferBarActive(settings.top_offer_bar_active !== undefined ? settings.top_offer_bar_active : true);
+      setOfferBarText(settings.top_offer_bar_text || "Special Live Batches with Syed Ejaz Bukhari now recruiting • Genuine IELTS Band 8.5+ Syllabus");
+      setOfferBarLinkText(settings.top_offer_bar_link_text || "Claim Seats");
+      setOfferBarLink(settings.top_offer_bar_link || "/courses");
+      
+      const favUrl = settings.site_favicon_url;
+      if (favUrl) {
+        updateDocumentFavicon(favUrl);
+      }
+    });
+
+    const onSettingsUpdate = (e: any) => {
+      const s = e?.detail;
+      if (!s) return;
+      if (s.site_logo_url) setLogoUrl(s.site_logo_url);
+      if (s.site_logo_alt) setLogoAlt(s.site_logo_alt);
+      if (s.site_header_style) setHeaderStyle(s.site_header_style);
+      if (s.iot_banner_text !== undefined) setIotBannerText(s.iot_banner_text);
+      if (s.iot_banner_subtext !== undefined) setIotBannerSubtext(s.iot_banner_subtext);
+      if (s.iot_banner_button_text !== undefined) setIotBannerButtonText(s.iot_banner_button_text);
+      if (s.iot_banner_link !== undefined) setIotBannerLink(s.iot_banner_link);
+      if (s.top_offer_bar_active !== undefined) setOfferBarActive(s.top_offer_bar_active);
+      if (s.top_offer_bar_text !== undefined) setOfferBarText(s.top_offer_bar_text);
+      if (s.top_offer_bar_link_text !== undefined) setOfferBarLinkText(s.top_offer_bar_link_text);
+      if (s.top_offer_bar_link !== undefined) setOfferBarLink(s.top_offer_bar_link);
+      if (s.site_favicon_url) updateDocumentFavicon(s.site_favicon_url);
     };
-    const onSettingsUpdate = () => handleStorageChange(true);
-    window.addEventListener("storage", onSettingsUpdate);
+
     window.addEventListener("site_settings_updated", onSettingsUpdate);
-    handleStorageChange(false);
     return () => {
-      window.removeEventListener("storage", onSettingsUpdate);
       window.removeEventListener("site_settings_updated", onSettingsUpdate);
     };
   }, []);
@@ -706,21 +709,18 @@ function Navbar() {
             <div className="flex items-center space-x-6">
               <Link to="/" className="flex items-center space-x-2 shrink-0 pr-2">
                 <img 
-                  src={logoUrl || "/sebs_official_logo_160.webp"} 
-                  srcSet={(!logoUrl || logoUrl === "/sebs_official_logo_315.webp" || logoUrl === "/sebs_official_logo_160.webp") ? "/sebs_official_logo_160.webp 160w, /sebs_official_logo_315.webp 315w" : undefined}
-                  sizes={(!logoUrl || logoUrl === "/sebs_official_logo_315.webp" || logoUrl === "/sebs_official_logo_160.webp") ? "(max-width: 640px) 110px, 160px" : undefined}
+                  src={logoUrl || "https://i.ibb.co/Xxg75WQc/image-1.jpg"} 
                   alt={logoAlt} 
                   width={110}
                   height={60}
                   loading="eager"
                   decoding="async"
-                  className="h-9 w-auto object-contain dark:brightness-200 dark:invert" 
+                  className="h-9 w-auto object-contain" 
                   referrerPolicy="no-referrer"
                   onError={(e) => {
                     const target = e.currentTarget;
-                    if (target.src !== "/sebs_official_logo_315.webp") {
-                      target.src = "/sebs_official_logo_315.webp";
-                    }
+                    target.onerror = null;
+                    target.src = "https://i.ibb.co/Xxg75WQc/image-1.jpg";
                   }}
                 />
                 <span className="font-black text-sm text-slate-900 dark:text-white tracking-wider hidden xl:inline">SEB's Institute</span>
@@ -864,19 +864,18 @@ function Navbar() {
             <div className="relative">
               <div className="absolute -inset-1 bg-gradient-to-tr from-emerald-500 to-violet-500 rounded-2xl blur opacity-15 group-hover:opacity-30 transition-all duration-300" />
               <img 
-                src={logoUrl || "/sebs_official_logo_315.webp"} 
+                src={logoUrl || "https://i.ibb.co/Xxg75WQc/image-1.jpg"} 
                 alt={logoAlt} 
                 width={160}
                 height={87}
                 loading="eager"
                 decoding="async"
-                className="relative h-14 w-auto object-contain dark:brightness-200 dark:invert transition-all duration-500 group-hover:scale-[1.04]" 
+                className="relative h-14 w-auto object-contain transition-all duration-500 group-hover:scale-[1.04]" 
                 referrerPolicy="no-referrer" 
                 onError={(e) => {
                   const target = e.currentTarget;
-                  if (target.src !== "/sebs_official_logo_315.webp") {
-                    target.src = "/sebs_official_logo_315.webp";
-                  }
+                  target.onerror = null;
+                  target.src = "https://i.ibb.co/Xxg75WQc/image-1.jpg";
                 }}
               />
             </div>
@@ -1149,7 +1148,8 @@ function AnnouncementPopup() {
   }, []);
 
   useEffect(() => {
-    if (location.pathname === "/" && announcementActive) {
+    const isShown = sessionStorage.getItem("site_announcement_shown") === "true";
+    if (location.pathname === "/" && announcementActive && !isShown) {
       setShowAnnouncementPopup(true);
     }
   }, [location.pathname, announcementActive]);

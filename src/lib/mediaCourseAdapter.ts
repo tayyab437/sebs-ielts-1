@@ -1,5 +1,6 @@
 import { MediaCourse } from "../types/mediaCourse";
 import { DEFAULT_MEDIA_COURSES } from "./defaultMediaCourses";
+import { defaultSettings } from "./settings";
 
 /**
  * Converts a MediaCourse into the standard application Course structure
@@ -38,7 +39,7 @@ export function mediaCourseToAppCourse(mediaCourse: MediaCourse): any {
     thumbnail_url: mediaCourse.featuredImage || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80",
     instructor: mediaCourse.instructor || "Syed Ejaz Bukhari",
     instructor_title: mediaCourse.instructorTitle || "Principal IELTS Director & Linguistic Expert",
-    instructor_avatar: mediaCourse.instructorAvatar || "/sebs_official_logo_160.webp",
+    instructor_avatar: mediaCourse.instructorAvatar || defaultSettings.site_logo_url,
     access_tier: accessTier,
     status: mediaCourse.status || "Published",
     total_duration: mediaCourse.totalDuration || "1h 30m",

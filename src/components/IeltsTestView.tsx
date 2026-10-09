@@ -595,7 +595,7 @@ export default function IeltsTestView({
           onClick={() => setShowExitConfirm(true)}
         >
           <img
-            src={logoUrl || "/sebs_official_logo_315.webp"}
+            src={logoUrl || defaultSettings.site_logo_url}
             alt={logoAlt || "SEB's Institute Logo"}
             width={110}
             height={60}
@@ -605,8 +605,8 @@ export default function IeltsTestView({
             referrerPolicy="no-referrer"
             onError={(e) => {
               const target = e.currentTarget;
-              if (!target.src.includes("sebs_official_logo_315.webp")) {
-                target.src = "/sebs_official_logo_315.webp";
+              if (target.src !== defaultSettings.site_logo_url && defaultSettings.site_logo_url) {
+                target.src = defaultSettings.site_logo_url;
               }
             }}
           />
