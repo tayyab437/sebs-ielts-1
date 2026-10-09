@@ -22,10 +22,6 @@ const isValidUrl = (url?: string, key?: string) => {
 
 const isValid = isValidUrl(supabaseUrl, supabaseServiceKey);
 
-if (!isValid) {
-  console.warn('Supabase server-side credentials are missing or placeholders.');
-}
-
 export const supabaseAdmin = isValid
   ? createClient(supabaseUrl!.trim(), supabaseServiceKey!.trim())
   : null as any;
