@@ -253,12 +253,12 @@ export default function TakeFreeTestSection() {
                 )}
 
                 {/* Exam Bottom Pagination Footer */}
-                <div className="border-t border-slate-200 pt-2 flex justify-between items-center text-[10px] text-slate-500 font-bold">
+                <div className="border-t border-slate-200 pt-3 flex justify-between items-center text-[11px] text-slate-500 font-bold">
                   <span>Part 3: 13 of 13 questions</span>
-                  <div className="flex items-center gap-1.5">
-                    <button type="button" aria-label="Go to Part 1" className="bg-slate-100 hover:bg-slate-200 min-h-[36px] min-w-[44px] px-3 py-1.5 rounded-md cursor-pointer transition-colors text-slate-700">Part 1</button>
-                    <button type="button" aria-label="Go to Part 2" className="bg-slate-100 hover:bg-slate-200 min-h-[36px] min-w-[44px] px-3 py-1.5 rounded-md cursor-pointer transition-colors text-slate-700">Part 2</button>
-                    <button type="button" aria-label="Current: Part 3" className="bg-[#00a8cc] text-white min-h-[36px] min-w-[44px] px-3 py-1.5 rounded-md cursor-pointer shadow-sm">Part 3</button>
+                  <div className="flex items-center gap-2">
+                    <button type="button" aria-label="Go to Part 1" className="bg-slate-100 hover:bg-slate-200 min-h-[44px] sm:min-h-[48px] min-w-[48px] px-3.5 py-2 rounded-lg cursor-pointer transition-colors text-slate-700">Part 1</button>
+                    <button type="button" aria-label="Go to Part 2" className="bg-slate-100 hover:bg-slate-200 min-h-[44px] sm:min-h-[48px] min-w-[48px] px-3.5 py-2 rounded-lg cursor-pointer transition-colors text-slate-700">Part 2</button>
+                    <button type="button" aria-label="Current: Part 3" className="bg-[#00a8cc] text-white min-h-[44px] sm:min-h-[48px] min-w-[48px] px-3.5 py-2 rounded-lg cursor-pointer shadow-sm">Part 3</button>
                   </div>
                 </div>
 

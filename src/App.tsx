@@ -177,7 +177,7 @@ function Footer() {
             <h3 className="font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-widest mb-5 relative pl-3 border-l-2 border-emerald-500">
               Academic Tracks
             </h3>
-            <ul className="space-y-1 text-xs font-semibold text-slate-600 dark:text-slate-400">
+            <ul className="space-y-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
               {[
                 { title: "Spoken English", tag: "Fluency" },
                 { title: "Writing Skills", tag: "Expert" },
@@ -187,7 +187,7 @@ function Footer() {
                 <li key={idx}>
                   <Link 
                     to="/courses" 
-                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[40px] py-2 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3 px-2 -mx-2 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
                   >
                     <span className="group-hover:translate-x-1 transition-transform">{course.title}</span>
                     <span className="text-[9px] uppercase tracking-widest font-black bg-slate-200 dark:bg-slate-900 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-950 text-slate-600 dark:text-slate-500 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors px-2 py-0.5 rounded">
@@ -204,11 +204,11 @@ function Footer() {
             <h3 className="font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-widest mb-5 relative pl-3 border-l-2 border-emerald-500">
               Resources & Info
             </h3>
-            <ul className="space-y-1 text-xs font-semibold text-slate-600 dark:text-slate-400">
+            <ul className="space-y-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
               <li>
                 <Link 
                   to="/blog" 
-                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[38px] py-1.5 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3 px-2 -mx-2 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
                 >
                   <span className="group-hover:translate-x-1 transition-transform">Blog & Research</span>
                   <span className="text-[8px] uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400 font-mono">Guides</span>
@@ -217,7 +217,7 @@ function Footer() {
               <li>
                 <Link 
                   to="/contact" 
-                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[38px] py-1.5 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3 px-2 -mx-2 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
                 >
                   <span className="group-hover:translate-x-1 transition-transform">Contact Us</span>
                   <span className="text-[8px] uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400 font-mono">Live</span>
@@ -226,7 +226,7 @@ function Footer() {
               <li>
                 <Link 
                   to="/books" 
-                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[38px] py-1.5 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3 px-2 -mx-2 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
                 >
                   <span className="group-hover:translate-x-1 transition-transform">Books</span>
                   <span className="text-[8px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">PDFs</span>
@@ -235,7 +235,7 @@ function Footer() {
               <li>
                 <Link 
                   to="/terms" 
-                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[38px] py-1.5 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3 px-2 -mx-2 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
                 >
                   <span className="group-hover:translate-x-1 transition-transform">Terms & Policies</span>
                   <span className="text-[8px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">Rules</span>
@@ -244,7 +244,7 @@ function Footer() {
               <li>
                 <Link 
                   to="/privacy" 
-                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[38px] py-1.5 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3 px-2 -mx-2 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
                 >
                   <span className="group-hover:translate-x-1 transition-transform">Privacy Policy</span>
                   <span className="text-[8px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">GDPR</span>
@@ -254,7 +254,7 @@ function Footer() {
                 <li key={cp.id}>
                   <Link 
                     to={`/pages/${cp.slug}`} 
-                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[38px] py-1.5 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3 px-2 -mx-2 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
                   >
                     <span className="group-hover:translate-x-1 transition-transform truncate pr-1">{cp.title}</span>
                     <span className="text-[8px] uppercase tracking-wider font-bold text-amber-600 dark:text-amber-400 shrink-0">Custom</span>
@@ -353,37 +353,37 @@ function Footer() {
               href="https://takeielts.britishcouncil.org" 
               target="_blank" 
               rel="nofollow noopener noreferrer" 
-              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1"
+              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5 min-h-[48px] py-2.5 px-2.5 -my-1 rounded-lg"
             >
               <span>British Council IELTS</span>
-              <ExternalLink className="w-3 h-3" />
+              <ExternalLink className="w-3.5 h-3.5" />
             </a>
             <a 
               href="https://www.ieltsidp.com" 
               target="_blank" 
               rel="nofollow noopener noreferrer" 
-              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1"
+              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5 min-h-[48px] py-2.5 px-2.5 -my-1 rounded-lg"
             >
               <span>IDP Education</span>
-              <ExternalLink className="w-3 h-3" />
+              <ExternalLink className="w-3.5 h-3.5" />
             </a>
             <a 
               href="https://www.cambridgeenglish.org" 
               target="_blank" 
               rel="nofollow noopener noreferrer" 
-              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1"
+              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5 min-h-[48px] py-2.5 px-2.5 -my-1 rounded-lg"
             >
               <span>Cambridge English</span>
-              <ExternalLink className="w-3 h-3" />
+              <ExternalLink className="w-3.5 h-3.5" />
             </a>
             <a 
               href="https://www.ielts.org" 
               target="_blank" 
               rel="nofollow noopener noreferrer" 
-              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1"
+              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5 min-h-[48px] py-2.5 px-2.5 -my-1 rounded-lg"
             >
               <span>IELTS.org Official</span>
-              <ExternalLink className="w-3 h-3" />
+              <ExternalLink className="w-3.5 h-3.5" />
             </a>
           </div>
         </div>
@@ -562,40 +562,49 @@ function Navbar() {
     };
 
     // Check initial session
+    const storedSession = localStorage.getItem("mysql-session");
+    const isMockUser = localStorage.getItem("mock_user_logged_in") === "true";
+    
+    if (!storedSession && !isMockUser) {
+      checkOfflineUser();
+    }
+
     if (supabase) {
       let subscription: any = null;
       try {
-        supabase.auth.getSession().then(({ data: { session }, error }) => {
-          if (error) {
-            console.warn("App: getSession returned error:", error.message);
-            if (error.message.includes("Refresh Token")) {
-              supabase.auth.signOut().catch(() => {});
+        if (storedSession || isMockUser) {
+          supabase.auth.getSession().then(({ data: { session }, error }) => {
+            if (error) {
+              console.warn("App: getSession returned error:", error.message);
+              if (error.message.includes("Refresh Token")) {
+                supabase.auth.signOut().catch(() => {});
+              }
             }
-          }
-          setUser(session?.user ?? null);
-          if (session?.user) {
-            supabase.from("profiles").select("role").eq("id", session.user.id).single().then(({ data }) => {
-              if (data?.role) {
-                setUserRole(data.role);
-                localStorage.setItem("user_role", data.role);
-              } else if (session.user.user_metadata?.role) {
-                setUserRole(session.user.user_metadata.role);
-                localStorage.setItem("user_role", session.user.user_metadata.role);
-              }
-            }).catch((err) => {
-              console.warn("App: profiles query failed on mount", err);
-              if (session.user.user_metadata?.role) {
-                setUserRole(session.user.user_metadata.role);
-                localStorage.setItem("user_role", session.user.user_metadata.role);
-              }
-            });
-          } else {
+            setUser(session?.user ?? null);
+            if (session?.user) {
+              supabase.from("profiles").select("role").eq("id", session.user.id).single().then(({ data }) => {
+                if (data?.role) {
+                  setUserRole(data.role);
+                  localStorage.setItem("user_role", data.role);
+                } else if (session.user.user_metadata?.role) {
+                  setUserRole(session.user.user_metadata.role);
+                  localStorage.setItem("user_role", session.user.user_metadata.role);
+                }
+              }).catch((err) => {
+                console.warn("App: profiles query failed on mount", err);
+                if (session.user.user_metadata?.role) {
+                  setUserRole(session.user.user_metadata.role);
+                  localStorage.setItem("user_role", session.user.user_metadata.role);
+                }
+              });
+            } else {
+              checkOfflineUser();
+            }
+          }).catch((err) => {
+            console.warn("App: getSession failed. Reverting to Offline Sandbox mode.", err);
             checkOfflineUser();
-          }
-        }).catch((err) => {
-          console.warn("App: getSession failed. Reverting to Offline Sandbox mode.", err);
-          checkOfflineUser();
-        });
+          });
+        }
 
         // Listen for changes
         const authChangeResult = supabase.auth.onAuthStateChange((_event, session) => {

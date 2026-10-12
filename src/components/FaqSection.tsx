@@ -100,10 +100,10 @@ export default function FaqSection() {
           <div className="pt-2">
             <Link
               to="/contact"
-              className="bg-[#202e43] hover:bg-[#152030] text-white font-black text-xs tracking-wider uppercase pl-6 pr-1.5 py-1.5 rounded-full shadow-lg hover:shadow-xl transition-all flex items-center gap-3 cursor-pointer group"
+              className="bg-[#202e43] hover:bg-[#152030] text-white font-black text-xs tracking-wider uppercase pl-6 pr-2 py-3 min-h-[48px] rounded-full shadow-lg hover:shadow-xl transition-all flex items-center gap-3 cursor-pointer group"
             >
               <span className="underline underline-offset-4 decoration-cyan-400">VIEW ALL</span>
-              <div className="w-7 h-7 rounded-full bg-[#497cb5] group-hover:bg-[#3b6aa3] flex items-center justify-center text-white transition-colors">
+              <div className="w-8 h-8 rounded-full bg-[#497cb5] group-hover:bg-[#3b6aa3] flex items-center justify-center text-white transition-colors shrink-0">
                 <ArrowUpRight className="w-4 h-4" />
               </div>
             </Link>
@@ -112,7 +112,7 @@ export default function FaqSection() {
         </div>
 
         {/* Right Column: Accordion Questions List (7 Cols) */}
-        <div className="lg:col-span-8 space-y-3.5 w-full">
+        <div className="lg:col-span-8 space-y-4 w-full">
           {faqData.map((faq, idx) => {
             const isOpen = openIndex === idx;
             return (
@@ -122,13 +122,14 @@ export default function FaqSection() {
               >
                 {/* Question Header Button */}
                 <button
+                  type="button"
                   onClick={() => toggleFaq(idx)}
-                  className="w-full text-left px-5 sm:px-6 py-4.5 min-h-[52px] flex items-center justify-between gap-4 font-semibold text-slate-700 hover:text-[#00a8cc] transition-colors cursor-pointer text-xs sm:text-sm md:text-base leading-snug"
+                  className="w-full text-left px-5 sm:px-6 py-4 sm:py-5 min-h-[60px] flex items-center justify-between gap-4 font-semibold text-slate-700 hover:text-[#00a8cc] transition-colors cursor-pointer text-sm sm:text-base leading-snug"
                 >
-                  <h3 className="font-semibold text-slate-700 text-xs sm:text-sm md:text-base m-0 p-0 inline">
+                  <h3 className="font-semibold text-slate-700 text-sm sm:text-base m-0 p-0 inline">
                     {faq.question}
                   </h3>
-                  <div className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-slate-100 flex items-center justify-center text-slate-600 shrink-0">
+                  <div className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-full bg-slate-100 flex items-center justify-center text-slate-600 shrink-0">
                     {isOpen ? (
                       <Minus className="w-4 h-4 text-[#00a8cc]" />
                     ) : (

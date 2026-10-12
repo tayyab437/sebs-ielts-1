@@ -55,6 +55,7 @@ import { safeSetItem, safeGetItemAndParse, safeJsonParse } from "@/src/lib/safeS
 import IeltsTestView from "@/src/components/IeltsTestView";
 import { mergeCoursesWithMedia, fetchAllMediaCourses } from "@/src/lib/mediaCourseAdapter";
 import MediaCoursePlayer from "@/src/components/courses/MediaCoursePlayer";
+import InteractiveSpeakingExam from "@/src/components/courses/InteractiveSpeakingExam";
 import SecureVideoPlayer from "@/src/components/common/SecureVideoPlayer";
 import { fetchSiteSettings } from "@/src/lib/settings";
 import { canAccessCourse, fetchMembershipTiers, MembershipTier } from "@/src/lib/membershipService";
@@ -220,7 +221,41 @@ const sortCoursesList = (list: any[]) => {
     }
     return Infinity;
   };
-  return [...list].sort((a, b) => {
+
+  // Deduplicate items strictly by ID and normalized title to prevent double-publish display
+  const seenIds = new Set<string>();
+  const seenTitles = new Map<string, any>();
+
+  (list || []).forEach(item => {
+    if (!item) return;
+    const itemId = String(item.id || "");
+    if (itemId && seenIds.has(itemId)) return;
+
+    const normTitle = String(item.title || "").trim().toLowerCase();
+    const courseCat = String(item.course_type || item.category || item.type || "").trim().toLowerCase();
+    const titleKey = normTitle ? `${normTitle}__${courseCat}` : itemId;
+
+    if (seenTitles.has(titleKey)) {
+      const prev = seenTitles.get(titleKey);
+      const prevSqCount = Array.isArray(prev.speaking_questions) ? prev.speaking_questions.length : 0;
+      const currSqCount = Array.isArray(item.speaking_questions) ? item.speaking_questions.length : 0;
+      
+      const prevModsCount = Array.isArray(prev.modules) ? prev.modules.length : 0;
+      const currModsCount = Array.isArray(item.modules) ? item.modules.length : 0;
+
+      // Keep the course with richer data / more questions / newer date
+      if (currSqCount > prevSqCount || (currSqCount === prevSqCount && currModsCount > prevModsCount)) {
+        seenTitles.set(titleKey, item);
+      }
+    } else {
+      seenTitles.set(titleKey, item);
+    }
+    if (itemId) seenIds.add(itemId);
+  });
+
+  const uniqueList = Array.from(seenTitles.values());
+
+  return [...uniqueList].sort((a, b) => {
     const aVal = getTestNumberValue(a.test_number);
     const bVal = getTestNumberValue(b.test_number);
     if (aVal !== bVal) {
@@ -1898,7 +1933,20 @@ function StudentCoursesInner({
           if (typeof mods === 'string') {
             try { mods = JSON.parse(mods); } catch { mods = []; }
           }
-          return { ...course, modules: mods || [] };
+          let sq = course.speaking_questions;
+          if (typeof sq === 'string') {
+            try { sq = JSON.parse(sq); } catch { sq = null; }
+          }
+          let sd = course.speaking_data;
+          if (typeof sd === 'string') {
+            try { sd = JSON.parse(sd); } catch { sd = null; }
+          }
+          return {
+            ...course,
+            modules: mods || [],
+            speaking_questions: sq || course.speaking_questions,
+            speaking_data: sd || course.speaking_data
+          };
         });
 
         try {
@@ -3130,6 +3178,31 @@ function StudentCoursesInner({
           onExit={confirmExit}
         />
       );
+    }
+
+    // Specialized 1-Question-per-screen Voice Recorder & AI Evaluator for Speaking Tests
+    const isSpeaking = Boolean(
+      activeCourse.course_type === "Speaking Test" ||
+      activeCourse.course_format === "speaking" ||
+      activeCourse.category === "Speaking Mastery" ||
+      (activeCourse.speaking_questions && Array.isArray(activeCourse.speaking_questions) && activeCourse.speaking_questions.length > 0) ||
+      activeCourse.speaking_data ||
+      (typeof activeCourse.title === "string" && activeCourse.title.toLowerCase().includes("speaking"))
+    );
+
+    if (isSpeaking) {
+      const speakingPlayer = (
+        <div id="full-screen-course" className="fixed inset-0 z-[9999] bg-slate-50 dark:bg-slate-950 overflow-y-auto pb-12">
+          <InteractiveSpeakingExam
+            course={activeCourse}
+            onExit={confirmExit}
+          />
+        </div>
+      );
+      if (isDashboardMode && typeof document !== "undefined") {
+        return createPortal(speakingPlayer, document.body);
+      }
+      return speakingPlayer;
     }
 
     // Build comprehensive normalized sections with full questions extracted across all structures

@@ -40,12 +40,11 @@ export default defineConfig(() => {
       modulePreload: {
         polyfill: false,
         resolveDependencies(_filename, deps) {
-          // Strictly limit initial modulepreload to essential entry scripts.
-          // Defer all secondary page chunks (Courses, MockTest, Pricing, Admin, etc.) and heavy libraries.
+          // Strictly limit initial modulepreload to essential core framework and router scripts.
+          // Defer all secondary libraries (vendor-supabase, vendor-base-ui, vendor-charts, vendor-markdown, etc.)
           return deps.filter(dep => 
             dep.includes('vendor-framework') ||
-            dep.includes('vendor-icons') || 
-            dep.includes('vendor-supabase')
+            dep.includes('vendor-router')
           );
         }
       },
@@ -53,25 +52,31 @@ export default defineConfig(() => {
         output: {
           manualChunks(id) {
             if (id.includes('node_modules')) {
-              if (
-                (id.includes('react/') ||
-                 id.includes('react-dom/') ||
-                 id.includes('react-router') ||
-                 id.includes('clsx') ||
-                 id.includes('tailwind-merge') ||
-                 id.includes('scheduler') ||
-                 id.includes('use-sync-external-store') ||
-                 id.includes('react-is')) &&
-                !id.includes('recharts') &&
-                !id.includes('react-markdown')
-              ) {
+              // 1. Core React framework (react, react-dom, scheduler, use-sync-external-store, react-is)
+              if (/[\\/]node_modules[\\/](react|react-dom|scheduler|use-sync-external-store|react-is)[\\/]/.test(id)) {
                 return 'vendor-framework';
               }
+              // 2. React Router
+              if (/[\\/]node_modules[\\/](react-router|react-router-dom)[\\/]/.test(id)) {
+                return 'vendor-router';
+              }
+              // 3. Base UI and floating ui (only loaded by routes that use Dialog/Tabs/Accordion/Progress)
+              if (id.includes('@base-ui') || id.includes('@floating-ui')) {
+                return 'vendor-base-ui';
+              }
+              // 4. Lucide icons
+              if (id.includes('lucide-react')) {
+                return 'vendor-icons';
+              }
+              // 5. Lightweight UI styling utils
+              if (/[\\/]node_modules[\\/](clsx|tailwind-merge|class-variance-authority)[\\/]/.test(id)) {
+                return 'vendor-utils';
+              }
+              // 6. Heavy feature libraries (deferred / lazy routes only)
               if (id.includes('firebase')) return 'vendor-firebase';
               if (id.includes('@supabase')) return 'vendor-supabase';
               if (id.includes('@dnd-kit')) return 'vendor-dnd';
               if (id.includes('motion') || id.includes('framer-motion')) return 'vendor-motion';
-              if (id.includes('lucide-react')) return 'vendor-icons';
               if (id.includes('recharts') || id.includes('d3') || id.includes('victory') || id.includes('decimal.js')) return 'vendor-charts';
               if (id.includes('react-markdown') || id.includes('rehype') || id.includes('remark')) return 'vendor-markdown';
             }

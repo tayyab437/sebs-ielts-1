@@ -1,5 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
-
 // @ts-ignore
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 // @ts-ignore
@@ -180,23 +178,37 @@ class SupabaseQueryBuilder {
 class SupabaseClientProxy {
   private _listeners: any[] = [];
   private _realClient: any = null;
+  private _initRealClientPromise: Promise<any> | null = null;
 
   constructor() {
-    if (isValid) {
-      this._realClient = createClient(supabaseUrl.trim(), supabaseAnonKey.trim());
-    }
-    
     // Listen for auth storage changes to sync tabs
-    window.addEventListener("storage", (e) => {
-      if (e.key === "mysql-session") {
-        const sessionStr = e.newValue;
-        let session = null;
-        if (sessionStr) {
-          try { session = JSON.parse(sessionStr); } catch (e) {}
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", (e) => {
+        if (e.key === "mysql-session") {
+          const sessionStr = e.newValue;
+          let session = null;
+          if (sessionStr) {
+            try { session = JSON.parse(sessionStr); } catch (e) {}
+          }
+          this._triggerAuthChange("SIGNED_IN", session);
         }
-        this._triggerAuthChange("SIGNED_IN", session);
-      }
-    });
+      });
+    }
+  }
+
+  private async _ensureRealClient() {
+    if (this._realClient) return this._realClient;
+    if (!isValid) return null;
+    if (!this._initRealClientPromise) {
+      this._initRealClientPromise = import('@supabase/supabase-js').then(({ createClient }) => {
+        this._realClient = createClient(supabaseUrl.trim(), supabaseAnonKey.trim());
+        return this._realClient;
+      }).catch((e) => {
+        console.warn("Could not dynamically load Supabase JS client:", e);
+        return null;
+      });
+    }
+    return this._initRealClientPromise;
   }
 
   auth = {
@@ -331,13 +343,37 @@ class SupabaseClientProxy {
     if (this._realClient) {
       return this._realClient.storage;
     }
-    // Mock storage if not configured
+    // Lazy on-demand fallback: trigger real client if configured
+    this._ensureRealClient();
     return {
       from: (bucket: string) => ({
-        upload: async (path: string, file: any) => ({ data: { path }, error: null }),
-        getPublicUrl: (path: string) => ({ data: { publicUrl: `https://via.placeholder.com/800x600?text=${encodeURIComponent(path)}` } }),
-        remove: async (paths: string[]) => ({ data: paths, error: null }),
-        list: async (path: string) => ({ data: [], error: null })
+        upload: async (path: string, file: any) => {
+          const client = await this._ensureRealClient();
+          if (client) {
+            return client.storage.from(bucket).upload(path, file);
+          }
+          return { data: { path }, error: null };
+        },
+        getPublicUrl: (path: string) => {
+          if (this._realClient) {
+            return this._realClient.storage.from(bucket).getPublicUrl(path);
+          }
+          return { data: { publicUrl: `https://via.placeholder.com/800x600?text=${encodeURIComponent(path)}` } };
+        },
+        remove: async (paths: string[]) => {
+          const client = await this._ensureRealClient();
+          if (client) {
+            return client.storage.from(bucket).remove(paths);
+          }
+          return { data: paths, error: null };
+        },
+        list: async (path: string) => {
+          const client = await this._ensureRealClient();
+          if (client) {
+            return client.storage.from(bucket).list(path);
+          }
+          return { data: [], error: null };
+        }
       })
     };
   }

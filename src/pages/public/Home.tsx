@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, Suspense } from "react";
 import HeroSection from "../../components/HeroSection";
 import LiveLessonsSection from "../../components/LiveLessonsSection";
-import { lazyWithRetry } from "../../lib/lazyWithRetry";
+import { lazyWithRetry } from "../../lib/lazyRetry";
 
 // Code-split below-the-fold sections with automatic retry for resilience
 const MockTestCollectionSection = lazyWithRetry(() => import("../../components/MockTestCollectionSection"));
@@ -29,26 +29,22 @@ function DeferredSection({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Guarantee loading on initial load after initial paint (100ms) even if IntersectionObserver doesn't trigger
-    const fallbackTimer = setTimeout(() => {
-      setIsVisible(true);
-    }, 100);
+    if (typeof window === "undefined") return;
 
-    if (typeof window === "undefined" || !("IntersectionObserver" in window)) {
+    if (!("IntersectionObserver" in window)) {
       setIsVisible(true);
-      return () => clearTimeout(fallbackTimer);
+      return;
     }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsVisible(true);
-          clearTimeout(fallbackTimer);
           observer.disconnect();
         }
       },
       {
-        rootMargin: "800px 0px",
+        rootMargin: "300px 0px",
       }
     );
 
@@ -56,9 +52,32 @@ function DeferredSection({
       observer.observe(containerRef.current);
     }
 
+    // Deferred idle hydration: gently warm up below-the-fold content only during true browser idle (10s+)
+    let idleTimer: any;
+    const scheduleWarmup = () => {
+      if ("requestIdleCallback" in window) {
+        idleTimer = (window as any).requestIdleCallback(() => setIsVisible(true), { timeout: 15000 });
+      } else {
+        idleTimer = setTimeout(() => setIsVisible(true), 10000);
+      }
+    };
+
+    if (document.readyState === "complete") {
+      scheduleWarmup();
+    } else {
+      window.addEventListener("load", scheduleWarmup, { once: true });
+    }
+
     return () => {
-      clearTimeout(fallbackTimer);
       observer.disconnect();
+      if (idleTimer) {
+        if ("cancelIdleCallback" in window) {
+          (window as any).cancelIdleCallback(idleTimer);
+        } else {
+          clearTimeout(idleTimer);
+        }
+      }
+      window.removeEventListener("load", scheduleWarmup);
     };
   }, []);
 

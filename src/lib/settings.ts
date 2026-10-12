@@ -1,5 +1,3 @@
-import { supabase } from "./supabaseClient";
-
 export interface CarouselSlide {
   id: string;
   type: "image" | "video";
@@ -262,10 +260,18 @@ export async function fetchSiteSettings(bypassCache = false): Promise<SiteSettin
         })();
       };
 
-      if ("requestIdleCallback" in window) {
-        (window as any).requestIdleCallback(syncFn, { timeout: 1000 });
+      const scheduleSync = () => {
+        if ("requestIdleCallback" in window) {
+          (window as any).requestIdleCallback(syncFn, { timeout: 15000 });
+        } else {
+          setTimeout(syncFn, 8000);
+        }
+      };
+
+      if (document.readyState === "complete") {
+        setTimeout(scheduleSync, 5000);
       } else {
-        setTimeout(syncFn, 500);
+        window.addEventListener("load", () => setTimeout(scheduleSync, 5000), { once: true });
       }
     }
     return cachedSettings;

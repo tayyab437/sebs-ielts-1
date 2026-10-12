@@ -378,9 +378,9 @@ export default function AdminDashboard() {
 
   // General Settings States
   const [generalFaviconUrl, setGeneralFaviconUrl] = useState(() => localStorage.getItem("site_favicon_url") || defaultSettings.site_favicon_url);
-  const [generalFaviconAlt, setGeneralFaviconAlt] = useState(() => localStorage.getItem("site_favicon_alt") || defaultSettings.site_favicon_alt);
+  const [generalFaviconAlt, setGeneralFaviconAlt] = useState(() => localStorage.getItem("site_favicon_alt") || "SEB's Institute Favicon");
   const [generalLogoUrl, setGeneralLogoUrl] = useState(() => localStorage.getItem("site_logo_url") || defaultSettings.site_logo_url);
-  const [generalLogoAlt, setGeneralLogoAlt] = useState(() => localStorage.getItem("site_logo_alt") || defaultSettings.site_logo_alt);
+  const [generalLogoAlt, setGeneralLogoAlt] = useState(() => localStorage.getItem("site_logo_alt") || "SEB's Institute Logo");
   const [generalHeroImageUrl, setGeneralHeroImageUrl] = useState(() => localStorage.getItem("site_hero_image_url") || "https://lh3.googleusercontent.com/aida-public/AB6AXuCiEeL_rvkeTN1WD6jaHqpjjT6Ax0o76N4V0pu0-U9-8L1-NmC3hc-k0EqLXXfB8w7S_JHA6uxlcJjT8HwJ71j-cNAM7_gbTUJWGN8laDVri0819emFvtVeJw9ECQhOkzQ3RMjUHwfzUzbRiBQjBA9pd6Akxy_LHqda19ke-kK_FnKsrOsty0qCAuANw2-QNsmrthXPUV2iOWueWW_foCUWkH5CGELRy807DzjiALnHmhKPMt_TPi8Fc37lfjxiLk5GbFg");
   const [generalHeroImageAlt, setGeneralHeroImageAlt] = useState(() => localStorage.getItem("site_hero_image_alt") || "Sir Syed Ejaz Bukhari - Founder & Master English Coach");
   const [coursesBannerImageUrl, setCoursesBannerImageUrl] = useState(() => localStorage.getItem("courses_banner_image_url") || "/level_up_skills_banner.jpg");
@@ -1606,8 +1606,35 @@ export default function AdminDashboard() {
           return String(a.name || a.title || "").localeCompare(String(b.name || b.title || ""));
         });
 
-        setCourses(sortedLocalCourses);
-        setMockTests([...(localMockTests || []), ...coursesLocalMockTests]);
+        // Strictly deduplicate local courses by ID and normalized title to prevent double-publish display
+        const localCourseMap = new Map<string, any>();
+        const localSeenTitles = new Map<string, any>();
+        sortedLocalCourses.forEach((c: any) => {
+          if (!c) return;
+          const normTitle = String(c.title || c.name || "").trim().toLowerCase();
+          const cat = String(c.course_type || c.category || c.type || "").trim().toLowerCase();
+          const titleKey = normTitle ? `${normTitle}__${cat}` : String(c.id);
+
+          if (localSeenTitles.has(titleKey)) {
+            const prev = localSeenTitles.get(titleKey);
+            const prevSq = Array.isArray(prev.speaking_questions) ? prev.speaking_questions.length : 0;
+            const currSq = Array.isArray(c.speaking_questions) ? c.speaking_questions.length : 0;
+            if (currSq > prevSq) {
+              localSeenTitles.set(titleKey, c);
+              localCourseMap.set(c.id, c);
+            }
+          } else {
+            localSeenTitles.set(titleKey, c);
+            if (c.id && !localCourseMap.has(c.id)) localCourseMap.set(c.id, c);
+          }
+        });
+        setCourses(Array.from(localSeenTitles.values()));
+
+        const localTestMap = new Map<string, any>();
+        [...(localMockTests || []), ...coursesLocalMockTests].forEach((t: any) => {
+          if (t && t.id && !localTestMap.has(t.id)) localTestMap.set(t.id, t);
+        });
+        setMockTests(Array.from(localTestMap.values()));
         setResources(localResources);
         setQuizzes(localQuizzes);
         setStudents(localStudents);
@@ -1947,8 +1974,35 @@ export default function AdminDashboard() {
         return String(a.name || a.title || "").localeCompare(String(b.name || b.title || ""));
       });
 
-      setCourses(sortedCourses);
-      setMockTests([...parsedTest, ...coursesMockTests]);
+      // Strictly deduplicate courses by ID and normalized title to prevent double-publish display
+      const remoteCourseMap = new Map<string, any>();
+      const remoteSeenTitles = new Map<string, any>();
+      sortedCourses.forEach((c: any) => {
+        if (!c) return;
+        const normTitle = String(c.title || c.name || "").trim().toLowerCase();
+        const cat = String(c.course_type || c.category || c.type || "").trim().toLowerCase();
+        const titleKey = normTitle ? `${normTitle}__${cat}` : String(c.id);
+
+        if (remoteSeenTitles.has(titleKey)) {
+          const prev = remoteSeenTitles.get(titleKey);
+          const prevSq = Array.isArray(prev.speaking_questions) ? prev.speaking_questions.length : 0;
+          const currSq = Array.isArray(c.speaking_questions) ? c.speaking_questions.length : 0;
+          if (currSq > prevSq) {
+            remoteSeenTitles.set(titleKey, c);
+            remoteCourseMap.set(c.id, c);
+          }
+        } else {
+          remoteSeenTitles.set(titleKey, c);
+          if (c.id && !remoteCourseMap.has(c.id)) remoteCourseMap.set(c.id, c);
+        }
+      });
+      setCourses(Array.from(remoteSeenTitles.values()));
+
+      const remoteTestMap = new Map<string, any>();
+      [...parsedTest, ...coursesMockTests].forEach((t: any) => {
+        if (t && t.id && !remoteTestMap.has(t.id)) remoteTestMap.set(t.id, t);
+      });
+      setMockTests(Array.from(remoteTestMap.values()));
       setResources(parsedResources);
       setQuizzes(parsedQuizzes);
       setStudents(sCount);

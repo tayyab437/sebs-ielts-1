@@ -166,13 +166,41 @@ export const MeetingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   useEffect(() => {
-    // Run fetchMeetings during idle time to avoid critical request chains during initial navigation
+    if (typeof window === "undefined") return;
+
+    // Do not run background meeting queries on public landing pages during initial navigation
+    const pathname = window.location.pathname;
+    const isDashboardOrAdmin = pathname.startsWith('/dashboard') || 
+                               pathname.startsWith('/admin') ||
+                               pathname.startsWith('/teacher');
+
     let timer: any;
-    if (typeof window !== "undefined") {
+    let channel: any;
+
+    if (isDashboardOrAdmin) {
       if ("requestIdleCallback" in window) {
         timer = (window as any).requestIdleCallback(() => fetchMeetings(), { timeout: 4000 });
       } else {
-        timer = setTimeout(() => fetchMeetings(), 3000);
+        timer = setTimeout(() => fetchMeetings(), 1500);
+      }
+
+      // Setup Real-time Supabase subscription for active dashboard/admin users
+      if (supabase) {
+        channel = supabase
+          .channel("db-meetings-changes")
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "live_meetings",
+            },
+            () => {
+              console.log("Real-time meetings update detected...");
+              fetchMeetings();
+            }
+          )
+          .subscribe();
       }
     }
 
@@ -180,30 +208,17 @@ export const MeetingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     window.addEventListener("sebs_meetings_updated", fetchMeetings);
     window.addEventListener("storage", fetchMeetings);
 
-    // Setup Real-time Supabase subscription
-    let channel: any;
-    if (supabase) {
-      channel = supabase
-        .channel("db-meetings-changes")
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "live_meetings",
-          },
-          () => {
-            console.log("Real-time meetings update detected...");
-            fetchMeetings();
-          }
-        )
-        .subscribe();
-    }
-
     return () => {
       window.removeEventListener("sebs_meetings_updated", fetchMeetings);
       window.removeEventListener("storage", fetchMeetings);
-      if (channel) {
+      if (timer) {
+        if ("cancelIdleCallback" in window) {
+          (window as any).cancelIdleCallback(timer);
+        } else {
+          clearTimeout(timer);
+        }
+      }
+      if (channel && supabase) {
         supabase.removeChannel(channel);
       }
     };
