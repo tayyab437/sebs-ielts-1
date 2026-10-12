@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { DEFAULT_POSTS, DEFAULT_CATEGORIES, DEFAULT_AUTHORS, DEFAULT_REVIEWERS } from "../lib/blogApi";
 
 export interface BlogRenderResult {
   notFound?: boolean;
@@ -26,14 +27,43 @@ function escapeAttr(str: string = ""): string {
 
 export function readBlogData(): any {
   const filePath = path.join(process.cwd(), "blog_data.json");
+  let data: any = { posts: [], categories: [], authors: [], reviewers: [], settings: {}, redirects: [] };
   try {
     if (fs.existsSync(filePath)) {
-      return JSON.parse(fs.readFileSync(filePath, "utf-8") || "{}");
+      data = JSON.parse(fs.readFileSync(filePath, "utf-8") || "{}");
     }
   } catch (e) {
     console.warn("[blogSeoRenderer] Failed to read blog_data.json:", e);
   }
-  return { posts: [], categories: [], authors: [], reviewers: [], settings: {}, redirects: [] };
+
+  if (!Array.isArray(data.posts)) data.posts = [];
+  if (!Array.isArray(data.categories)) data.categories = [];
+  if (!Array.isArray(data.authors)) data.authors = [];
+  if (!Array.isArray(data.reviewers)) data.reviewers = [];
+
+  // Merge default seed posts to guarantee zero 404s
+  for (const defPost of DEFAULT_POSTS) {
+    if (!data.posts.some((p: any) => p.slug === defPost.slug || p.id === defPost.id)) {
+      data.posts.push(defPost);
+    }
+  }
+  for (const defCat of DEFAULT_CATEGORIES) {
+    if (!data.categories.some((c: any) => c.slug === defCat.slug || c.id === defCat.id)) {
+      data.categories.push(defCat);
+    }
+  }
+  for (const defAuthor of DEFAULT_AUTHORS) {
+    if (!data.authors.some((a: any) => a.slug === defAuthor.slug || a.id === defAuthor.id)) {
+      data.authors.push(defAuthor);
+    }
+  }
+  for (const defRev of DEFAULT_REVIEWERS) {
+    if (!data.reviewers.some((r: any) => r.slug === defRev.slug || r.id === defRev.id)) {
+      data.reviewers.push(defRev);
+    }
+  }
+
+  return data;
 }
 
 /**
@@ -174,6 +204,7 @@ function replaceHeadTags(html: string, options: {
   canonicalUrl: string;
   ogType?: string;
   ogImage?: string;
+  preloadImage?: string;
   publishedTime?: string;
   modifiedTime?: string;
   authorName?: string;
@@ -238,7 +269,7 @@ function replaceHeadTags(html: string, options: {
     `<meta name="twitter:image" content="${escapeAttr(ogImg)}" />`
   );
 
-  // 6. Handle Robots tag (if noindex)
+  // 6. Handle Robots tag (strict noindex vs fully indexable)
   if (options.noindex) {
     result = result.replace(
       /<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i,
@@ -248,9 +279,31 @@ function replaceHeadTags(html: string, options: {
       /<meta\s+name="googlebot"\s+content="[^"]*"\s*\/?>/i,
       `<meta name="googlebot" content="noindex, nofollow" />`
     );
+  } else {
+    result = result.replace(
+      /<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i,
+      `<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />`
+    );
+    result = result.replace(
+      /<meta\s+name="googlebot"\s+content="[^"]*"\s*\/?>/i,
+      `<meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />`
+    );
   }
 
-  // 7. Inject extra head tags (JSON-LD schemas, article metadata) before </head>
+  // 7. CRITICAL LCP & CONSOLE WARNING FIX: Replace or remove unused hero image preload
+  const heroPreloadRegex = /<!--[^\n]*Critical LCP Hero Image Preload[^\n]*-->\s*<link\s+rel="preload"\s+as="image"\s+href="\/syed_ejaz_bukhari_hero\.webp"[^>]*\/?>\s*|<link\s+rel="preload"\s+as="image"\s+href="\/syed_ejaz_bukhari_hero\.webp"[^>]*\/?>\s*/gi;
+  if (options.preloadImage && !options.preloadImage.includes("syed_ejaz_bukhari_hero.webp")) {
+    // Replace with article's actual LCP featured image (0ms resource load delay for LCP)
+    result = result.replace(
+      heroPreloadRegex,
+      `<!-- Article LCP Featured Image Preload (0ms Resource Load Delay) -->\n    <link rel="preload" as="image" href="${escapeAttr(options.preloadImage)}" fetchpriority="high" />\n    `
+    );
+  } else {
+    // Completely remove unused hero preload on non-homepage views
+    result = result.replace(heroPreloadRegex, "");
+  }
+
+  // 8. Inject extra head tags (JSON-LD schemas, article metadata) before </head>
   if (options.extraHead) {
     result = result.replace("</head>", `${options.extraHead}\n</head>`);
   }
@@ -412,8 +465,13 @@ export function renderBlogPostHtml(slug: string, baseHtml: string): BlogRenderRe
     };
   }
 
-  // 2. Find Post
-  const rawPost = (data.posts || []).find((p: any) => p.slug === slug || p.id === slug);
+  // 2. Find Post (case-insensitive, trimmed, and normalized)
+  const normSlug = decodeURIComponent(slug || "").trim().toLowerCase().replace(/^\/+|\/+$/g, "");
+  const rawPost = (data.posts || []).find((p: any) => {
+    const s = (p.slug || "").trim().toLowerCase();
+    const id = (p.id || "").trim().toLowerCase();
+    return s === normSlug || id === normSlug;
+  });
   if (!rawPost) {
     // Return explicit 404 with noindex to prevent Google Soft 404!
     const notFoundHtml = replaceHeadTags(baseHtml, {
@@ -461,13 +519,14 @@ export function renderBlogPostHtml(slug: string, baseHtml: string): BlogRenderRe
 
   const schemasHtml = buildArticleSchema(post);
 
-  // Replace <head> tags
+  // Replace <head> tags & preload the actual article image for instantaneous LCP (0ms delay)
   const updatedHtml = replaceHeadTags(baseHtml, {
     title: pageTitle,
     description: metaDesc,
     canonicalUrl,
     ogType: "article",
     ogImage: featImg,
+    preloadImage: featImg,
     publishedTime: post.published_at,
     modifiedTime: post.updated_at || post.published_at,
     authorName,
@@ -585,7 +644,7 @@ export function renderBlogPostHtml(slug: string, baseHtml: string): BlogRenderRe
 
         <!-- Featured Image -->
         <figure class="my-6 rounded-3xl overflow-hidden bg-slate-900 border border-slate-800 shadow-xl">
-          <img src="${escapeAttr(featImg)}" alt="${escapeAttr(post.featured_image_alt || post.title)}" class="w-full h-auto object-cover max-h-[480px]" width="1200" height="675" />
+          <img src="${escapeAttr(featImg)}" alt="${escapeAttr(post.featured_image_alt || post.title)}" class="w-full h-auto object-cover max-h-[480px]" width="1200" height="675" fetchpriority="high" loading="eager" decoding="async" />
         </figure>
 
         ${directAnswerHtml}

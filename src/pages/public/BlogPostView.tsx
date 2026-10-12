@@ -88,6 +88,18 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ isPreviewMode = fals
     setMeta('og:url', articleUrl, true);
     setMeta('og:type', 'article', true);
 
+    const robotsContent = post.robots_index === false 
+      ? 'noindex, nofollow' 
+      : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
+    setMeta('robots', robotsContent);
+    setMeta('googlebot', robotsContent);
+
+    // Remove any lingering unused homepage hero preload tag
+    const heroPreload = document.querySelector('link[rel="preload"][href*="syed_ejaz_bukhari_hero.webp"]');
+    if (heroPreload) {
+      heroPreload.remove();
+    }
+
     const featImg = (post as any).featured_image_url || post.featured_image || 'https://sebsinstitute.com/ielts_prep_banner_960.webp';
     setMeta('og:image', featImg, true);
     setMeta('twitter:image', featImg);
@@ -242,6 +254,11 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ isPreviewMode = fals
                 src={post.featured_image || (post as any).featured_image_url}
                 alt={post.featured_image_alt || post.title}
                 className="w-full h-full object-cover"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+                width={1200}
+                height={675}
               />
             </div>
             {(post as any).featured_image_caption && (

@@ -214,6 +214,21 @@
     </image:image>
   </url>
 
+  <!-- Published Blog Post 4: IELTS Computer-Based Writing Format -->
+  <url>
+    <loc>https://sebsinstitute.com/blog/ielts-computer-based-writing-format-interface-scoring-and-booking-guide</loc>
+    <lastmod>2026-03-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sebsinstitute.com/blog/ielts-computer-based-writing-format-interface-scoring-and-booking-guide" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://sebsinstitute.com/blog/ielts-computer-based-writing-format-interface-scoring-and-booking-guide" />
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format,compress&amp;fm=webp&amp;w=1200&amp;q=80</image:loc>
+      <image:title>IELTS Computer-Based Writing Format: Interface, Scoring &amp; Booking Guide</image:title>
+      <image:caption>Comprehensive guide to the computer-delivered IELTS Writing test interface and Band 8 descriptors</image:caption>
+    </image:image>
+  </url>
+
   <!-- Blog Categories -->
   <url>
     <loc>https://sebsinstitute.com/blog/category/ielts-writing</loc>

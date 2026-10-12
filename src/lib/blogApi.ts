@@ -319,6 +319,183 @@ export const DEFAULT_POSTS: BlogPost[] = [
       "Use your 1 minute to outline structural milestones rather than full sentences.",
       "Vary intonation and pace to demonstrate natural discourse flow."
     ]
+  },
+  {
+    id: "post-ielts-computer-based-writing-format",
+    title: "IELTS Computer-Based Writing Format: Interface, Scoring & Booking Guide",
+    slug: "ielts-computer-based-writing-format-interface-scoring-and-booking-guide",
+    excerpt: "Master the computer-delivered IELTS Writing test with our authoritative 2026 guide. Explore the split-screen interface, word-count counter, shortcut keys, Band 8+ scoring criteria, and IDP/British Council booking tips.",
+    content: `
+      <h2>1. Understanding the Computer-Delivered IELTS Writing Ecosystem</h2>
+      <p>In 2026, over 70% of global test-takers select <strong>Computer-Delivered (CD) IELTS</strong> over the traditional paper-based format. While the academic syllabus, task prompts, and Cambridge evaluation standards remain 100% identical between both formats, the digital environment introduces critical ergonomic, cognitive, and mechanical nuances that can either elevate or jeopardize your target band score.</p>
+      <p>The test comprises two compulsory components completed within exactly 60 minutes: <strong>Writing Task 1</strong> (150 words minimum, recommended 20 minutes) and <strong>Writing Task 2</strong> (250 words minimum, recommended 40 minutes). Both tasks are presented simultaneously, allowing candidates to switch freely between Task 1 and Task 2 at any point during the session.</p>
+
+      <h2>2. Comprehensive Test Interface Walkthrough</h2>
+      <p>The official British Council and IDP IELTS testing software runs on dedicated, locked-down workstations designed for maximum clarity and zero distraction.</p>
+      
+      <h3>The Split-Screen Layout</h3>
+      <p>The screen is divided vertically into two synchronized panes:</p>
+      <ul>
+        <li><strong>Left Pane (Question & Stimulus):</strong> Displays the task instructions, graphic stimulus (bar chart, line graph, pie chart, table, or diagram for Academic Task 1, or letter prompt for General Training), and scoring reminders. You can scroll this pane independently without moving your essay text.</li>
+        <li><strong>Right Pane (Candidate Response Box):</strong> An unrestricted multi-line plain text editing window where you type your essay. As you type past the visible boundary, the box scrolls automatically while keeping the question prompt visible on the left.</li>
+      </ul>
+
+      <h3>Real-Time Word Count Display</h3>
+      <p>Directly beneath the right text editing pane sits an automated, real-time <strong>Word Count Indicator</strong>. In the paper test, candidates waste valuable minutes manually counting lines and estimating word totals. On the computer, the software updates the exact word count with every keystroke. Aim for <strong>165–185 words</strong> for Task 1 and <strong>270–290 words</strong> for Task 2.</p>
+
+      <h3>Timer Alerts & Visual Warnings</h3>
+      <p>A digital countdown clock is pinned to the top center of your monitor. At <strong>10 minutes remaining</strong> and <strong>5 minutes remaining</strong>, the clock flashes red and displays a notification banner across the top header before resuming silent countdown. The test automatically locks and submits your text when 00:00 is reached.</p>
+
+      <h3>Keyboard Editing Shortcuts vs. Spell-Check</h3>
+      <p>The test interface natively supports standard operating system keyboard shortcuts:</p>
+      <ul>
+        <li><code>Ctrl + C</code> (Copy) &bull; <code>Ctrl + V</code> (Paste) &bull; <code>Ctrl + X</code> (Cut)</li>
+        <li><code>Ctrl + Z</code> (Undo)</li>
+        <li>Mouse left-click and drag to highlight sections of your text for quick reorganization.</li>
+      </ul>
+      <p><strong>CRITICAL WARNING:</strong> There is <em>NO spell-check, autocorrect, or red squiggly underline</em> anywhere in the software. Typos, misspelled academic words, and omitted capitalizations are strictly registered and will reduce your Lexical Resource mark.</p>
+
+      <h2>3. Computer-Delivered vs. Paper-Based: Strategic Advantages</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Computer-Delivered (CD) IELTS</th>
+            <th>Paper-Based IELTS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Results Turnaround</td>
+            <td>1 to 5 Calendar Days</td>
+            <td>13 Calendar Days</td>
+          </tr>
+          <tr>
+            <td>Word Count Tracking</td>
+            <td>Automatic live counter</td>
+            <td>Manual counting required</td>
+          </tr>
+          <tr>
+            <td>Paragraph Reordering</td>
+            <td>Instant cut-and-paste</td>
+            <td>Messy erasing & re-writing</td>
+          </tr>
+          <tr>
+            <td>Handwriting Legibility</td>
+            <td>100% clean typography</td>
+            <td>Subject to examiner fatigue</td>
+          </tr>
+          <tr>
+            <td>Test Center Frequency</td>
+            <td>Up to 3 sessions daily</td>
+            <td>Fixed Saturday/Thursday slots</td>
+          </tr>
+          <tr>
+            <td>One Skill Retake (OSR)</td>
+            <td>Fully supported at select centres</td>
+            <td>Limited or unavailable</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>4. Cambridge Scoring Rubric & 4 Band Descriptors Demystified</h2>
+      <p>Your writing is scored across four equally weighted criteria (25% each) by certified Cambridge Assessment English examiners:</p>
+      <ol>
+        <li><strong>Task Achievement / Response (25%):</strong> Fully addressing all parts of the prompt, establishing a clear thesis, and providing relevant, thoroughly supported arguments.</li>
+        <li><strong>Coherence & Cohesion (25%):</strong> Logical paragraphing, clear progression from introduction to conclusion, and sophisticated use of cohesive devices without robotic formulaic transitions.</li>
+        <li><strong>Lexical Resource (25%):</strong> Range and precision of academic vocabulary, natural collocations, and minimal spelling or word-formation slips.</li>
+        <li><strong>Grammatical Range & Accuracy (25%):</strong> Balance of complex, compound, and conditional sentence structures with high grammatical control and punctuation accuracy.</li>
+      </ol>
+
+      <h2>5. 60-Minute Master Time Allocation Strategy</h2>
+      <p>At SEB's Institute, Sir Syed Ejaz Bukhari trains candidates to adhere strictly to the <strong>20/40 Rule with Built-in Proofreading Margins</strong>:</p>
+      <ul>
+        <li><strong>Task 2 (First 40 Minutes — Recommended):</strong> Because Task 2 carries double the mark weighting of Task 1, tackling it first with maximum mental stamina is optimal. Spend 5 minutes planning thesis and arguments, 30 minutes typing, and 5 minutes proofreading grammar and typos.</li>
+        <li><strong>Task 1 (Remaining 20 Minutes):</strong> Spend 3 minutes analyzing data trends or letter purpose, 14 minutes typing the overview and detailed groupings, and 3 minutes checking numerical accuracy and prepositions.</li>
+      </ul>
+
+      <h2>6. Step-by-Step Official Booking Guide</h2>
+      <ol>
+        <li><strong>Select Test Administrator:</strong> Visit the official portal for either <em>British Council IELTS</em> (takeielts.britishcouncil.org) or <em>IDP IELTS</em> (ielts.idp.com). Both offer authentic Cambridge exams with equal global validity.</li>
+        <li><strong>Choose Test Module:</strong> Select either <strong>IELTS Academic</strong> (for higher education undergraduate/postgraduate degrees) or <strong>IELTS General Training</strong> (for migration, Express Entry, or employment visas).</li>
+        <li><strong>Filter by 'Computer':</strong> Ensure you select 'IELTS on Computer'. Verify the test venue address and choose your preferred morning, afternoon, or evening session.</li>
+        <li><strong>Upload Identification:</strong> Upload a high-resolution, uncropped scanned copy of your valid international passport. Your original passport must be presented on exam day.</li>
+        <li><strong>Confirm & Pay:</strong> Complete secure payment via debit/credit card. You will receive an immediate booking confirmation email containing your candidate reference number and portal login credentials.</li>
+      </ol>
+
+      <h2>7. Critical Test-Day Ergonomics & Preparation Checklist</h2>
+      <ul>
+        <li><strong>Test Typing Speed:</strong> Practice typing at minimum 35–40 words per minute on a standard desktop external keyboard with physical keys (not a soft laptop keyboard).</li>
+        <li><strong>Noise Management:</strong> Most computer labs offer noise-cancelling headphones or foam earplugs. Request these immediately if adjacent typing clatter distracts you.</li>
+        <li><strong>Rough Sheet Provided:</strong> You will receive a pencil and a scratch paper sheet stamped with your confidential login credentials. Use this for quick 3-minute brainstorming sketches before typing.</li>
+      </ul>
+    `,
+    content_format: "html",
+    featured_image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format,compress&fm=webp&w=1200&q=80",
+    featured_image_alt: "Candidate typing IELTS Computer-Based Writing essay on official workstation interface",
+    status: "published",
+    content_type: "pillar",
+    category_id: "cat-ielts-writing",
+    author_id: "author-seb",
+    reviewer_id: "reviewer-sz",
+    published_at: "2026-03-01T08:00:00Z",
+    updated_at: "2026-03-05T12:00:00Z",
+    last_reviewed_at: "2026-03-05T12:00:00Z",
+    seo_title: "IELTS Computer-Based Writing: Interface, Scoring & Booking Guide",
+    meta_description: "Complete guide to Computer-Delivered IELTS Writing: split-screen layout, live word counter, timer alerts, Band 8 scoring descriptors, and official booking instructions.",
+    canonical_url: "https://sebsinstitute.com/blog/ielts-computer-based-writing-format-interface-scoring-and-booking-guide",
+    robots_index: true,
+    robots_follow: true,
+    primary_keyword: "IELTS computer based writing format",
+    search_intent: "informational",
+    reading_time: 7,
+    word_count: 1350,
+    featured: true,
+    direct_answer_question: "How does the computer-based IELTS Writing interface work?",
+    direct_answer_text: "The computer-delivered IELTS Writing test features a split-screen interface: the prompt or visual stimulus is pinned on the left half, and an active editing text box is on the right. It features an automated on-screen word counter, a countdown timer that turns red at 10 and 5 minutes remaining, and standard keyboard editing shortcuts (Ctrl+C, Ctrl+V, Ctrl+X). No spell-check or grammar auto-correct is provided.",
+    key_takeaways: [
+      "The screen is split vertically: task instructions on the left, your response input box on the right.",
+      "An automatic live word counter updates at the bottom of the screen, removing manual word counting.",
+      "Standard cut, copy, and paste shortcuts work, but there is NO spell-check or autocorrect feature.",
+      "Both Task 1 (20 minutes, 150 words) and Task 2 (40 minutes, 250 words) must be completed within 60 minutes.",
+      "Results for computer-delivered IELTS are released within 1 to 5 days, significantly faster than paper-based tests."
+    ],
+    important_note: "Remember that test center computers do NOT have spell-check enabled. Typos and spelling mistakes directly penalize your Lexical Resource descriptor score. Always reserve 3–5 minutes at the end to proofread your response.",
+    faqs: [
+      {
+        question: "Can I use keyboard shortcuts like Ctrl+C and Ctrl+V in the computer-delivered IELTS Writing test?",
+        answer: "Yes. Standard keyboard shortcuts for cut (Ctrl+X / Cmd+X), copy (Ctrl+C / Cmd+C), and paste (Ctrl+V / Cmd+V) are fully supported in the official test software."
+      },
+      {
+        question: "Does the computer-based IELTS Writing test have auto-correct or spell-check?",
+        answer: "No. Auto-correct, grammar assistance, and spell-check are completely disabled. Candidates must type with accuracy, and spelling errors directly impact your Lexical Resource band score."
+      },
+      {
+        question: "Is computer-delivered IELTS Writing scored by AI or human examiners?",
+        answer: "Computer-delivered IELTS Writing is evaluated by accredited human Cambridge examiners according to the four standard IELTS band descriptors: Task Achievement/Response, Coherence & Cohesion, Lexical Resource, and Grammatical Range & Accuracy."
+      },
+      {
+        question: "How do I book a computer-delivered IELTS test date?",
+        answer: "You can book directly through the official British Council or IDP IELTS booking portals. Select 'IELTS on Computer', choose your preferred city and certified test centre, upload a valid passport copy, and complete fee payment online."
+      }
+    ],
+    sources: [
+      {
+        title: "Cambridge Assessment English: Guide to Computer-delivered IELTS",
+        url: "https://www.cambridgeenglish.org/exams-and-tests/ielts/",
+        publisher: "Cambridge University Press & Assessment"
+      },
+      {
+        title: "IDP IELTS Official Computer Test Demonstration",
+        url: "https://ielts.idp.com/prepare/article-computer-delivered-ielts",
+        publisher: "IDP Education"
+      },
+      {
+        title: "British Council Computer-delivered IELTS Candidate Portal",
+        url: "https://takeielts.britishcouncil.org/take-ielts/which-test/computer",
+        publisher: "British Council"
+      }
+    ]
   }
 ];
 

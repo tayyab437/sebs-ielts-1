@@ -2089,7 +2089,12 @@ async function startServer() {
       return res.json({ redirect: { destination: redirectRule.destination_url, status: redirectRule.status_code || 301 } });
     }
 
-    const post = (data.posts || []).find((p: any) => p.slug === slug || p.id === slug);
+    const normSlug = decodeURIComponent(slug || "").trim().toLowerCase().replace(/^\/+|\/+$/g, "");
+    const post = (data.posts || []).find((p: any) => {
+      const s = (p.slug || "").trim().toLowerCase();
+      const id = (p.id || "").trim().toLowerCase();
+      return s === normSlug || id === normSlug;
+    });
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
     }
