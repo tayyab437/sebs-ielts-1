@@ -124,12 +124,12 @@ export default function FaqSection() {
                 <button
                   type="button"
                   onClick={() => toggleFaq(idx)}
-                  className="w-full text-left px-5 sm:px-6 py-4 sm:py-5 min-h-[60px] flex items-center justify-between gap-4 font-semibold text-slate-700 hover:text-[#00a8cc] transition-colors cursor-pointer text-sm sm:text-base leading-snug"
+                  className="w-full text-left px-5 sm:px-6 py-5 min-h-[64px] flex items-center justify-between gap-4 font-semibold text-slate-700 hover:text-[#00a8cc] transition-colors cursor-pointer text-sm sm:text-base leading-snug touch-manipulation"
                 >
-                  <h3 className="font-semibold text-slate-700 text-sm sm:text-base m-0 p-0 inline">
+                  <span className="font-semibold text-slate-700 text-sm sm:text-base">
                     {faq.question}
-                  </h3>
-                  <div className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-full bg-slate-100 flex items-center justify-center text-slate-600 shrink-0">
+                  </span>
+                  <div className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full bg-slate-100 flex items-center justify-center text-slate-600 shrink-0 pointer-events-none">
                     {isOpen ? (
                       <Minus className="w-4 h-4 text-[#00a8cc]" />
                     ) : (

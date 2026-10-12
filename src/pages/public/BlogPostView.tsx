@@ -62,6 +62,50 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ isPreviewMode = fals
     }
   }, [slug, id, isPreviewMode, navigate]);
 
+  useEffect(() => {
+    if (!post) return;
+
+    // Dynamically update document title, canonical link, and social meta tags
+    document.title = `${post.seo_title || post.title} | SEB's Institute Blog`;
+
+    const setMeta = (name: string, content: string, isProperty = false) => {
+      const attr = isProperty ? 'property' : 'name';
+      let el = document.querySelector(`meta[${attr}="${name}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, name);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', content);
+    };
+
+    const articleUrl = post.canonical_url || `https://sebsinstitute.com/blog/${post.slug}`;
+    const desc = post.meta_description || post.excerpt || "Comprehensive IELTS guide and linguistic mastery by Syed Ejaz Bukhari.";
+
+    setMeta('description', desc);
+    setMeta('og:title', post.seo_title || post.title, true);
+    setMeta('og:description', desc, true);
+    setMeta('og:url', articleUrl, true);
+    setMeta('og:type', 'article', true);
+
+    const featImg = (post as any).featured_image_url || post.featured_image || 'https://sebsinstitute.com/ielts_prep_banner_960.webp';
+    setMeta('og:image', featImg, true);
+    setMeta('twitter:image', featImg);
+    setMeta('twitter:title', post.seo_title || post.title);
+    setMeta('twitter:description', desc);
+
+    let canonicalEl = document.querySelector('link[rel="canonical"]');
+    if (!canonicalEl) {
+      canonicalEl = document.createElement('link');
+      canonicalEl.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonicalEl);
+    }
+    canonicalEl.setAttribute('href', articleUrl);
+
+    // Scroll to top on post switch
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [post]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-6">

@@ -28,6 +28,11 @@ export const BlogAuthorView: React.FC = () => {
       .then((auth) => {
         if (!auth) throw new Error('Author not found');
         setAuthor(auth);
+        document.title = `${auth.name} | SEB's Institute Author Profile`;
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (metaDesc) metaDesc.setAttribute('content', auth.bio || `${auth.name} - Faculty at SEB's Institute`);
+        let canonicalEl = document.querySelector('link[rel="canonical"]');
+        if (canonicalEl) canonicalEl.setAttribute('href', `https://sebsinstitute.com/blog/author/${auth.slug}`);
         return fetchPublicPosts({ page, limit: 12 }).then((res) => ({ auth, res }));
       })
       .then(({ auth, res }) => {

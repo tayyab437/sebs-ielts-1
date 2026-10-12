@@ -154,4 +154,123 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sebsinstitute.com/privacy" />
     <xhtml:link rel="alternate" hreflang="en" href="https://sebsinstitute.com/privacy" />
   </url>
+
+  <!-- ============================================ -->
+  <!-- BLOG & ACADEMIC JOURNAL ARCHITECTURE         -->
+  <!-- ============================================ -->
+
+  <!-- Blog Home -->
+  <url>
+    <loc>https://sebsinstitute.com/blog</loc>
+    <lastmod>2026-03-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sebsinstitute.com/blog" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://sebsinstitute.com/blog" />
+  </url>
+
+  <!-- Published Blog Post 1: Complete Master Guide 2026 -->
+  <url>
+    <loc>https://sebsinstitute.com/blog/ielts-complete-master-guide-2026</loc>
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sebsinstitute.com/blog/ielts-complete-master-guide-2026" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://sebsinstitute.com/blog/ielts-complete-master-guide-2026" />
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format,compress&amp;fm=webp&amp;w=1200&amp;q=80</image:loc>
+      <image:title>IELTS Complete Master Guide 2026: Format, Band Descriptors &amp; 8.5 Strategy</image:title>
+      <image:caption>Exhaustive breakdown of IELTS exam format, scoring criteria and Band 8.5 roadmap</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Published Blog Post 2: Writing Task 2 Band 8 Essay Architecture -->
+  <url>
+    <loc>https://sebsinstitute.com/blog/ielts-writing-task-2-band-8-essay-architecture</loc>
+    <lastmod>2026-03-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sebsinstitute.com/blog/ielts-writing-task-2-band-8-essay-architecture" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://sebsinstitute.com/blog/ielts-writing-task-2-band-8-essay-architecture" />
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format,compress&amp;fm=webp&amp;w=1200&amp;q=80</image:loc>
+      <image:title>IELTS Writing Task 2: 7-Step Band 8 Essay Architecture</image:title>
+      <image:caption>Structure discursive, opinion, and problem-solution essays with Band 8 descriptors</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Published Blog Post 3: Speaking Part 2 Cue Cards -->
+  <url>
+    <loc>https://sebsinstitute.com/blog/ielts-speaking-part-2-cue-cards-brainstorming</loc>
+    <lastmod>2026-03-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sebsinstitute.com/blog/ielts-speaking-part-2-cue-cards-brainstorming" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://sebsinstitute.com/blog/ielts-speaking-part-2-cue-cards-brainstorming" />
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format,compress&amp;fm=webp&amp;w=1200&amp;q=80</image:loc>
+      <image:title>IELTS Speaking Part 2 Cue Cards: 1-Minute Preparation Blueprint</image:title>
+      <image:caption>Blueprint for 60-second preparation and 2-minute fluent monologue</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Blog Categories -->
+  <url>
+    <loc>https://sebsinstitute.com/blog/category/ielts-writing</loc>
+    <lastmod>2026-03-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sebsinstitute.com/blog/category/ielts-writing" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://sebsinstitute.com/blog/category/ielts-writing" />
+  </url>
+  <url>
+    <loc>https://sebsinstitute.com/blog/category/ielts-speaking</loc>
+    <lastmod>2026-03-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sebsinstitute.com/blog/category/ielts-speaking" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://sebsinstitute.com/blog/category/ielts-speaking" />
+  </url>
+  <url>
+    <loc>https://sebsinstitute.com/blog/category/exam-strategy</loc>
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sebsinstitute.com/blog/category/exam-strategy" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://sebsinstitute.com/blog/category/exam-strategy" />
+  </url>
+  <url>
+    <loc>https://sebsinstitute.com/blog/category/reading-listening</loc>
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sebsinstitute.com/blog/category/reading-listening" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://sebsinstitute.com/blog/category/reading-listening" />
+  </url>
+
+  <!-- Blog Authors -->
+  <url>
+    <loc>https://sebsinstitute.com/blog/author/syed-ejaz-bukhari</loc>
+    <lastmod>2026-03-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sebsinstitute.com/blog/author/syed-ejaz-bukhari" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://sebsinstitute.com/blog/author/syed-ejaz-bukhari" />
+  </url>
+  <url>
+    <loc>https://sebsinstitute.com/blog/author/zoha-ali</loc>
+    <lastmod>2026-03-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sebsinstitute.com/blog/author/zoha-ali" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://sebsinstitute.com/blog/author/zoha-ali" />
+  </url>
+  <url>
+    <loc>https://sebsinstitute.com/blog/author/syeda-zarnaz-gilani</loc>
+    <lastmod>2026-03-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sebsinstitute.com/blog/author/syeda-zarnaz-gilani" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://sebsinstitute.com/blog/author/syeda-zarnaz-gilani" />
+  </url>
 </urlset>

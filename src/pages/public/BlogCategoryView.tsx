@@ -28,6 +28,11 @@ export const BlogCategoryView: React.FC = () => {
       .then((cat) => {
         if (!cat) throw new Error('Category not found');
         setCategory(cat);
+        document.title = `${cat.seo_title || cat.name} | SEB's Institute Blog`;
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (metaDesc) metaDesc.setAttribute('content', cat.meta_description || cat.description || '');
+        let canonicalEl = document.querySelector('link[rel="canonical"]');
+        if (canonicalEl) canonicalEl.setAttribute('href', `https://sebsinstitute.com/blog/category/${cat.slug}`);
         return fetchPublicPosts({ category: cat.slug || cat.id, page, limit: 9 });
       })
       .then((res) => {

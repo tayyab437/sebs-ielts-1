@@ -39,7 +39,7 @@ export const BlogFaqSection: React.FC<BlogFaqSectionProps> = ({ faqs }) => {
               <button
                 type="button"
                 onClick={() => toggle(idx)}
-                className="w-full text-left p-4 sm:p-5 flex items-center justify-between gap-4 font-bold text-slate-900 dark:text-white text-sm sm:text-base hover:text-primary transition-colors cursor-pointer"
+                className="w-full text-left p-4.5 sm:p-5 min-h-[56px] flex items-center justify-between gap-4 font-bold text-slate-900 dark:text-white text-sm sm:text-base hover:text-primary transition-colors cursor-pointer touch-manipulation"
                 aria-expanded={isOpen}
               >
                 <span>{faq.question}</span>

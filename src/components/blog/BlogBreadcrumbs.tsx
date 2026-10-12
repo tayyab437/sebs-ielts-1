@@ -49,7 +49,7 @@ export const BlogBreadcrumbs: React.FC<BlogBreadcrumbsProps> = ({ items }) => {
                 ) : (
                   <Link
                     to={item.url}
-                    className="hover:text-primary transition-colors flex items-center gap-1"
+                    className="hover:text-primary transition-colors flex items-center gap-1 py-1.5 px-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/60 touch-manipulation min-h-[36px]"
                   >
                     {idx === 0 && <Home className="w-3.5 h-3.5" />}
                     <span>{item.label}</span>

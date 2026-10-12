@@ -24,6 +24,13 @@ export const BlogHome: React.FC = () => {
   const [searchInput, setSearchInput] = useState<string>(searchParam);
 
   useEffect(() => {
+    document.title = "IELTS & English Learning Academic Journal | SEB's Institute";
+    const desc = "Explore comprehensive guides on IELTS Academic & General Training, speaking fluency, essay structures, and British Council standards curated by Syed Ejaz Bukhari.";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) metaDesc.setAttribute('content', desc);
+    let canonicalEl = document.querySelector('link[rel="canonical"]');
+    if (canonicalEl) canonicalEl.setAttribute('href', 'https://sebsinstitute.com/blog');
+
     fetchCategories()
       .then(setCategories)
       .catch(() => {});

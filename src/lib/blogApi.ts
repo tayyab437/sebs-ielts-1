@@ -402,8 +402,21 @@ export async function fetchPublicPostBySlug(slug: string): Promise<BlogPost | nu
     const res = await fetch(`/api/blog/posts/${encodeURIComponent(slug)}`);
     if (res.ok) {
       const data = await res.json();
-      if (data && data.post) {
-        return data.post;
+      if (data && data.redirect) {
+        return data as any;
+      }
+      const post = data.post || (data.id || data.slug ? data : null);
+      if (post) {
+        // Cache post in fallback cache
+        const allCached = getLocalCache<BlogPost[]>(FALLBACK_CACHE_KEY, DEFAULT_POSTS);
+        const existingIdx = allCached.findIndex(p => p.slug === post.slug || p.id === post.id);
+        if (existingIdx >= 0) {
+          allCached[existingIdx] = post;
+        } else {
+          allCached.push(post);
+        }
+        setLocalCache(FALLBACK_CACHE_KEY, allCached);
+        return post;
       }
     }
   } catch (err) {
@@ -411,7 +424,7 @@ export async function fetchPublicPostBySlug(slug: string): Promise<BlogPost | nu
   }
 
   const allCached = getLocalCache<BlogPost[]>(FALLBACK_CACHE_KEY, DEFAULT_POSTS);
-  const found = allCached.find(p => p.slug === slug || p.id === slug);
+  const found = allCached.find(p => p.slug === slug || p.id === slug) || DEFAULT_POSTS.find(p => p.slug === slug || p.id === slug);
   if (found) {
     // Populate relations if missing
     const cats = getLocalCache<BlogCategory[]>(CATEGORIES_CACHE_KEY, DEFAULT_CATEGORIES);
@@ -420,9 +433,9 @@ export async function fetchPublicPostBySlug(slug: string): Promise<BlogPost | nu
 
     return {
       ...found,
-      category: found.category || cats.find(c => c.id === found.category_id),
-      author: found.author || authors.find(a => a.id === found.author_id),
-      reviewer: found.reviewer || reviewers.find(r => r.id === found.reviewer_id)
+      category: found.category || cats.find(c => c.id === found.category_id) || DEFAULT_CATEGORIES.find(c => c.id === found.category_id),
+      author: found.author || authors.find(a => a.id === found.author_id) || DEFAULT_AUTHORS.find(a => a.id === found.author_id),
+      reviewer: found.reviewer || reviewers.find(r => r.id === found.reviewer_id) || DEFAULT_REVIEWERS.find(r => r.id === found.reviewer_id)
     };
   }
   return null;

@@ -162,7 +162,7 @@ function Footer() {
                     rel="nofollow noopener noreferrer"
                     aria-label={`Visit SEB's Institute on ${social.name}`}
                     title={`Visit SEB's Institute on ${social.name}`}
-                    className="w-11 h-11 min-w-[44px] min-h-[44px] sm:w-12 sm:h-12 sm:min-w-[48px] sm:min-h-[48px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-xl flex items-center justify-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-500/10"
+                    className="w-12 h-12 min-w-[48px] min-h-[48px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-xl flex items-center justify-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-500/10 touch-manipulation"
                   >
                     {social.icon}
                     <span className="sr-only">Visit SEB's Institute on {social.name}</span>
@@ -177,7 +177,7 @@ function Footer() {
             <h3 className="font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-widest mb-5 relative pl-3 border-l-2 border-emerald-500">
               Academic Tracks
             </h3>
-            <ul className="space-y-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
+            <ul className="space-y-3 text-xs font-semibold text-slate-600 dark:text-slate-400">
               {[
                 { title: "Spoken English", tag: "Fluency" },
                 { title: "Writing Skills", tag: "Expert" },
@@ -187,7 +187,7 @@ function Footer() {
                 <li key={idx}>
                   <Link 
                     to="/courses" 
-                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3 px-2 -mx-2 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3.5 px-3 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
                   >
                     <span className="group-hover:translate-x-1 transition-transform">{course.title}</span>
                     <span className="text-[9px] uppercase tracking-widest font-black bg-slate-200 dark:bg-slate-900 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-950 text-slate-600 dark:text-slate-500 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors px-2 py-0.5 rounded">
@@ -204,11 +204,11 @@ function Footer() {
             <h3 className="font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-widest mb-5 relative pl-3 border-l-2 border-emerald-500">
               Resources & Info
             </h3>
-            <ul className="space-y-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
+            <ul className="space-y-3 text-xs font-semibold text-slate-600 dark:text-slate-400">
               <li>
                 <Link 
                   to="/blog" 
-                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3 px-2 -mx-2 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3.5 px-3 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
                 >
                   <span className="group-hover:translate-x-1 transition-transform">Blog & Research</span>
                   <span className="text-[8px] uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400 font-mono">Guides</span>
@@ -217,7 +217,7 @@ function Footer() {
               <li>
                 <Link 
                   to="/contact" 
-                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3 px-2 -mx-2 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3.5 px-3 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
                 >
                   <span className="group-hover:translate-x-1 transition-transform">Contact Us</span>
                   <span className="text-[8px] uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400 font-mono">Live</span>
@@ -226,7 +226,7 @@ function Footer() {
               <li>
                 <Link 
                   to="/books" 
-                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3 px-2 -mx-2 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3.5 px-3 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
                 >
                   <span className="group-hover:translate-x-1 transition-transform">Books</span>
                   <span className="text-[8px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">PDFs</span>
@@ -235,7 +235,7 @@ function Footer() {
               <li>
                 <Link 
                   to="/terms" 
-                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3 px-2 -mx-2 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3.5 px-3 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
                 >
                   <span className="group-hover:translate-x-1 transition-transform">Terms & Policies</span>
                   <span className="text-[8px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">Rules</span>
@@ -244,7 +244,7 @@ function Footer() {
               <li>
                 <Link 
                   to="/privacy" 
-                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3 px-2 -mx-2 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3.5 px-3 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
                 >
                   <span className="group-hover:translate-x-1 transition-transform">Privacy Policy</span>
                   <span className="text-[8px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">GDPR</span>
@@ -254,7 +254,7 @@ function Footer() {
                 <li key={cp.id}>
                   <Link 
                     to={`/pages/${cp.slug}`} 
-                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3 px-2 -mx-2 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3.5 px-3 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
                   >
                     <span className="group-hover:translate-x-1 transition-transform truncate pr-1">{cp.title}</span>
                     <span className="text-[8px] uppercase tracking-wider font-bold text-amber-600 dark:text-amber-400 shrink-0">Custom</span>
@@ -348,12 +348,12 @@ function Footer() {
           <div className="flex items-center gap-2 font-bold text-slate-700 dark:text-slate-300">
             <span>Official Examination Portals:</span>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs">
             <a 
               href="https://takeielts.britishcouncil.org" 
               target="_blank" 
               rel="nofollow noopener noreferrer" 
-              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5 min-h-[48px] py-2.5 px-2.5 -my-1 rounded-lg"
+              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5 min-h-[48px] py-3 px-3.5 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
             >
               <span>British Council IELTS</span>
               <ExternalLink className="w-3.5 h-3.5" />
@@ -362,7 +362,7 @@ function Footer() {
               href="https://www.ieltsidp.com" 
               target="_blank" 
               rel="nofollow noopener noreferrer" 
-              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5 min-h-[48px] py-2.5 px-2.5 -my-1 rounded-lg"
+              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5 min-h-[48px] py-3 px-3.5 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
             >
               <span>IDP Education</span>
               <ExternalLink className="w-3.5 h-3.5" />
@@ -371,7 +371,7 @@ function Footer() {
               href="https://www.cambridgeenglish.org" 
               target="_blank" 
               rel="nofollow noopener noreferrer" 
-              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5 min-h-[48px] py-2.5 px-2.5 -my-1 rounded-lg"
+              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5 min-h-[48px] py-3 px-3.5 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
             >
               <span>Cambridge English</span>
               <ExternalLink className="w-3.5 h-3.5" />
@@ -380,7 +380,7 @@ function Footer() {
               href="https://www.ielts.org" 
               target="_blank" 
               rel="nofollow noopener noreferrer" 
-              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5 min-h-[48px] py-2.5 px-2.5 -my-1 rounded-lg"
+              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5 min-h-[48px] py-3 px-3.5 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
             >
               <span>IELTS.org Official</span>
               <ExternalLink className="w-3.5 h-3.5" />

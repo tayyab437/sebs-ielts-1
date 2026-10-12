@@ -9,6 +9,7 @@ import { supabaseAdmin } from "./src/lib/supabaseServer";
 import Stripe from "stripe";
 import mysql from "mysql2/promise";
 import crypto from "crypto";
+import { generateDynamicSitemap, generateBlogRss, renderBlogPostHtml, renderBlogHomeHtml } from "./src/server/blogSeoRenderer";
 
 // Process safety guards to prevent unhandled rejections from crashing the server
 process.on("unhandledRejection", (reason, promise) => {
@@ -2099,7 +2100,7 @@ async function startServer() {
       author: (data.authors || []).find((a: any) => a.id === post.author_id),
       reviewer: (data.reviewers || []).find((r: any) => r.id === post.reviewer_id)
     };
-    res.json(fullPost);
+    res.json({ post: fullPost, ...fullPost });
   });
 
   // 3. Public Categories
@@ -3643,20 +3644,34 @@ Sitemap: https://sebsinstitute.com/sitemap.xml
 `);
   });
 
-  // Explicit XML Sitemap Handlers
+  // Explicit XML Sitemap Handlers (Dynamically includes all published blog posts)
   app.get(["/sitemap.xml", "/sitemap_index.xml"], (req, res) => {
     res.removeHeader("X-Frame-Options");
     res.setHeader("Content-Type", "application/xml; charset=utf-8");
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Cache-Control", "public, max-age=3600");
 
-    const publicPath = path.join(process.cwd(), "public", "sitemap.xml");
-    const distPath = path.join(process.cwd(), "dist", "sitemap.xml");
-    const filePath = fs.existsSync(publicPath) ? publicPath : distPath;
-    if (fs.existsSync(filePath)) {
-      return res.sendFile(filePath);
+    try {
+      const xml = generateDynamicSitemap();
+      return res.send(xml);
+    } catch (e) {
+      const publicPath = path.join(process.cwd(), "public", "sitemap.xml");
+      const distPath = path.join(process.cwd(), "dist", "sitemap.xml");
+      const filePath = fs.existsSync(publicPath) ? publicPath : distPath;
+      if (fs.existsSync(filePath)) {
+        return res.sendFile(filePath);
+      }
+      res.status(404).send("<?xml version=\"1.0\" encoding=\"UTF-8\"?><error>Sitemap not found</error>");
     }
-    res.status(404).send("<?xml version=\"1.0\" encoding=\"UTF-8\"?><error>Sitemap not found</error>");
+  });
+
+  // RSS Feed Handler for Google News & Aggregators
+  app.get(["/blog/rss.xml", "/blog/feed.xml", "/feed.xml"], (req, res) => {
+    res.removeHeader("X-Frame-Options");
+    res.setHeader("Content-Type", "application/xml; charset=utf-8");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    return res.send(generateBlogRss());
   });
 
   // Long-term immutable caching for static assets (images, webp, png, fonts, icons)
@@ -3671,6 +3686,68 @@ Sitemap: https://sebsinstitute.com/sitemap.xml
     }
   }));
 
+  // Helper to load base template HTML
+  const getBaseHtml = (isDevMode: boolean) => {
+    const distHtmlPath = path.join(process.cwd(), "dist", "index.html");
+    const rootHtmlPath = path.join(process.cwd(), "index.html");
+    if (!isDevMode && fs.existsSync(distHtmlPath)) {
+      return fs.readFileSync(distHtmlPath, "utf-8");
+    }
+    if (fs.existsSync(rootHtmlPath)) {
+      return fs.readFileSync(rootHtmlPath, "utf-8");
+    }
+    if (fs.existsSync(distHtmlPath)) {
+      return fs.readFileSync(distHtmlPath, "utf-8");
+    }
+    return "<html><head><title>SEB's Institute</title></head><body><div id=\"root\"></div></body></html>";
+  };
+
+  // Google-Compliant SSR & SEO Handler for single blog post
+  const handleBlogPostRoute = async (req: express.Request, res: express.Response, next: express.NextFunction, viteInstance?: any) => {
+    const slug = req.params.slug;
+    if (!slug || slug.includes(".") || slug.startsWith("api")) {
+      return next();
+    }
+    try {
+      const baseHtml = getBaseHtml(isDev);
+      const result = renderBlogPostHtml(slug, baseHtml);
+      if (result.redirect) {
+        return res.redirect(result.redirect.status || 301, result.redirect.destination);
+      }
+      let finalHtml = result.html;
+      if (isDev && viteInstance) {
+        finalHtml = await viteInstance.transformIndexHtml(req.originalUrl, finalHtml);
+      }
+      res.removeHeader("X-Frame-Options");
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      if (result.notFound) {
+        return res.status(404).send(finalHtml);
+      }
+      return res.status(200).send(finalHtml);
+    } catch (e) {
+      console.error("Error rendering blog post SEO:", e);
+      next();
+    }
+  };
+
+  // Google-Compliant SSR & SEO Handler for Blog Directory
+  const handleBlogHomeRoute = async (req: express.Request, res: express.Response, next: express.NextFunction, viteInstance?: any) => {
+    try {
+      const baseHtml = getBaseHtml(isDev);
+      const result = renderBlogHomeHtml(baseHtml);
+      let finalHtml = result.html;
+      if (isDev && viteInstance) {
+        finalHtml = await viteInstance.transformIndexHtml(req.originalUrl, finalHtml);
+      }
+      res.removeHeader("X-Frame-Options");
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      return res.status(200).send(finalHtml);
+    } catch (e) {
+      console.error("Error rendering blog home SEO:", e);
+      next();
+    }
+  };
+
   // Vite middleware for development vs Static serving for production
   const isDev = process.env.NODE_ENV === "development" || (process.env.NODE_ENV !== "production" && !fs.existsSync(path.join(process.cwd(), "dist", "index.html")));
 
@@ -3683,9 +3760,19 @@ Sitemap: https://sebsinstitute.com/sitemap.xml
       },
       appType: "spa",
     });
+
+    // Mount blog SEO routes before vite.middlewares
+    app.get("/blog/:slug", (req, res, next) => handleBlogPostRoute(req, res, next, vite));
+    app.get("/blog", (req, res, next) => handleBlogHomeRoute(req, res, next, vite));
+
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
+
+    // Mount blog SEO routes before static catch-all in production
+    app.get("/blog/:slug", (req, res, next) => handleBlogPostRoute(req, res, next));
+    app.get("/blog", (req, res, next) => handleBlogHomeRoute(req, res, next));
+
     app.use(express.static(distPath, {
       maxAge: '1y',
       immutable: true,
