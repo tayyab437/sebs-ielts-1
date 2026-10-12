@@ -746,3 +746,302 @@ export function renderBlogHomeHtml(baseHtml: string): BlogRenderResult {
     html: replaceRootContainer(updatedHtml, semanticContent)
   };
 }
+
+/**
+ * Renders complete Google-compliant HTML for Blog Category View (/blog/category/:categorySlug)
+ */
+export function renderBlogCategoryHtml(categorySlug: string, baseHtml: string): BlogRenderResult {
+  const data = readBlogData();
+  const category = (data.categories || []).find((c: any) => c.slug === categorySlug || c.id === categorySlug);
+
+  if (!category) {
+    const notFoundHtml = replaceHeadTags(baseHtml, {
+      title: "Category Not Found | SEB's Institute Blog",
+      description: "The requested blog category was not found.",
+      canonicalUrl: `https://sebsinstitute.com/blog/category/${categorySlug}`,
+      noindex: true
+    });
+    const root404 = `
+      <div class="min-h-screen bg-slate-900 text-white flex items-center justify-center p-6 text-center">
+        <div class="max-w-md w-full bg-slate-800/80 border border-slate-700 p-8 rounded-3xl space-y-4 shadow-xl">
+          <div class="w-16 h-16 rounded-full bg-rose-500/10 text-rose-400 mx-auto flex items-center justify-center text-3xl font-black">404</div>
+          <h1 class="text-2xl font-black text-white">Category Not Found</h1>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            The requested article category does not exist. Browse our comprehensive knowledge hub instead.
+          </p>
+          <div class="pt-2">
+            <a href="/blog" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#00a8cc] text-slate-950 font-black text-xs uppercase tracking-wider hover:bg-[#0096b7] transition-all">
+              &larr; Return to Academic Blog
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+    return {
+      notFound: true,
+      html: replaceRootContainer(notFoundHtml, root404)
+    };
+  }
+
+  const posts = (data.posts || []).filter(
+    (p: any) => p.status === "published" && (p.category_id === category.id || p.category_id === category.slug)
+  );
+
+  const pageTitle = `${category.seo_title || category.name} Articles | SEB's Institute`;
+  const metaDesc = category.seo_description || category.description || `Read comprehensive IELTS tutorials and guides in ${category.name} by Syed Ejaz Bukhari.`;
+  const canonicalUrl = `https://sebsinstitute.com/blog/category/${category.slug}`;
+
+  const breadcrumbsSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://sebsinstitute.com" },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://sebsinstitute.com/blog" },
+      { "@type": "ListItem", "position": 3, "name": category.name, "item": canonicalUrl }
+    ]
+  };
+
+  const collectionSchema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": pageTitle,
+    "description": metaDesc,
+    "url": canonicalUrl,
+    "publisher": {
+      "@type": "EducationalOrganization",
+      "name": "SEB's Institute",
+      "url": "https://sebsinstitute.com"
+    },
+    "hasPart": posts.map((p: any) => ({
+      "@type": "BlogPosting",
+      "headline": p.title,
+      "url": `https://sebsinstitute.com/blog/${p.slug}`,
+      "description": p.excerpt
+    }))
+  };
+
+  const updatedHtml = replaceHeadTags(baseHtml, {
+    title: pageTitle,
+    description: metaDesc,
+    canonicalUrl,
+    ogType: "website",
+    extraHead: `<script type="application/ld+json">${JSON.stringify(breadcrumbsSchema)}</script>\n<script type="application/ld+json">${JSON.stringify(collectionSchema)}</script>`
+  });
+
+  const postsGrid = posts.length > 0 ? posts.map((p: any) => `
+    <article class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-lg hover:border-[#00a8cc]/50 transition-all flex flex-col justify-between">
+      <div>
+        <a href="/blog/${p.slug}" class="block aspect-[16/9] overflow-hidden bg-slate-950">
+          <img src="${escapeAttr(p.featured_image || '/syed_ejaz_bukhari_hero.webp')}" alt="${escapeAttr(p.title)}" class="w-full h-full object-cover" width="600" height="338" loading="lazy" />
+        </a>
+        <div class="p-6 space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-[#00a8cc]/10 text-[#00a8cc]">${escapeHtml(category.name)}</span>
+            <span class="text-slate-500 text-xs">${p.published_at ? new Date(p.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}</span>
+          </div>
+          <h2 class="text-lg font-black text-white hover:text-[#00a8cc] transition-colors">
+            <a href="/blog/${p.slug}">${escapeHtml(p.title)}</a>
+          </h2>
+          <p class="text-xs text-slate-400 line-clamp-3 leading-relaxed">${escapeHtml(p.excerpt || "")}</p>
+        </div>
+      </div>
+      <div class="p-6 pt-0 border-t border-slate-800/60 mt-4 flex items-center justify-between">
+        <span class="text-xs font-bold text-slate-300">Syed Ejaz Bukhari</span>
+        <a href="/blog/${p.slug}" class="text-xs font-black text-[#00a8cc] hover:underline">Read Article &rarr;</a>
+      </div>
+    </article>
+  `).join("") : `<div class="col-span-3 text-center py-16 text-slate-400">Articles in this category are currently being curated. Check back shortly.</div>`;
+
+  const semanticContent = `
+    <div class="min-h-screen bg-slate-950 text-slate-100 font-sans pb-24 text-left">
+      <header class="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+          <a href="/" class="flex items-center gap-3">
+            <img src="https://i.ibb.co/Xxg75WQc/image-1.jpg" alt="SEB's Institute Logo" width="140" height="76" class="h-12 w-auto object-contain" />
+            <div>
+              <span class="text-lg font-black tracking-tight text-white block">SEB's Institute</span>
+              <span class="text-[10px] font-bold uppercase tracking-widest text-[#00a8cc] block">Academic Journal</span>
+            </div>
+          </a>
+          <nav class="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-wider text-slate-300">
+            <a href="/blog" class="hover:text-white transition-colors">&larr; All Articles</a>
+            <a href="/courses" class="hover:text-[#00a8cc] transition-colors">Courses</a>
+            <a href="/mock-tests" class="hover:text-[#00a8cc] transition-colors">Mock Tests</a>
+          </nav>
+        </div>
+      </header>
+      <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 space-y-10">
+        <nav aria-label="Breadcrumb" class="text-xs text-slate-400 flex items-center gap-2">
+          <a href="/" class="hover:text-white">Home</a> &rsaquo;
+          <a href="/blog" class="hover:text-white">Blog</a> &rsaquo;
+          <span class="text-white font-bold">${escapeHtml(category.name)}</span>
+        </nav>
+        <div class="text-center max-w-3xl mx-auto space-y-3">
+          <span class="text-xs font-black uppercase tracking-widest text-[#00a8cc]">Category Archives</span>
+          <h1 class="text-3xl sm:text-5xl font-black text-white tracking-tight uppercase">${escapeHtml(category.name)}</h1>
+          <p class="text-xs sm:text-sm text-slate-400 leading-relaxed">${escapeHtml(metaDesc)}</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          ${postsGrid}
+        </div>
+      </main>
+      <footer class="mt-20 bg-slate-950 border-t border-slate-850 py-12 text-xs text-slate-500 text-center">
+        &copy; 2026 SEB's Institute &bull; Syed Ejaz Bukhari. All rights reserved.
+      </footer>
+    </div>
+  `;
+
+  return {
+    notFound: false,
+    html: replaceRootContainer(updatedHtml, semanticContent)
+  };
+}
+
+/**
+ * Renders complete Google-compliant HTML for Blog Author View (/blog/author/:authorSlug)
+ */
+export function renderBlogAuthorHtml(authorSlug: string, baseHtml: string): BlogRenderResult {
+  const data = readBlogData();
+  const author = (data.authors || []).find((a: any) => a.slug === authorSlug || a.id === authorSlug);
+
+  if (!author) {
+    const notFoundHtml = replaceHeadTags(baseHtml, {
+      title: "Author Not Found | SEB's Institute Blog",
+      description: "The requested author profile was not found.",
+      canonicalUrl: `https://sebsinstitute.com/blog/author/${authorSlug}`,
+      noindex: true
+    });
+    const root404 = `
+      <div class="min-h-screen bg-slate-900 text-white flex items-center justify-center p-6 text-center">
+        <div class="max-w-md w-full bg-slate-800/80 border border-slate-700 p-8 rounded-3xl space-y-4 shadow-xl">
+          <div class="w-16 h-16 rounded-full bg-rose-500/10 text-rose-400 mx-auto flex items-center justify-center text-3xl font-black">404</div>
+          <h1 class="text-2xl font-black text-white">Author Profile Not Found</h1>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            The requested faculty profile was not found. Browse our academic journal to discover research articles.
+          </p>
+          <div class="pt-2">
+            <a href="/blog" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#00a8cc] text-slate-950 font-black text-xs uppercase tracking-wider hover:bg-[#0096b7] transition-all">
+              &larr; Return to Academic Blog
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+    return {
+      notFound: true,
+      html: replaceRootContainer(notFoundHtml, root404)
+    };
+  }
+
+  const posts = (data.posts || []).filter(
+    (p: any) => p.status === "published" && (p.author_id === author.id || p.author_id === author.slug)
+  );
+
+  const pageTitle = `${author.name} — Author & Faculty Profile | SEB's Institute`;
+  const metaDesc = author.bio || author.short_bio || `Learn more about ${author.name}, master linguistics educator at SEB's Institute.`;
+  const canonicalUrl = `https://sebsinstitute.com/blog/author/${author.slug}`;
+
+  const breadcrumbsSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://sebsinstitute.com" },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://sebsinstitute.com/blog" },
+      { "@type": "ListItem", "position": 3, "name": author.name, "item": canonicalUrl }
+    ]
+  };
+
+  const profileSchema = {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    "mainEntity": {
+      "@type": "Person",
+      "name": author.name,
+      "description": author.bio || author.short_bio,
+      "jobTitle": author.role || "IELTS Master Trainer",
+      "worksFor": {
+        "@type": "EducationalOrganization",
+        "name": "SEB's Institute",
+        "url": "https://sebsinstitute.com"
+      },
+      "url": canonicalUrl
+    }
+  };
+
+  const updatedHtml = replaceHeadTags(baseHtml, {
+    title: pageTitle,
+    description: metaDesc,
+    canonicalUrl,
+    ogType: "profile",
+    extraHead: `<script type="application/ld+json">${JSON.stringify(breadcrumbsSchema)}</script>\n<script type="application/ld+json">${JSON.stringify(profileSchema)}</script>`
+  });
+
+  const postsGrid = posts.length > 0 ? posts.map((p: any) => `
+    <article class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-lg hover:border-[#00a8cc]/50 transition-all flex flex-col justify-between">
+      <div>
+        <a href="/blog/${p.slug}" class="block aspect-[16/9] overflow-hidden bg-slate-950">
+          <img src="${escapeAttr(p.featured_image || '/syed_ejaz_bukhari_hero.webp')}" alt="${escapeAttr(p.title)}" class="w-full h-full object-cover" width="600" height="338" loading="lazy" />
+        </a>
+        <div class="p-6 space-y-3">
+          <h2 class="text-lg font-black text-white hover:text-[#00a8cc] transition-colors">
+            <a href="/blog/${p.slug}">${escapeHtml(p.title)}</a>
+          </h2>
+          <p class="text-xs text-slate-400 line-clamp-3 leading-relaxed">${escapeHtml(p.excerpt || "")}</p>
+        </div>
+      </div>
+      <div class="p-6 pt-0 border-t border-slate-800/60 mt-4 flex items-center justify-between">
+        <span class="text-xs text-slate-400">${p.published_at ? new Date(p.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}</span>
+        <a href="/blog/${p.slug}" class="text-xs font-black text-[#00a8cc] hover:underline">Read Article &rarr;</a>
+      </div>
+    </article>
+  `).join("") : `<div class="col-span-3 text-center py-16 text-slate-400">Articles by this author are currently being scheduled. Check back shortly.</div>`;
+
+  const semanticContent = `
+    <div class="min-h-screen bg-slate-950 text-slate-100 font-sans pb-24 text-left">
+      <header class="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+          <a href="/" class="flex items-center gap-3">
+            <img src="https://i.ibb.co/Xxg75WQc/image-1.jpg" alt="SEB's Institute Logo" width="140" height="76" class="h-12 w-auto object-contain" />
+            <div>
+              <span class="text-lg font-black tracking-tight text-white block">SEB's Institute</span>
+              <span class="text-[10px] font-bold uppercase tracking-widest text-[#00a8cc] block">Author Profile</span>
+            </div>
+          </a>
+          <nav class="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-wider text-slate-300">
+            <a href="/blog" class="hover:text-white transition-colors">&larr; Academic Journal</a>
+            <a href="/courses" class="hover:text-[#00a8cc] transition-colors">Courses</a>
+          </nav>
+        </div>
+      </header>
+      <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 space-y-10">
+        <nav aria-label="Breadcrumb" class="text-xs text-slate-400 flex items-center gap-2">
+          <a href="/" class="hover:text-white">Home</a> &rsaquo;
+          <a href="/blog" class="hover:text-white">Blog</a> &rsaquo;
+          <span class="text-white font-bold">${escapeHtml(author.name)}</span>
+        </nav>
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-8">
+          <img src="${escapeAttr(author.avatar || '/syed_ejaz_bukhari_hero.webp')}" alt="${escapeAttr(author.name)}" class="w-32 h-32 rounded-full object-cover border-4 border-[#00a8cc]/30 shadow-xl" width="128" height="128" />
+          <div class="space-y-3 text-center md:text-left">
+            <span class="text-xs font-black uppercase tracking-widest text-[#00a8cc]">${escapeHtml(author.role || "Faculty Trainer")}</span>
+            <h1 class="text-2xl sm:text-4xl font-black text-white">${escapeHtml(author.name)}</h1>
+            <p class="text-xs sm:text-sm text-slate-400 leading-relaxed">${escapeHtml(author.bio || author.short_bio || "")}</p>
+          </div>
+        </div>
+        <div class="pt-8 space-y-6">
+          <h2 class="text-xl font-black text-white uppercase tracking-tight">Articles by ${escapeHtml(author.name)}</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            ${postsGrid}
+          </div>
+        </div>
+      </main>
+      <footer class="mt-20 bg-slate-950 border-t border-slate-850 py-12 text-xs text-slate-500 text-center">
+        &copy; 2026 SEB's Institute &bull; Syed Ejaz Bukhari. All rights reserved.
+      </footer>
+    </div>
+  `;
+
+  return {
+    notFound: false,
+    html: replaceRootContainer(updatedHtml, semanticContent)
+  };
+}

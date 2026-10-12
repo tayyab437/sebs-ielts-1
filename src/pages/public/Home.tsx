@@ -1,50 +1,42 @@
-import React, { useState, useEffect, useRef, Suspense } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import HeroSection from "../../components/HeroSection";
 import LiveLessonsSection from "../../components/LiveLessonsSection";
-import { lazyWithRetry } from "../../lib/lazyRetry";
 
-// Code-split below-the-fold sections with automatic retry for resilience
-const MockTestCollectionSection = lazyWithRetry(() => import("../../components/MockTestCollectionSection"));
-const OfficialPracticeMaterialsSection = lazyWithRetry(() => import("../../components/OfficialPracticeMaterialsSection"));
-const StudentTrustBannerSection = lazyWithRetry(() => import("../../components/StudentTrustBannerSection"));
-const SixStepsSection = lazyWithRetry(() => import("../../components/SixStepsSection"));
-const TakeFreeTestSection = lazyWithRetry(() => import("../../components/TakeFreeTestSection"));
-const SeoOverviewContentSection = lazyWithRetry(() => import("../../components/SeoOverviewContentSection"));
-const FaqSection = lazyWithRetry(() => import("../../components/FaqSection"));
+interface LazySectionProps {
+  loader: () => Promise<{ default: React.ComponentType<any> }>;
+  minHeight?: string;
+  sectionId?: string;
+}
 
 /**
- * DeferredSection: Defers the creation and mounting of below-the-fold DOM nodes
- * until they approach the user's viewport (500px pre-render margin).
- * This slashes initial DOM size by 80% (from 2,100+ nodes to ~350 nodes)
- * and eliminates main-thread input delay (INP) for instant taps and clicks.
+ * LazyViewportSection: Only invokes dynamic import() when the section is near the viewport (150px margin).
+ * Eliminates below-the-fold component chunks from the initial critical request chain.
  */
-function DeferredSection({ 
-  children, 
-  minHeight = "450px" 
-}: { 
-  children: React.ReactNode; 
-  minHeight?: string; 
-}) {
-  const [isVisible, setIsVisible] = useState(false);
+function LazyViewportSection({
+  loader,
+  minHeight = "450px",
+  sectionId
+}: LazySectionProps) {
+  const [Component, setComponent] = useState<React.ComponentType<any> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     if (!("IntersectionObserver" in window)) {
-      setIsVisible(true);
+      loader().then(m => setComponent(() => m.default)).catch(console.error);
       return;
     }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsVisible(true);
+          loader().then(m => setComponent(() => m.default)).catch(console.error);
           observer.disconnect();
         }
       },
       {
-        rootMargin: "300px 0px",
+        rootMargin: "150px 0px",
       }
     );
 
@@ -52,42 +44,19 @@ function DeferredSection({
       observer.observe(containerRef.current);
     }
 
-    // Deferred idle hydration: gently warm up below-the-fold content only during true browser idle (10s+)
-    let idleTimer: any;
-    const scheduleWarmup = () => {
-      if ("requestIdleCallback" in window) {
-        idleTimer = (window as any).requestIdleCallback(() => setIsVisible(true), { timeout: 15000 });
-      } else {
-        idleTimer = setTimeout(() => setIsVisible(true), 10000);
-      }
-    };
-
-    if (document.readyState === "complete") {
-      scheduleWarmup();
-    } else {
-      window.addEventListener("load", scheduleWarmup, { once: true });
-    }
-
     return () => {
       observer.disconnect();
-      if (idleTimer) {
-        if ("cancelIdleCallback" in window) {
-          (window as any).cancelIdleCallback(idleTimer);
-        } else {
-          clearTimeout(idleTimer);
-        }
-      }
-      window.removeEventListener("load", scheduleWarmup);
     };
-  }, []);
+  }, [loader]);
 
   return (
     <div
       ref={containerRef}
-      style={{ minHeight: isVisible ? undefined : minHeight }}
+      id={sectionId}
+      style={{ minHeight: Component ? undefined : minHeight }}
       className="content-visibility-auto"
     >
-      {isVisible ? <Suspense fallback={null}>{children}</Suspense> : null}
+      {Component ? <Component /> : null}
     </div>
   );
 }
@@ -103,40 +72,47 @@ export default function HomePage() {
         <LiveLessonsSection />
       </div>
 
-      {/* 3. Mock Test Collection Showcase Section (Deferred) */}
-      <DeferredSection minHeight="550px">
-        <MockTestCollectionSection />
-      </DeferredSection>
+      {/* 3. Mock Test Collection Showcase Section (Lazy-loaded upon scroll) */}
+      <LazyViewportSection 
+        loader={() => import("../../components/MockTestCollectionSection")}
+        minHeight="550px"
+      />
 
-      {/* 4. 2026 Official IELTS Practice Materials Section (Deferred) */}
-      <DeferredSection minHeight="480px">
-        <OfficialPracticeMaterialsSection />
-      </DeferredSection>
+      {/* 4. 2026 Official IELTS Practice Materials Section (Lazy-loaded upon scroll) */}
+      <LazyViewportSection 
+        loader={() => import("../../components/OfficialPracticeMaterialsSection")}
+        minHeight="480px"
+      />
 
-      {/* 5. 35,000,000+ Students Trust Us To Learn Mosaic Banner (Deferred) */}
-      <DeferredSection minHeight="420px">
-        <StudentTrustBannerSection />
-      </DeferredSection>
+      {/* 5. 35,000,000+ Students Trust Us To Learn Mosaic Banner (Lazy-loaded upon scroll) */}
+      <LazyViewportSection 
+        loader={() => import("../../components/StudentTrustBannerSection")}
+        minHeight="420px"
+      />
 
-      {/* 6. 6 Steps to Achieve Your IELTS Goal Section (Deferred) */}
-      <DeferredSection minHeight="550px">
-        <SixStepsSection />
-      </DeferredSection>
+      {/* 6. 6 Steps to Achieve Your IELTS Goal Section (Lazy-loaded upon scroll) */}
+      <LazyViewportSection 
+        loader={() => import("../../components/SixStepsSection")}
+        minHeight="550px"
+      />
 
-      {/* 7. Take an IELTS Free Online Test Feature Slider Section (Deferred) */}
-      <DeferredSection minHeight="600px">
-        <TakeFreeTestSection />
-      </DeferredSection>
+      {/* 7. Take an IELTS Free Online Test Feature Slider Section (Lazy-loaded upon scroll) */}
+      <LazyViewportSection 
+        loader={() => import("../../components/TakeFreeTestSection")}
+        minHeight="600px"
+      />
 
-      {/* 8. SEO-Rich Educational Overview & Global Testing Standards Section (Deferred) */}
-      <DeferredSection minHeight="450px">
-        <SeoOverviewContentSection />
-      </DeferredSection>
+      {/* 8. SEO-Rich Educational Overview & Global Testing Standards Section (Lazy-loaded upon scroll) */}
+      <LazyViewportSection 
+        loader={() => import("../../components/SeoOverviewContentSection")}
+        minHeight="450px"
+      />
 
-      {/* 9. FAQ Section (Deferred) */}
-      <DeferredSection minHeight="400px">
-        <FaqSection />
-      </DeferredSection>
+      {/* 9. FAQ Section (Lazy-loaded upon scroll) */}
+      <LazyViewportSection 
+        loader={() => import("../../components/FaqSection")}
+        minHeight="400px"
+      />
     </div>
   );
 }

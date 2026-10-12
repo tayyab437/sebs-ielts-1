@@ -112,7 +112,7 @@ export default function FaqSection() {
         </div>
 
         {/* Right Column: Accordion Questions List (7 Cols) */}
-        <div className="lg:col-span-8 space-y-4 w-full">
+        <div className="lg:col-span-8 space-y-5 w-full">
           {faqData.map((faq, idx) => {
             const isOpen = openIndex === idx;
             return (

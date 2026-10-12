@@ -1,5 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { supabase } from "@/src/lib/supabaseClient";
+
+// Lazy accessor for supabase client to prevent critical bundle bloat
+const getSupabase = async () => {
+  try {
+    const mod = await import("@/src/lib/supabaseClient");
+    return mod.supabase;
+  } catch {
+    return null;
+  }
+};
 
 export interface Meeting {
   id: string;
@@ -40,6 +49,7 @@ export const MeetingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const fetchMeetings = async () => {
     try {
       let currentUserId = "anonymous_preview_user";
+      const supabase = await getSupabase();
       if (supabase) {
         try {
           const { data: { user: sbUser } } = await supabase.auth.getUser();
@@ -185,23 +195,25 @@ export const MeetingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
 
       // Setup Real-time Supabase subscription for active dashboard/admin users
-      if (supabase) {
-        channel = supabase
-          .channel("db-meetings-changes")
-          .on(
-            "postgres_changes",
-            {
-              event: "*",
-              schema: "public",
-              table: "live_meetings",
-            },
-            () => {
-              console.log("Real-time meetings update detected...");
-              fetchMeetings();
-            }
-          )
-          .subscribe();
-      }
+      getSupabase().then((sb) => {
+        if (sb) {
+          channel = sb
+            .channel("db-meetings-changes")
+            .on(
+              "postgres_changes",
+              {
+                event: "*",
+                schema: "public",
+                table: "live_meetings",
+              },
+              () => {
+                console.log("Real-time meetings update detected...");
+                fetchMeetings();
+              }
+            )
+            .subscribe();
+        }
+      });
     }
 
     // Listen to changes from other tabs or windows
@@ -218,8 +230,10 @@ export const MeetingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           clearTimeout(timer);
         }
       }
-      if (channel && supabase) {
-        supabase.removeChannel(channel);
+      if (channel) {
+        getSupabase().then((sb) => {
+          if (sb) sb.removeChannel(channel);
+        });
       }
     };
   }, []);

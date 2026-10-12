@@ -55,7 +55,15 @@ export const prefetchRoute = (path: string) => {
   else if (path.startsWith("/books")) import("./pages/public/Books");
 };
 
-import { supabase } from "./lib/supabaseClient";
+// Lazy accessor for supabase client to prevent vendor-supabase bundle in critical path
+const getSupabaseClient = async () => {
+  try {
+    const mod = await import("./lib/supabaseClient");
+    return mod.supabase;
+  } catch {
+    return null;
+  }
+};
 import { MeetingsProvider } from "./context/MeetingsContext";
 import { fetchSiteSettings, sanitizeAssetUrl, defaultSettings, updateDocumentFavicon } from "./lib/settings";
 import { PageSEOManager } from "./components/PageSEOManager";
@@ -68,13 +76,25 @@ function Footer() {
   const [customPages, setCustomPages] = useState<CustomPage[]>([]);
 
   useEffect(() => {
-    fetchCustomPages().then(pages => {
-      if (pages && Array.isArray(pages)) {
-        setCustomPages(pages.filter(p => p.is_published && p.slug !== "about-us" && p.slug !== "faq" && p.id !== "about-us" && p.id !== "faq"));
+    const loadPages = () => {
+      fetchCustomPages().then(pages => {
+        if (pages && Array.isArray(pages)) {
+          setCustomPages(pages.filter(p => p.is_published && p.slug !== "about-us" && p.slug !== "faq" && p.id !== "about-us" && p.id !== "faq"));
+        }
+      }).catch(err => {
+        console.warn("Failed loading custom pages for footer", err);
+      });
+    };
+
+    if (typeof window !== "undefined") {
+      if ("requestIdleCallback" in window) {
+        (window as any).requestIdleCallback(loadPages, { timeout: 12000 });
+      } else {
+        setTimeout(loadPages, 4000);
       }
-    }).catch(err => {
-      console.warn("Failed loading custom pages for footer", err);
-    });
+    } else {
+      loadPages();
+    }
   }, []);
 
   useEffect(() => {
@@ -177,7 +197,7 @@ function Footer() {
             <h3 className="font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-widest mb-5 relative pl-3 border-l-2 border-emerald-500">
               Academic Tracks
             </h3>
-            <ul className="space-y-3 text-xs font-semibold text-slate-600 dark:text-slate-400">
+            <ul className="space-y-3.5 text-xs font-semibold text-slate-600 dark:text-slate-400">
               {[
                 { title: "Spoken English", tag: "Fluency" },
                 { title: "Writing Skills", tag: "Expert" },
@@ -204,7 +224,7 @@ function Footer() {
             <h3 className="font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-widest mb-5 relative pl-3 border-l-2 border-emerald-500">
               Resources & Info
             </h3>
-            <ul className="space-y-3 text-xs font-semibold text-slate-600 dark:text-slate-400">
+            <ul className="space-y-3.5 text-xs font-semibold text-slate-600 dark:text-slate-400">
               <li>
                 <Link 
                   to="/blog" 
@@ -569,11 +589,16 @@ function Navbar() {
       checkOfflineUser();
     }
 
-    if (supabase) {
-      let subscription: any = null;
-      try {
-        if (storedSession || isMockUser) {
+    let subscription: any = null;
+    let isSubscribed = true;
+
+    // Only load supabase if there is an active session to verify
+    if (storedSession || isMockUser) {
+      getSupabaseClient().then((supabase) => {
+        if (!supabase || !isSubscribed) return;
+        try {
           supabase.auth.getSession().then(({ data: { session }, error }) => {
+            if (!isSubscribed) return;
             if (error) {
               console.warn("App: getSession returned error:", error.message);
               if (error.message.includes("Refresh Token")) {
@@ -583,6 +608,7 @@ function Navbar() {
             setUser(session?.user ?? null);
             if (session?.user) {
               supabase.from("profiles").select("role").eq("id", session.user.id).single().then(({ data }) => {
+                if (!isSubscribed) return;
                 if (data?.role) {
                   setUserRole(data.role);
                   localStorage.setItem("user_role", data.role);
@@ -604,61 +630,61 @@ function Navbar() {
             console.warn("App: getSession failed. Reverting to Offline Sandbox mode.", err);
             checkOfflineUser();
           });
-        }
 
-        // Listen for changes
-        const authChangeResult = supabase.auth.onAuthStateChange((_event, session) => {
-          setUser(session?.user ?? null);
-          if (session?.user) {
-            supabase.from("profiles").select("role").eq("id", session.user.id).single().then(({ data }) => {
-              if (data?.role) {
-                setUserRole(data.role);
-                localStorage.setItem("user_role", data.role);
-              } else if (session.user.user_metadata?.role) {
-                setUserRole(session.user.user_metadata.role);
-                localStorage.setItem("user_role", session.user.user_metadata.role);
-              }
-            }).catch((err) => {
-              console.warn("App: profiles query failed during auth change", err);
-              if (session.user.user_metadata?.role) {
-                setUserRole(session.user.user_metadata.role);
-                localStorage.setItem("user_role", session.user.user_metadata.role);
-              }
-            });
-          } else {
-            if (localStorage.getItem("mock_user_logged_in") === "true") {
-              checkOfflineUser();
+          // Listen for changes
+          const authChangeResult = supabase.auth.onAuthStateChange((_event, session) => {
+            if (!isSubscribed) return;
+            setUser(session?.user ?? null);
+            if (session?.user) {
+              supabase.from("profiles").select("role").eq("id", session.user.id).single().then(({ data }) => {
+                if (!isSubscribed) return;
+                if (data?.role) {
+                  setUserRole(data.role);
+                  localStorage.setItem("user_role", data.role);
+                } else if (session.user.user_metadata?.role) {
+                  setUserRole(session.user.user_metadata.role);
+                  localStorage.setItem("user_role", session.user.user_metadata.role);
+                }
+              }).catch((err) => {
+                console.warn("App: profiles query failed during auth change", err);
+                if (session.user.user_metadata?.role) {
+                  setUserRole(session.user.user_metadata.role);
+                  localStorage.setItem("user_role", session.user.user_metadata.role);
+                }
+              });
             } else {
-              setUserRole("student");
-              localStorage.removeItem("user_role");
+              if (localStorage.getItem("mock_user_logged_in") === "true") {
+                checkOfflineUser();
+              } else {
+                setUserRole("student");
+                localStorage.removeItem("user_role");
+              }
             }
-          }
-        });
-        
-        subscription = authChangeResult?.data?.subscription;
-      } catch (err) {
-        console.warn("App: auth listener setup failed. Reverting to Offline Sandbox mode.", err);
-        checkOfflineUser();
-      }
-
-      window.addEventListener("storage", checkOfflineUser);
-      return () => {
-        window.removeEventListener("storage", checkOfflineUser);
-        if (subscription) subscription.unsubscribe();
-      };
-    } else {
-      checkOfflineUser();
-      window.addEventListener("storage", checkOfflineUser);
-      return () => window.removeEventListener("storage", checkOfflineUser);
+          });
+          
+          subscription = authChangeResult?.data?.subscription;
+        } catch (err) {
+          console.warn("App: auth listener setup failed. Reverting to Offline Sandbox mode.", err);
+          checkOfflineUser();
+        }
+      });
     }
+
+    window.addEventListener("storage", checkOfflineUser);
+    return () => {
+      isSubscribed = false;
+      window.removeEventListener("storage", checkOfflineUser);
+      if (subscription) subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogout = async () => {
     localStorage.removeItem("mock_user_logged_in");
     localStorage.removeItem("mock_user_email");
     localStorage.removeItem("user_role");
+    const supabase = await getSupabaseClient();
     if (supabase) {
-      await supabase.auth.signOut();
+      await supabase.auth.signOut().catch(() => {});
     }
     setUser(null);
     setUserRole("student");
@@ -1289,6 +1315,7 @@ function UnifiedDashboard() {
         setRole(savedRole);
       }
 
+      const supabase = await getSupabaseClient();
       if (!supabase) {
         return;
       }

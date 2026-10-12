@@ -9,7 +9,7 @@ import { supabaseAdmin } from "./src/lib/supabaseServer";
 import Stripe from "stripe";
 import mysql from "mysql2/promise";
 import crypto from "crypto";
-import { generateDynamicSitemap, generateBlogRss, renderBlogPostHtml, renderBlogHomeHtml } from "./src/server/blogSeoRenderer";
+import { generateDynamicSitemap, generateBlogRss, renderBlogPostHtml, renderBlogHomeHtml, renderBlogCategoryHtml, renderBlogAuthorHtml } from "./src/server/blogSeoRenderer";
 
 // Process safety guards to prevent unhandled rejections from crashing the server
 process.on("unhandledRejection", (reason, promise) => {
@@ -3748,6 +3748,56 @@ Sitemap: https://sebsinstitute.com/sitemap.xml
     }
   };
 
+  // Google-Compliant SSR & SEO Handler for Blog Category
+  const handleBlogCategoryRoute = async (req: express.Request, res: express.Response, next: express.NextFunction, viteInstance?: any) => {
+    const categorySlug = req.params.categorySlug;
+    if (!categorySlug || categorySlug.includes(".") || categorySlug.startsWith("api")) {
+      return next();
+    }
+    try {
+      const baseHtml = getBaseHtml(isDev);
+      const result = renderBlogCategoryHtml(categorySlug, baseHtml);
+      let finalHtml = result.html;
+      if (isDev && viteInstance) {
+        finalHtml = await viteInstance.transformIndexHtml(req.originalUrl, finalHtml);
+      }
+      res.removeHeader("X-Frame-Options");
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      if (result.notFound) {
+        return res.status(404).send(finalHtml);
+      }
+      return res.status(200).send(finalHtml);
+    } catch (e) {
+      console.error("Error rendering blog category SEO:", e);
+      next();
+    }
+  };
+
+  // Google-Compliant SSR & SEO Handler for Blog Author
+  const handleBlogAuthorRoute = async (req: express.Request, res: express.Response, next: express.NextFunction, viteInstance?: any) => {
+    const authorSlug = req.params.authorSlug;
+    if (!authorSlug || authorSlug.includes(".") || authorSlug.startsWith("api")) {
+      return next();
+    }
+    try {
+      const baseHtml = getBaseHtml(isDev);
+      const result = renderBlogAuthorHtml(authorSlug, baseHtml);
+      let finalHtml = result.html;
+      if (isDev && viteInstance) {
+        finalHtml = await viteInstance.transformIndexHtml(req.originalUrl, finalHtml);
+      }
+      res.removeHeader("X-Frame-Options");
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      if (result.notFound) {
+        return res.status(404).send(finalHtml);
+      }
+      return res.status(200).send(finalHtml);
+    } catch (e) {
+      console.error("Error rendering blog author SEO:", e);
+      next();
+    }
+  };
+
   // Vite middleware for development vs Static serving for production
   const isDev = process.env.NODE_ENV === "development" || (process.env.NODE_ENV !== "production" && !fs.existsSync(path.join(process.cwd(), "dist", "index.html")));
 
@@ -3761,17 +3811,21 @@ Sitemap: https://sebsinstitute.com/sitemap.xml
       appType: "spa",
     });
 
-    // Mount blog SEO routes before vite.middlewares
-    app.get("/blog/:slug", (req, res, next) => handleBlogPostRoute(req, res, next, vite));
-    app.get("/blog", (req, res, next) => handleBlogHomeRoute(req, res, next, vite));
+    // Mount blog SEO routes before vite.middlewares (category & author before general slug)
+    app.get(["/blog/category/:categorySlug", "/blog/category/:categorySlug/"], (req, res, next) => handleBlogCategoryRoute(req, res, next, vite));
+    app.get(["/blog/author/:authorSlug", "/blog/author/:authorSlug/"], (req, res, next) => handleBlogAuthorRoute(req, res, next, vite));
+    app.get(["/blog/:slug", "/blog/:slug/"], (req, res, next) => handleBlogPostRoute(req, res, next, vite));
+    app.get(["/blog", "/blog/"], (req, res, next) => handleBlogHomeRoute(req, res, next, vite));
 
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
 
-    // Mount blog SEO routes before static catch-all in production
-    app.get("/blog/:slug", (req, res, next) => handleBlogPostRoute(req, res, next));
-    app.get("/blog", (req, res, next) => handleBlogHomeRoute(req, res, next));
+    // Mount blog SEO routes before static catch-all in production (category & author before general slug)
+    app.get(["/blog/category/:categorySlug", "/blog/category/:categorySlug/"], (req, res, next) => handleBlogCategoryRoute(req, res, next));
+    app.get(["/blog/author/:authorSlug", "/blog/author/:authorSlug/"], (req, res, next) => handleBlogAuthorRoute(req, res, next));
+    app.get(["/blog/:slug", "/blog/:slug/"], (req, res, next) => handleBlogPostRoute(req, res, next));
+    app.get(["/blog", "/blog/"], (req, res, next) => handleBlogHomeRoute(req, res, next));
 
     app.use(express.static(distPath, {
       maxAge: '1y',

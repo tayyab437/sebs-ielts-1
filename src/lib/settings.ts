@@ -202,7 +202,7 @@ export function sanitizeAssetUrl(url: string | null | undefined, defaultUrl: str
 }
 
 let activeFetchPromise: Promise<SiteSettings> | null = null;
-let cachedSettings: SiteSettings | null = typeof window !== "undefined" ? getLocalSettings() : defaultSettings;
+let cachedSettings: SiteSettings | null = typeof window !== "undefined" ? (getLocalSettings() || defaultSettings) : defaultSettings;
 let hasTriggeredSync = false;
 
 export function invalidateSettingsCache() {

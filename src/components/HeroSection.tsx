@@ -217,6 +217,7 @@ export default function HeroSection() {
                   height={500}
                   loading="eager"
                   decoding="async"
+                  fetchPriority="high"
                   className="w-full h-[470px] lg:h-[500px] object-cover object-top filter contrast-[1.03] transition-transform duration-700 hover:scale-[1.02]"
                 />
 
