@@ -206,3 +206,23 @@ button, a, input, select, textarea, [role="button"] {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: oklch(0.5 0.02 260);
 }
+
+/* Prose table and embed styling */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
+.prose th {
+  background-color: rgba(148, 163, 184, 0.15);
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 700;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+.prose td {
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
