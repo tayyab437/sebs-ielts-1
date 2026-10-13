@@ -2044,6 +2044,132 @@ async function startServer() {
     }
   };
 
+  const syncBlogFromMySQL = async () => {
+    try {
+      const [mysqlPosts]: any = await mysqlPool.query("SELECT * FROM blog_posts");
+      const [mysqlCats]: any = await mysqlPool.query("SELECT * FROM blog_categories");
+      const [mysqlAuthors]: any = await mysqlPool.query("SELECT * FROM blog_authors");
+      const [mysqlReviewers]: any = await mysqlPool.query("SELECT * FROM blog_reviewers");
+
+      const blogData = readBlogData();
+      if (!Array.isArray(blogData.posts)) blogData.posts = [];
+      if (!Array.isArray(blogData.categories)) blogData.categories = [];
+      if (!Array.isArray(blogData.authors)) blogData.authors = [];
+      if (!Array.isArray(blogData.reviewers)) blogData.reviewers = [];
+
+      // Merge categories
+      if (Array.isArray(mysqlCats)) {
+        for (const mc of mysqlCats) {
+          const idx = blogData.categories.findIndex((c: any) => c.id === mc.id || c.slug === mc.slug);
+          const catObj = {
+            id: mc.id,
+            name: mc.name,
+            slug: mc.slug,
+            description: mc.description || '',
+            seo_title: mc.seo_title || mc.name,
+            meta_description: mc.meta_description || '',
+            indexable: Boolean(mc.is_indexable !== 0),
+            display_order: mc.display_order || 1,
+            post_count: mc.post_count || 1
+          };
+          if (idx >= 0) blogData.categories[idx] = { ...blogData.categories[idx], ...catObj };
+          else blogData.categories.push(catObj);
+        }
+      }
+
+      // Merge authors
+      if (Array.isArray(mysqlAuthors)) {
+        for (const ma of mysqlAuthors) {
+          const idx = blogData.authors.findIndex((a: any) => a.id === ma.id || a.slug === ma.slug);
+          const authObj = {
+            id: ma.id,
+            name: ma.name,
+            slug: ma.slug,
+            profile_image: ma.avatar_url || '/syed_ejaz_bukhari_hero.webp',
+            bio: ma.bio || '',
+            credentials: ma.credentials || '',
+            organization: 'SEBS Institute',
+            expertise: ['IELTS Academic & GT', 'Linguistics'],
+            indexable: true
+          };
+          if (idx >= 0) blogData.authors[idx] = { ...blogData.authors[idx], ...authObj };
+          else blogData.authors.push(authObj);
+        }
+      }
+
+      // Merge reviewers
+      if (Array.isArray(mysqlReviewers)) {
+        for (const mr of mysqlReviewers) {
+          const idx = blogData.reviewers.findIndex((r: any) => r.id === mr.id || r.slug === mr.slug);
+          const revObj = {
+            id: mr.id,
+            name: mr.name,
+            slug: mr.slug,
+            bio: mr.bio || '',
+            qualifications: mr.credentials || '',
+            organization: 'SEBS Institute Assessment Board',
+            expertise: ['Examiner Protocols'],
+            indexable: true
+          };
+          if (idx >= 0) blogData.reviewers[idx] = { ...blogData.reviewers[idx], ...revObj };
+          else blogData.reviewers.push(revObj);
+        }
+      }
+
+      // Merge posts
+      if (Array.isArray(mysqlPosts)) {
+        for (const mp of mysqlPosts) {
+          const idx = blogData.posts.findIndex((p: any) => p.id === mp.id || p.slug === mp.slug);
+          const postObj = {
+            id: mp.id,
+            title: mp.title,
+            slug: mp.slug,
+            excerpt: mp.excerpt || '',
+            content: mp.content || '',
+            content_format: 'html',
+            featured_image: mp.featured_image_url || '/ielts_prep_banner_960.webp',
+            featured_image_alt: mp.featured_image_alt || mp.title,
+            status: mp.status || 'published',
+            content_type: mp.content_type || 'pillar',
+            category_id: mp.category_id || 'cat_1_1791377157718',
+            author_id: mp.author_id || 'author_tayyab_ashfaq',
+            reviewer_id: mp.reviewer_id || 'reviewer_ejaz_bukhari',
+            published_at: mp.published_at ? new Date(mp.published_at).toISOString() : new Date().toISOString(),
+            updated_at: mp.updated_at ? new Date(mp.updated_at).toISOString() : new Date().toISOString(),
+            last_reviewed_at: mp.last_reviewed_at ? new Date(mp.last_reviewed_at).toISOString() : new Date().toISOString(),
+            seo_title: mp.seo_title || mp.title,
+            meta_description: mp.meta_description || mp.excerpt,
+            canonical_url: mp.canonical_url || `https://sebsinstitute.com/blog/${mp.slug}`,
+            robots_index: Boolean(mp.robots_index !== 0),
+            robots_follow: Boolean(mp.robots_follow !== 0),
+            primary_keyword: mp.primary_keyword || 'IELTS',
+            search_intent: mp.search_intent || 'informational',
+            reading_time: 8,
+            word_count: mp.content ? mp.content.replace(/<[^>]+>/g, '').split(/\s+/).filter(Boolean).length : 800,
+            featured: Boolean(mp.is_featured),
+            direct_answer_question: mp.direct_answer_question,
+            direct_answer_text: mp.direct_answer_text,
+            key_takeaways: Array.isArray(mp.key_takeaways) ? mp.key_takeaways : (typeof mp.key_takeaways === 'string' ? JSON.parse(mp.key_takeaways || '[]') : []),
+            important_note: typeof mp.important_note === 'string' ? JSON.parse(mp.important_note || '{}') : mp.important_note,
+            faqs: Array.isArray(mp.faqs) ? mp.faqs : (typeof mp.faqs === 'string' ? JSON.parse(mp.faqs || '[]') : []),
+            sources: Array.isArray(mp.sources) ? mp.sources : (typeof mp.sources === 'string' ? JSON.parse(mp.sources || '[]') : []),
+            cta: typeof mp.cta === 'string' ? JSON.parse(mp.cta || '{}') : mp.cta
+          };
+          if (idx >= 0) blogData.posts[idx] = { ...blogData.posts[idx], ...postObj };
+          else blogData.posts.unshift(postObj);
+        }
+      }
+
+      writeBlogData(blogData);
+      console.log(`[syncBlogFromMySQL] Synced ${mysqlPosts.length} posts from MySQL into blog_data.json.`);
+    } catch (e: any) {
+      console.warn("[syncBlogFromMySQL] Error syncing blog from MySQL:", e.message || e);
+    }
+  };
+
+  // Initial trigger
+  syncBlogFromMySQL().catch(() => {});
+
   // 1. Public Posts List with Category, Search, & Pagination
   app.get("/api/blog/posts", (req, res) => {
     const data = readBlogData();
@@ -2165,22 +2291,49 @@ async function startServer() {
   });
 
   // 9. Admin Create Post
-  app.post("/api/blog/admin/posts", (req, res) => {
+  app.post("/api/blog/admin/posts", async (req, res) => {
     const data = readBlogData();
     const newPost = {
       ...req.body,
       id: req.body.id || `post-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      status: req.body.status || 'published',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
     if (!data.posts) data.posts = [];
     data.posts.unshift(newPost);
     writeBlogData(data);
+
+    // Persist to MySQL blog_posts table
+    try {
+      await mysqlPool.query(
+        `INSERT INTO blog_posts (
+          id, title, slug, excerpt, content, status, content_type,
+          category_id, author_id, reviewer_id, is_featured,
+          direct_answer_question, direct_answer_text, key_takeaways, important_note, faqs, sources, cta,
+          seo_title, meta_description, canonical_url, primary_keyword,
+          published_at, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NOW())
+        ON DUPLICATE KEY UPDATE
+          title=VALUES(title), slug=VALUES(slug), excerpt=VALUES(excerpt), content=VALUES(content), status=VALUES(status),
+          category_id=VALUES(category_id), author_id=VALUES(author_id), reviewer_id=VALUES(reviewer_id),
+          updated_at=NOW()`,
+        [
+          newPost.id, newPost.title || 'Untitled', newPost.slug || `post-${Date.now()}`, newPost.excerpt || '', newPost.content || '', newPost.status || 'published', newPost.content_type || 'pillar',
+          newPost.category_id || 'cat_1_1791377157718', newPost.author_id || 'author_tayyab_ashfaq', newPost.reviewer_id || 'reviewer_ejaz_bukhari', newPost.is_featured || newPost.featured ? 1 : 0,
+          newPost.direct_answer_question || null, newPost.direct_answer_text || null, JSON.stringify(newPost.key_takeaways || []), JSON.stringify(newPost.important_note || {}), JSON.stringify(newPost.faqs || []), JSON.stringify(newPost.sources || []), JSON.stringify(newPost.cta || {}),
+          newPost.seo_title || newPost.title, newPost.meta_description || newPost.excerpt, newPost.canonical_url || null, newPost.primary_keyword || null
+        ]
+      );
+    } catch (mysqlErr: any) {
+      console.warn("[Admin Create Post] MySQL insert warning:", mysqlErr.message);
+    }
+
     res.json(newPost);
   });
 
   // 10. Admin Update Post
-  app.put("/api/blog/admin/posts/:id", (req, res) => {
+  app.put("/api/blog/admin/posts/:id", async (req, res) => {
     const data = readBlogData();
     const idx = (data.posts || []).findIndex((p: any) => p.id === req.params.id);
     if (idx === -1) return res.status(404).json({ error: "Post not found" });
@@ -2201,14 +2354,45 @@ async function startServer() {
       updated_at: new Date().toISOString()
     };
     writeBlogData(data);
+
+    // Persist to MySQL blog_posts table
+    try {
+      const p = data.posts[idx];
+      await mysqlPool.query(
+        `UPDATE blog_posts SET
+          title = ?, slug = ?, excerpt = ?, content = ?, status = ?,
+          category_id = ?, author_id = ?, reviewer_id = ?, is_featured = ?,
+          direct_answer_question = ?, direct_answer_text = ?, key_takeaways = ?, important_note = ?, faqs = ?, sources = ?, cta = ?,
+          seo_title = ?, meta_description = ?, canonical_url = ?, primary_keyword = ?,
+          updated_at = NOW()
+        WHERE id = ? OR slug = ?`,
+        [
+          p.title || 'Untitled', p.slug, p.excerpt || '', p.content || '', p.status || 'published',
+          p.category_id || 'cat_1_1791377157718', p.author_id || 'author_tayyab_ashfaq', p.reviewer_id || 'reviewer_ejaz_bukhari', p.is_featured || p.featured ? 1 : 0,
+          p.direct_answer_question || null, p.direct_answer_text || null, JSON.stringify(p.key_takeaways || []), JSON.stringify(p.important_note || {}), JSON.stringify(p.faqs || []), JSON.stringify(p.sources || []), JSON.stringify(p.cta || {}),
+          p.seo_title || p.title, p.meta_description || p.excerpt, p.canonical_url || null, p.primary_keyword || null,
+          req.params.id, p.slug
+        ]
+      );
+    } catch (mysqlErr: any) {
+      console.warn("[Admin Update Post] MySQL update warning:", mysqlErr.message);
+    }
+
     res.json(data.posts[idx]);
   });
 
   // 11. Admin Delete Post
-  app.delete("/api/blog/admin/posts/:id", (req, res) => {
+  app.delete("/api/blog/admin/posts/:id", async (req, res) => {
     const data = readBlogData();
     data.posts = (data.posts || []).filter((p: any) => p.id !== req.params.id);
     writeBlogData(data);
+
+    try {
+      await mysqlPool.query('DELETE FROM blog_posts WHERE id = ?', [req.params.id]);
+    } catch (mysqlErr: any) {
+      console.warn("[Admin Delete Post] MySQL delete warning:", mysqlErr.message);
+    }
+
     res.json({ success: true });
   });
 

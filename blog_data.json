@@ -13,26 +13,26 @@
   },
   "categories": [
     {
-      "id": "cat-ielts-writing",
+      "id": "cat_4_1791377157773",
       "name": "IELTS Writing",
       "slug": "ielts-writing",
-      "description": "In-depth guides for Task 1 reports/letters and Task 2 argumentative and discursive essays.",
-      "seo_title": "IELTS Writing Task 1 & 2 Guides | SEBS Institute",
-      "meta_description": "Master Band 8+ essay templates, coherence techniques, and lexical resources for Academic and GT.",
+      "description": "Task 1 visual summaries, Task 2 discursive essays, Band 9 vocabulary, and grammar structures.",
+      "seo_title": "IELTS Writing Preparation & Guides | SEB's Institute",
+      "meta_description": "Task 1 visual summaries, Task 2 discursive essays, Band 9 vocabulary, and grammar structures.",
       "indexable": true,
       "display_order": 1,
-      "post_count": 5
+      "post_count": 1
     },
     {
-      "id": "cat-ielts-speaking",
+      "id": "cat_5_1791377157800",
       "name": "IELTS Speaking",
       "slug": "ielts-speaking",
-      "description": "Oral interview protocols, Part 2 cue card blueprints, and pronunciation phonetic retraining.",
-      "seo_title": "IELTS Speaking Practice & Cue Cards | SEBS Institute",
-      "meta_description": "Fluency tactics, Cambridge marking criteria, and model audio answers with Sir Ejaz Bukhari.",
+      "description": "Part 1, 2, and 3 cue card drills, fluency heuristics, pronunciation, and examiner questions.",
+      "seo_title": "IELTS Speaking Preparation & Guides | SEB's Institute",
+      "meta_description": "Part 1, 2, and 3 cue card drills, fluency heuristics, pronunciation, and examiner questions.",
       "indexable": true,
-      "display_order": 2,
-      "post_count": 4
+      "display_order": 1,
+      "post_count": 1
     },
     {
       "id": "cat-exam-strategy",
@@ -55,6 +55,149 @@
       "indexable": true,
       "display_order": 4,
       "post_count": 2
+    },
+    {
+      "id": "cat_1_1791377157718",
+      "name": "IELTS",
+      "slug": "ielts",
+      "description": "Comprehensive guides, formats, and preparation strategies for the IELTS examination.",
+      "seo_title": "IELTS Preparation & Guides | SEB's Institute",
+      "meta_description": "Comprehensive guides, formats, and preparation strategies for the IELTS examination.",
+      "indexable": true,
+      "display_order": 1,
+      "post_count": 1
+    },
+    {
+      "id": "cat_10_1791377157925",
+      "name": "Duolingo English Test",
+      "slug": "duolingo-english-test",
+      "description": "DET adaptive exam mastery, subscores, interactive reading, and speaking drills.",
+      "seo_title": "Duolingo English Test Preparation & Guides | SEB's Institute",
+      "meta_description": "DET adaptive exam mastery, subscores, interactive reading, and speaking drills.",
+      "indexable": true,
+      "display_order": 1,
+      "post_count": 1
+    },
+    {
+      "id": "cat_11_1791377157953",
+      "name": "Spoken English",
+      "slug": "spoken-english",
+      "description": "Fluency development, accent neutralisation, professional conversation, and idioms.",
+      "seo_title": "Spoken English Preparation & Guides | SEB's Institute",
+      "meta_description": "Fluency development, accent neutralisation, professional conversation, and idioms.",
+      "indexable": true,
+      "display_order": 1,
+      "post_count": 1
+    },
+    {
+      "id": "cat_12_1791377157971",
+      "name": "English Learning",
+      "slug": "english-learning",
+      "description": "Core grammar fundamentals, advanced vocabulary expansions, and linguistic mastery.",
+      "seo_title": "English Learning Preparation & Guides | SEB's Institute",
+      "meta_description": "Core grammar fundamentals, advanced vocabulary expansions, and linguistic mastery.",
+      "indexable": true,
+      "display_order": 1,
+      "post_count": 1
+    },
+    {
+      "id": "cat_13_1791377157988",
+      "name": "Study Abroad",
+      "slug": "study-abroad",
+      "description": "Visa processing, UK/Canada/Australia university requirements, and global scholarships.",
+      "seo_title": "Study Abroad Preparation & Guides | SEB's Institute",
+      "meta_description": "Visa processing, UK/Canada/Australia university requirements, and global scholarships.",
+      "indexable": true,
+      "display_order": 1,
+      "post_count": 1
+    },
+    {
+      "id": "cat_14_1791377158005",
+      "name": "Exam Preparation",
+      "slug": "exam-preparation",
+      "description": "Exam day checklists, time management strategies, stress management, and test center rules.",
+      "seo_title": "Exam Preparation Preparation & Guides | SEB's Institute",
+      "meta_description": "Exam day checklists, time management strategies, stress management, and test center rules.",
+      "indexable": true,
+      "display_order": 1,
+      "post_count": 1
+    },
+    {
+      "id": "cat_15_1791377158022",
+      "name": "SEBS News",
+      "slug": "sebs-news",
+      "description": "Official academy announcements, batch admissions, masterclass schedules, and scholar achievements.",
+      "seo_title": "SEBS News Preparation & Guides | SEB's Institute",
+      "meta_description": "Official academy announcements, batch admissions, masterclass schedules, and scholar achievements.",
+      "indexable": true,
+      "display_order": 1,
+      "post_count": 1
+    },
+    {
+      "id": "cat_2_1791377157735",
+      "name": "IELTS Academic",
+      "slug": "ielts-academic",
+      "description": "Targeted preparation for higher education university admissions and academic test modules.",
+      "seo_title": "IELTS Academic Preparation & Guides | SEB's Institute",
+      "meta_description": "Targeted preparation for higher education university admissions and academic test modules.",
+      "indexable": true,
+      "display_order": 1,
+      "post_count": 1
+    },
+    {
+      "id": "cat_3_1791377157756",
+      "name": "IELTS General Training",
+      "slug": "ielts-general-training",
+      "description": "Practical test materials for global immigration, work visas, and citizenship qualifications.",
+      "seo_title": "IELTS General Training Preparation & Guides | SEB's Institute",
+      "meta_description": "Practical test materials for global immigration, work visas, and citizenship qualifications.",
+      "indexable": true,
+      "display_order": 1,
+      "post_count": 1
+    },
+    {
+      "id": "cat_6_1791377157817",
+      "name": "IELTS Reading",
+      "slug": "ielts-reading",
+      "description": "Skimming and scanning methods, true/false/not given tactics, and academic text comprehension.",
+      "seo_title": "IELTS Reading Preparation & Guides | SEB's Institute",
+      "meta_description": "Skimming and scanning methods, true/false/not given tactics, and academic text comprehension.",
+      "indexable": true,
+      "display_order": 1,
+      "post_count": 1
+    },
+    {
+      "id": "cat_7_1791377157836",
+      "name": "IELTS Listening",
+      "slug": "ielts-listening",
+      "description": "Audio transcript drills, British Council accent familiarization, and map labelling strategies.",
+      "seo_title": "IELTS Listening Preparation & Guides | SEB's Institute",
+      "meta_description": "Audio transcript drills, British Council accent familiarization, and map labelling strategies.",
+      "indexable": true,
+      "display_order": 1,
+      "post_count": 1
+    },
+    {
+      "id": "cat_8_1791377157856",
+      "name": "TOEFL",
+      "slug": "toefl",
+      "description": "ETS TOEFL iBT preparation, academic integrated speaking, and writing strategies.",
+      "seo_title": "TOEFL Preparation & Guides | SEB's Institute",
+      "meta_description": "ETS TOEFL iBT preparation, academic integrated speaking, and writing strategies.",
+      "indexable": true,
+      "display_order": 1,
+      "post_count": 1
+    },
+    {
+      "id": "cat_9_1791377157873",
+      "name": "PTE",
+      "slug": "pte",
+      "description": "Pearson Test of English Academic scoring criteria, AI grading hacks, and automated mock tips.",
+      "seo_title": "PTE Preparation & Guides | SEB's Institute",
+      "meta_description": "Pearson Test of English Academic scoring criteria, AI grading hacks, and automated mock tips.",
+      "indexable": true,
+      "display_order": 1,
+      "post_count": 1
     }
   ],
   "authors": [
@@ -66,7 +209,12 @@
       "bio": "Founder and Principal Mentor at SEBS Institute. Over 34 years of instructional leadership in English phonetics, linguistic retraining, and IELTS test coaching.",
       "credentials": "Founder & Master English Coach • 34+ Years Experience • British Council Certified Instructor",
       "organization": "SEBS Institute",
-      "expertise": ["IELTS Academic & GT", "Spoken English Fluency", "Phonetics & Accent Softening", "Advanced Discourse"],
+      "expertise": [
+        "IELTS Academic & GT",
+        "Spoken English Fluency",
+        "Phonetics & Accent Softening",
+        "Advanced Discourse"
+      ],
       "social_links": {
         "linkedin": "https://linkedin.com",
         "website": "https://sebsinstitute.com"
@@ -80,7 +228,25 @@
       "bio": "Senior Linguistics Specialist and EFL mentor focusing on cognitive language processing and structured lexical acquisition.",
       "credentials": "MS ELTL • CELTA Qualified • 10+ Years Pedagogy",
       "organization": "SEBS Institute",
-      "expertise": ["EFL Pedagogy", "Grammatical Cohesion", "Cambridge Assessment Framework"],
+      "expertise": [
+        "EFL Pedagogy",
+        "Grammatical Cohesion",
+        "Cambridge Assessment Framework"
+      ],
+      "indexable": true
+    },
+    {
+      "id": "author_tayyab_ashfaq",
+      "name": "Tayyab Ashfaq",
+      "slug": "tayyab-ashfaq",
+      "profile_image": "/sebs_official_logo_315.webp",
+      "bio": "Lead Educational Technologist, SEO Architect, and Content Strategist at SEB’s Institute with over 8 years of experience building specialized IELTS educational platforms.",
+      "credentials": "M.Sc. Information Technology, Certified Technical Auditor",
+      "organization": "SEBS Institute",
+      "expertise": [
+        "IELTS Academic & GT",
+        "Linguistics"
+      ],
       "indexable": true
     }
   ],
@@ -92,11 +258,103 @@
       "bio": "Senior Academic Reviewer and IELTS examiner specialist. University of London graduate ensuring curriculum compliance with Cambridge Assessment English.",
       "qualifications": "BA English (University of London) • AEO & British Council Master Trainer",
       "organization": "SEBS Institute Assessment Board",
-      "expertise": ["Cambridge Examiner Protocols", "Criterion Scoring Validation", "Academic Lexis"],
+      "expertise": [
+        "Cambridge Examiner Protocols",
+        "Criterion Scoring Validation",
+        "Academic Lexis"
+      ],
+      "indexable": true
+    },
+    {
+      "id": "reviewer_ejaz_bukhari",
+      "name": "Syed Ejaz Bukhari",
+      "slug": "syed-ejaz-bukhari",
+      "bio": "Founder and Principal Linguistics Trainer at SEB’s Institute. Renowned language mentor with 30+ years coaching thousands of scholars to verified Band 8.5+ IELTS results.",
+      "qualifications": "Master of English Linguistics, Certified IELTS Master Trainer (Since 1992)",
+      "organization": "SEBS Institute Assessment Board",
+      "expertise": [
+        "Examiner Protocols"
+      ],
       "indexable": true
     }
   ],
   "posts": [
+    {
+      "id": "post_ielts_complete_guide",
+      "title": "IELTS: Complete Exam Guide to Format, Scoring, Fees & Registration",
+      "slug": "ielts-complete-exam-guide",
+      "excerpt": "An authoritative master guide to the International English Language Testing System (IELTS). Discover exam format differences, 9-band scale descriptors, registration fees, and strategic preparation roadmaps verified by Syed Ejaz Bukhari.",
+      "content": "\n<h2>Understanding the IELTS Examination Architecture</h2>\n<p>The International English Language Testing System (IELTS) is the world's most recognized high-stakes English proficiency evaluation, jointly managed by the British Council, IDP: IELTS Australia, and Cambridge Assessment English. Each year, millions of candidates sit for the examination to unlock university admissions, skilled migration pathways, and professional licensure across the United Kingdom, Canada, Australia, New Zealand, and the United States.</p>\n\n<h2>IELTS Academic vs. IELTS General Training</h2>\n<p>Selecting the correct test module is essential for achieving your immigration or academic objectives:</p>\n<ul>\n  <li><strong>IELTS Academic:</strong> Formatted for undergraduate and postgraduate university admissions as well as professional healthcare registrations (GMC, NMC). The reading passages feature rigorous scholarly syntax, and Writing Task 1 requires analytical reporting of charts, graphs, maps, or processes.</li>\n  <li><strong>IELTS General Training:</strong> Designed for migration to Canada (Express Entry), Australia (SkillSelect), and secondary education or work experience programs. Reading texts emphasize everyday workplace communications, and Writing Task 1 consists of a formal, semi-formal, or informal letter.</li>\n</ul>\n\n<h2>The 4 Core Skill Modules Breakdown</h2>\n<p>Both test variations evaluate four fundamental linguistic domains across a comprehensive testing sequence:</p>\n<ol>\n  <li><strong>Listening (30 Minutes + 10 Mins Transfer):</strong> 4 recorded audio sections featuring native British, Australian, and North American accents, escalating from social dialogues to university lectures.</li>\n  <li><strong>Reading (60 Minutes):</strong> 3 extensive sections comprising 40 questions covering True/False/Not Given, Headings Matching, and Sentence Completion.</li>\n  <li><strong>Writing (60 Minutes):</strong> Task 1 (150 words minimum, 20 mins) and Task 2 (250 words minimum discursive essay, 40 mins).</li>\n  <li><strong>Speaking (11–14 Minutes):</strong> A face-to-face interactive viva with a certified British Council/IDP examiner covering Part 1 introduction, Part 2 individual long turn (cue card), and Part 3 two-way conceptual discussion.</li>\n</ol>\n\n<h2>How the 9-Band Scoring System Works</h2>\n<p>IELTS evaluates proficiency on an internationally standardized 9-band scale. Candidate responses receive integer or half-band scores (e.g., 7.5, 8.0, 8.5) across all four skills, which are averaged and rounded according to strict Cambridge rounding conventions.</p>\n          ",
+      "content_format": "html",
+      "featured_image": "/ielts_prep_banner_960.webp",
+      "featured_image_alt": "IELTS: Complete Exam Guide to Format, Scoring, Fees & Registration",
+      "status": "published",
+      "content_type": "pillar",
+      "category_id": "cat_1_1791377157718",
+      "author_id": "author_tayyab_ashfaq",
+      "reviewer_id": "reviewer_ejaz_bukhari",
+      "published_at": "2026-10-07T12:45:58.000Z",
+      "updated_at": "2026-10-07T12:45:58.000Z",
+      "last_reviewed_at": "2026-10-07T12:45:58.000Z",
+      "seo_title": "IELTS Exam Complete Guide 2026: Format, Band Scoring & Registration",
+      "meta_description": "Master the IELTS exam with our comprehensive guide to Academic vs General Training, 9-band score calculations, test dates, and proven prep roadmaps by SEB’s Institute.",
+      "canonical_url": "https://sebsinstitute.com/blog/ielts-complete-exam-guide",
+      "robots_index": true,
+      "robots_follow": true,
+      "primary_keyword": "IELTS complete guide",
+      "search_intent": "Informational",
+      "reading_time": 8,
+      "word_count": 312,
+      "featured": true,
+      "direct_answer_question": "What is IELTS and which module should I take?",
+      "direct_answer_text": "The IELTS (International English Language Testing System) is a globally standardized test evaluating English proficiency across Listening, Reading, Writing, and Speaking. Take IELTS Academic for university degrees or professional licensing; take IELTS General Training for Express Entry immigration and work visas.",
+      "key_takeaways": [
+        "IELTS is co-owned by the British Council, IDP, and Cambridge University.",
+        "Band scores range from 1.0 (Non-User) to 9.0 (Expert User) in half-band increments.",
+        "Listening and Speaking modules are identical for both Academic and General Training.",
+        "Test results remain valid for exactly 2 years from the examination date."
+      ],
+      "important_note": {
+        "title": "Computer-Delivered vs. Paper-Based IELTS",
+        "content": "Computer-delivered IELTS results are declared within 3 to 5 calendar days, whereas paper-based test TRFs (Test Report Forms) require 13 days. Both formats are completely equal in validity and test difficulty.",
+        "type": "Important"
+      },
+      "faqs": [
+        {
+          "question": "How long are IELTS test scores valid?",
+          "answer": "IELTS scores are officially valid for 2 years from the date on your Test Report Form (TRF)."
+        },
+        {
+          "question": "What score is considered a good IELTS band?",
+          "answer": "A Band 7.0 (Good User) to Band 8.0 (Very Good User) is widely recognized as competitive for top global universities and maximum Canadian Express Entry CRS points."
+        },
+        {
+          "question": "Can I retake individual skills in IELTS?",
+          "answer": "Yes, IELTS One Skill Retake (OSR) allows computer-based test takers to retake any single module (Listening, Reading, Writing, or Speaking) within 60 days of the original test date."
+        }
+      ],
+      "sources": [
+        {
+          "title": "IELTS Official Guide & Band Descriptors",
+          "url": "https://www.ielts.org",
+          "publisher": "IELTS Official Partners",
+          "date": "2026"
+        },
+        {
+          "title": "British Council Take IELTS Examination Portal",
+          "url": "https://takeielts.britishcouncil.org",
+          "publisher": "British Council",
+          "date": "2026"
+        }
+      ],
+      "cta": {
+        "enabled": true,
+        "heading": "Aiming for Band 8.5+ on Your First Attempt?",
+        "description": "Join Syed Ejaz Bukhari’s intensive Master Batches for personalized 1-on-1 coaching, real exam cue card simulations, and verified essay evaluations.",
+        "buttonText": "Explore IELTS Masterclasses",
+        "buttonUrl": "/courses"
+      }
+    },
     {
       "id": "post-ielts-master-guide-2026",
       "title": "IELTS Complete Master Guide 2026: Format, Band Descriptors & 8.5 Strategy",

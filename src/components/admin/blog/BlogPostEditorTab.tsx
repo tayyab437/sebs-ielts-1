@@ -48,7 +48,7 @@ export const BlogPostEditorTab: React.FC<BlogPostEditorTabProps> = ({
     featured_image_url: '',
     featured_image_alt: '',
     featured_image_caption: '',
-    status: 'draft',
+    status: 'published',
     content_type: 'cluster',
     category_id: '',
     author_id: '',

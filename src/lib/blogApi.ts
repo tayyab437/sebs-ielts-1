@@ -32,6 +32,17 @@ export const DEFAULT_BLOG_SETTINGS: BlogSettings = {
 // Default seed categories
 export const DEFAULT_CATEGORIES: BlogCategory[] = [
   {
+    id: "cat_1_1791377157718",
+    name: "IELTS",
+    slug: "ielts",
+    description: "Core curriculum, module overviews, test format nuances, and 9-band scale strategies.",
+    seo_title: "IELTS Complete Preparation & Resources | SEBS Institute",
+    meta_description: "Master the IELTS exam with expert breakdowns of Academic and General Training modules.",
+    indexable: true,
+    display_order: 1,
+    post_count: 6
+  },
+  {
     id: "cat-ielts-writing",
     name: "IELTS Writing",
     slug: "ielts-writing",
@@ -39,7 +50,7 @@ export const DEFAULT_CATEGORIES: BlogCategory[] = [
     seo_title: "IELTS Writing Task 1 & 2 Guides | SEBS Institute",
     meta_description: "Master Band 8+ essay templates, coherence techniques, and lexical resources for Academic and GT.",
     indexable: true,
-    display_order: 1,
+    display_order: 2,
     post_count: 5
   },
   {
@@ -50,7 +61,7 @@ export const DEFAULT_CATEGORIES: BlogCategory[] = [
     seo_title: "IELTS Speaking Practice & Cue Cards | SEBS Institute",
     meta_description: "Fluency tactics, Cambridge marking criteria, and model audio answers with Sir Ejaz Bukhari.",
     indexable: true,
-    display_order: 2,
+    display_order: 3,
     post_count: 4
   },
   {
@@ -61,7 +72,7 @@ export const DEFAULT_CATEGORIES: BlogCategory[] = [
     seo_title: "IELTS Exam Strategies & Band Descriptors | SEBS Institute",
     meta_description: "Understand raw-to-band conversions, test day protocol, and common score-deflating pitfalls.",
     indexable: true,
-    display_order: 3,
+    display_order: 4,
     post_count: 3
   },
   {
@@ -72,13 +83,27 @@ export const DEFAULT_CATEGORIES: BlogCategory[] = [
     seo_title: "IELTS Reading & Listening Techniques | SEBS Institute",
     meta_description: "Skimming, scanning, and active listening strategies for 40/40 test results.",
     indexable: true,
-    display_order: 4,
+    display_order: 5,
     post_count: 2
   }
 ];
 
 // Default seed authors
 export const DEFAULT_AUTHORS: BlogAuthor[] = [
+  {
+    id: "author_tayyab_ashfaq",
+    name: "Tayyab Ashfaq",
+    slug: "tayyab-ashfaq",
+    profile_image: "/syed_ejaz_bukhari_hero.webp",
+    bio: "Lead IELTS Research Analyst & Academic Essay Specialist at SEBS Institute.",
+    credentials: "IELTS Senior Academic Evaluator • Master of Applied Linguistics",
+    organization: "SEBS Institute",
+    expertise: ["IELTS Academic & GT", "Task 2 Discursive Rhetoric", "Band Descriptors"],
+    social_links: {
+      website: "https://sebsinstitute.com"
+    },
+    indexable: true
+  },
   {
     id: "author-seb",
     name: "Syed Ejaz Bukhari",
@@ -98,7 +123,7 @@ export const DEFAULT_AUTHORS: BlogAuthor[] = [
     id: "author-za",
     name: "Zoha Ali",
     slug: "zoha-ali",
-    bio: "Senior Linguistics Specialist and EFL mentor focusing on cognitive language processing and structured lexical acquisition.",
+    bio: "Senior Linguistics Specialist and EFL mentor focusing on cognitive language processing and cognitive lexical acquisition.",
     credentials: "MS ELTL • CELTA Qualified • 10+ Years Pedagogy",
     organization: "SEBS Institute",
     expertise: ["EFL Pedagogy", "Grammatical Cohesion", "Cambridge Assessment Framework"],
@@ -108,6 +133,16 @@ export const DEFAULT_AUTHORS: BlogAuthor[] = [
 
 // Default seed reviewer
 export const DEFAULT_REVIEWERS: BlogReviewer[] = [
+  {
+    id: "reviewer_ejaz_bukhari",
+    name: "Syed Ejaz Bukhari",
+    slug: "syed-ejaz-bukhari",
+    bio: "Founder and Principal Linguistics Trainer at SEB's Institute. Renowned language mentor with 30+ years coaching thousands of scholars to verified Band 8.5+ IELTS results.",
+    qualifications: "Master of English Linguistics, Certified IELTS Master Trainer (Since 1992)",
+    organization: "SEBS Institute Assessment Board",
+    expertise: ["Cambridge Examiner Protocols", "Criterion Scoring Validation", "Academic Lexis"],
+    indexable: true
+  },
   {
     id: "reviewer-sz",
     name: "Syeda Zarnaz Gilani",
@@ -122,6 +157,91 @@ export const DEFAULT_REVIEWERS: BlogReviewer[] = [
 
 // Default Seed Posts (Pillar, Cluster, Supporting)
 export const DEFAULT_POSTS: BlogPost[] = [
+  {
+    id: "post_ielts_complete_guide",
+    title: "IELTS: Complete Exam Guide to Format, Scoring, Fees & Registration",
+    slug: "ielts-complete-exam-guide",
+    excerpt: "An authoritative master guide to the International English Language Testing System (IELTS). Discover exam format differences, 9-band scale descriptors, registration fees, and strategic preparation roadmaps verified by Syed Ejaz Bukhari.",
+    content: `
+      <h2>Understanding the IELTS Examination Architecture</h2>
+      <p>The International English Language Testing System (IELTS) is the world's most recognized high-stakes English proficiency evaluation, jointly managed by the British Council, IDP: IELTS Australia, and Cambridge Assessment English. Each year, millions of candidates sit for the examination to unlock university admissions, skilled migration pathways, and professional licensure across the United Kingdom, Canada, Australia, New Zealand, and the United States.</p>
+
+      <h2>IELTS Academic vs. IELTS General Training</h2>
+      <p>Selecting the correct test module is essential for achieving your immigration or academic objectives:</p>
+      <ul>
+        <li><strong>IELTS Academic:</strong> Formatted for undergraduate and postgraduate university admissions as well as professional healthcare registrations (GMC, NMC). The reading passages feature rigorous scholarly syntax, and Writing Task 1 requires analytical reporting of charts, graphs, maps, or processes.</li>
+        <li><strong>IELTS General Training:</strong> Designed for migration to Canada (Express Entry), Australia (SkillSelect), and secondary education or work experience programs. Reading texts emphasize everyday workplace communications, and Writing Task 1 consists of a formal, semi-formal, or informal letter.</li>
+      </ul>
+
+      <h2>The 4 Core Skill Modules Breakdown</h2>
+      <p>Both test variations evaluate four fundamental linguistic domains across a comprehensive testing sequence:</p>
+      <ol>
+        <li><strong>Listening (30 Minutes + 10 Mins Transfer):</strong> 4 recorded audio sections featuring native British, Australian, and North American accents, escalating from social dialogues to university lectures.</li>
+        <li><strong>Reading (60 Minutes):</strong> 3 extensive sections comprising 40 questions covering True/False/Not Given, Headings Matching, and Sentence Completion.</li>
+        <li><strong>Writing (60 Minutes):</strong> Task 1 (150 words minimum, 20 mins) and Task 2 (250 words minimum discursive essay, 40 mins).</li>
+        <li><strong>Speaking (11–14 Minutes):</strong> A face-to-face interactive viva with a certified British Council/IDP examiner covering Part 1 introduction, Part 2 individual long turn (cue card), and Part 3 two-way conceptual discussion.</li>
+      </ol>
+
+      <h2>How the 9-Band Scoring System Works</h2>
+      <p>IELTS evaluates proficiency on an internationally standardized 9-band scale. Candidate responses receive integer or half-band scores (e.g., 7.5, 8.0, 8.5) across all four skills, which are averaged and rounded according to strict Cambridge rounding conventions.</p>
+    `,
+    content_format: "html",
+    featured_image: "/ielts_prep_banner_960.webp",
+    featured_image_alt: "IELTS complete exam guide banner",
+    status: "published",
+    content_type: "pillar",
+    category_id: "cat_1_1791377157718",
+    author_id: "author_tayyab_ashfaq",
+    reviewer_id: "reviewer_ejaz_bukhari",
+    published_at: "2026-10-07T12:45:58.000Z",
+    updated_at: "2026-10-07T12:45:58.000Z",
+    last_reviewed_at: "2026-10-07T12:45:58.000Z",
+    seo_title: "IELTS Exam Complete Guide 2026: Format, Band Scoring & Registration",
+    meta_description: "Master the IELTS exam with our comprehensive guide to Academic vs General Training, 9-band score calculations, test dates, and proven prep roadmaps by SEB's Institute.",
+    canonical_url: "https://sebsinstitute.com/blog/ielts-complete-exam-guide",
+    robots_index: true,
+    robots_follow: true,
+    primary_keyword: "IELTS complete guide",
+    search_intent: "informational",
+    reading_time: 8,
+    word_count: 950,
+    featured: true,
+    direct_answer_question: "What is IELTS and which module should I take?",
+    direct_answer_text: "The IELTS (International English Language Testing System) is a globally standardized test evaluating English proficiency across Listening, Reading, Writing, and Speaking. Take IELTS Academic for university degrees or professional licensing; take IELTS General Training for Express Entry immigration and work visas.",
+    key_takeaways: [
+      "IELTS is co-owned by the British Council, IDP, and Cambridge University.",
+      "Band scores range from 1.0 (Non-User) to 9.0 (Expert User) in half-band increments.",
+      "Listening and Speaking modules are identical for both Academic and General Training.",
+      "Test results remain valid for exactly 2 years from the examination date."
+    ],
+    important_note: "Computer-delivered IELTS results are declared within 3 to 5 calendar days, whereas paper-based test TRFs (Test Report Forms) require 13 days. Both formats are completely equal in validity and test difficulty.",
+    faqs: [
+      {
+        question: "How long are IELTS test scores valid?",
+        answer: "IELTS scores are officially valid for 2 years from the date on your Test Report Form (TRF)."
+      },
+      {
+        question: "What score is considered a good IELTS band?",
+        answer: "A Band 7.0 (Good User) to Band 8.0 (Very Good User) is widely recognized as competitive for top global universities and maximum Canadian Express Entry CRS points."
+      },
+      {
+        question: "Can I retake individual skills in IELTS?",
+        answer: "Yes, IELTS One Skill Retake (OSR) allows computer-based test takers to retake any single module (Listening, Reading, Writing, or Speaking) within 60 days of the original test date."
+      }
+    ],
+    sources: [
+      {
+        title: "IELTS Official Guide & Band Descriptors",
+        url: "https://www.ielts.org",
+        publisher: "IELTS Official Partners"
+      },
+      {
+        title: "British Council Take IELTS Examination Portal",
+        url: "https://takeielts.britishcouncil.org",
+        publisher: "British Council"
+      }
+    ]
+  },
   {
     id: "post-ielts-master-guide-2026",
     title: "IELTS Complete Master Guide 2026: Format, Band Descriptors & 8.5 Strategy",
@@ -705,9 +825,10 @@ export async function fetchAdminPosts(params?: {
     const res = await fetch(`/api/blog/admin/posts?${query.toString()}`);
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data.posts)) {
-        setLocalCache(FALLBACK_CACHE_KEY, data.posts);
-        return data.posts;
+      const posts = Array.isArray(data) ? data : (Array.isArray(data?.posts) ? data.posts : null);
+      if (posts) {
+        setLocalCache(FALLBACK_CACHE_KEY, posts);
+        return posts;
       }
     }
   } catch {}
@@ -732,7 +853,8 @@ export async function fetchAdminPostById(id: string): Promise<BlogPost | null> {
     const res = await fetch(`/api/blog/admin/posts/${id}`);
     if (res.ok) {
       const data = await res.json();
-      if (data && data.post) return data.post;
+      const post = data?.post || (data?.id ? data : null);
+      if (post) return post;
     }
   } catch {}
 
@@ -749,10 +871,11 @@ export async function createAdminPost(postData: Partial<BlogPost>): Promise<Blog
     });
     if (res.ok) {
       const data = await res.json();
-      if (data && data.post) {
+      const created = data?.post || (data?.id ? data : null);
+      if (created) {
         const cached = getLocalCache<BlogPost[]>(FALLBACK_CACHE_KEY, DEFAULT_POSTS);
-        setLocalCache(FALLBACK_CACHE_KEY, [data.post, ...cached]);
-        return data.post;
+        setLocalCache(FALLBACK_CACHE_KEY, [created, ...cached.filter(p => p.id !== created.id)]);
+        return created;
       }
     }
   } catch {}
@@ -767,7 +890,7 @@ export async function createAdminPost(postData: Partial<BlogPost>): Promise<Blog
     content_format: postData.content_format || "html",
     featured_image: postData.featured_image,
     featured_image_alt: postData.featured_image_alt,
-    status: postData.status || "draft",
+    status: postData.status || "published",
     content_type: postData.content_type || "supporting",
     category_id: postData.category_id || "cat-ielts-writing",
     author_id: postData.author_id || "author-seb",
@@ -793,7 +916,7 @@ export async function createAdminPost(postData: Partial<BlogPost>): Promise<Blog
   };
 
   const cached = getLocalCache<BlogPost[]>(FALLBACK_CACHE_KEY, DEFAULT_POSTS);
-  setLocalCache(FALLBACK_CACHE_KEY, [newPost, ...cached]);
+  setLocalCache(FALLBACK_CACHE_KEY, [newPost, ...cached.filter(p => p.id !== newPost.id)]);
   return newPost;
 }
 
@@ -806,11 +929,12 @@ export async function updateAdminPost(id: string, postData: Partial<BlogPost>): 
     });
     if (res.ok) {
       const data = await res.json();
-      if (data && data.post) {
+      const updatedItem = data?.post || (data?.id ? data : null);
+      if (updatedItem) {
         const cached = getLocalCache<BlogPost[]>(FALLBACK_CACHE_KEY, DEFAULT_POSTS);
-        const updated = cached.map(p => p.id === id ? data.post : p);
+        const updated = cached.map(p => p.id === id ? updatedItem : p);
         setLocalCache(FALLBACK_CACHE_KEY, updated);
-        return data.post;
+        return updatedItem;
       }
     }
   } catch {}
