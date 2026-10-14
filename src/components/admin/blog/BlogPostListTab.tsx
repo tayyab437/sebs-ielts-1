@@ -186,10 +186,12 @@ export const BlogPostListTab: React.FC<BlogPostListTabProps> = ({ onEditPost, on
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-950/80 border-b border-slate-200/80 dark:border-white/5 font-black uppercase text-[10px] tracking-wider text-slate-500 dark:text-slate-400">
+                  <th className="p-4 w-20">Image</th>
                   <th className="p-4">Title & Slug</th>
                   <th className="p-4">Status</th>
                   <th className="p-4">Category</th>
                   <th className="p-4">Author</th>
+                  <th className="p-4">Views</th>
                   <th className="p-4">Published / Updated</th>
                   <th className="p-4 text-right">Actions</th>
                 </tr>
@@ -197,6 +199,19 @@ export const BlogPostListTab: React.FC<BlogPostListTabProps> = ({ onEditPost, on
               <tbody className="divide-y divide-slate-100 dark:divide-white/5 font-medium text-slate-800 dark:text-slate-200">
                 {posts.map((post) => (
                   <tr key={post.id} className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors">
+                    <td className="p-4">
+                      <div className="w-12 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center border border-slate-200 dark:border-white/10">
+                        {(post as any).featured_image_url || post.featured_image ? (
+                          <img
+                            src={(post as any).featured_image_url || post.featured_image}
+                            alt={post.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <FileEdit className="w-3.5 h-3.5 text-slate-400" />
+                        )}
+                      </div>
+                    </td>
                     <td className="p-4">
                       <p className="font-black text-slate-900 dark:text-white text-sm line-clamp-1">{post.title}</p>
                       <p className="text-[10px] text-slate-400 font-mono mt-0.5">/blog/{post.slug}</p>
@@ -213,6 +228,12 @@ export const BlogPostListTab: React.FC<BlogPostListTabProps> = ({ onEditPost, on
                     </td>
                     <td className="p-4 font-bold text-slate-700 dark:text-slate-300">
                       {post.author?.name || 'Tayyab Ashfaq'}
+                    </td>
+                    <td className="p-4 font-bold text-slate-700 dark:text-slate-300">
+                      <span className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg text-xs">
+                        <Eye className="w-3.5 h-3.5 text-primary" />
+                        {((post as any).views || 0).toLocaleString()}
+                      </span>
                     </td>
                     <td className="p-4 text-[11px] text-slate-500">
                       {post.published_at ? new Date(post.published_at).toLocaleDateString() : new Date(post.updated_at).toLocaleDateString()}

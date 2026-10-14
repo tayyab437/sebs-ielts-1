@@ -2214,7 +2214,8 @@ async function startServer() {
         important_note: safeJsonParse(mp.important_note, {}),
         faqs: safeJsonParse(mp.faqs, []),
         sources: safeJsonParse(mp.sources, []),
-        cta: safeJsonParse(mp.cta, {})
+        cta: safeJsonParse(mp.cta, {}),
+        views: Number(mp.views || 0)
       })) : [];
 
       writeBlogData(blogData);
@@ -2281,6 +2282,11 @@ async function startServer() {
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
     }
+
+    try {
+      await mysqlPool.query("UPDATE blog_posts SET views = COALESCE(views, 0) + 1 WHERE id = ? OR slug = ?", [post.id, post.slug]);
+      post.views = (post.views || 0) + 1;
+    } catch {}
 
     const fullPost = {
       ...post,
