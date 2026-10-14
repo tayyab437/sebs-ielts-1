@@ -2044,6 +2044,25 @@ async function startServer() {
     }
   };
 
+
+
+  const safeJsonParse = (val: any, fallback: any) => {
+    if (!val) return fallback;
+    if (typeof val === 'object') return val;
+    try {
+      return JSON.parse(val);
+    } catch {
+      return fallback;
+    }
+  };
+
+  const getSyncedBlogData = async () => {
+    try {
+      await syncBlogFromMySQL();
+    } catch {}
+    return readBlogData();
+  };
+
   const syncBlogFromMySQL = async () => {
     try {
       const blogData = readBlogData();
@@ -2052,183 +2071,152 @@ async function startServer() {
       if (!Array.isArray(blogData.authors)) blogData.authors = [];
       if (!Array.isArray(blogData.reviewers)) blogData.reviewers = [];
 
-      // 1. First push any local items into MySQL if MySQL is missing them
-      for (const p of blogData.posts) {
-        try {
-          await mysqlPool.query(
-            `INSERT INTO blog_posts (
-              id, title, slug, excerpt, content, status, content_type,
-              category_id, author_id, reviewer_id, is_featured,
-              direct_answer_question, direct_answer_text, key_takeaways, important_note, faqs, sources, cta,
-              seo_title, meta_description, canonical_url, primary_keyword,
-              published_at, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NOW())
-            ON DUPLICATE KEY UPDATE
-              title=VALUES(title), slug=VALUES(slug), excerpt=VALUES(excerpt), content=VALUES(content), status=VALUES(status),
-              category_id=VALUES(category_id), author_id=VALUES(author_id), reviewer_id=VALUES(reviewer_id),
-              updated_at=NOW()`,
-            [
-              p.id, p.title || 'Untitled', p.slug || `post-${Date.now()}`, p.excerpt || '', p.content || '', p.status || 'published', p.content_type || 'pillar',
-              p.category_id || 'cat_1_1791377157718', p.author_id || 'author_tayyab_ashfaq', p.reviewer_id || 'reviewer_ejaz_bukhari', p.is_featured || p.featured ? 1 : 0,
-              p.direct_answer_question || null, p.direct_answer_text || null, JSON.stringify(p.key_takeaways || []), JSON.stringify(p.important_note || {}), JSON.stringify(p.faqs || []), JSON.stringify(p.sources || []), JSON.stringify(p.cta || {}),
-              p.seo_title || p.title, p.meta_description || p.excerpt, p.canonical_url || null, p.primary_keyword || null
-            ]
-          );
-        } catch {}
+      // Check if MySQL blog_posts table is empty; if so, seed from initial blog_data.json once
+      const [countRows]: any = await mysqlPool.query("SELECT COUNT(*) as cnt FROM blog_posts");
+      const cnt = countRows[0]?.cnt || 0;
+      if (cnt === 0) {
+        for (const p of blogData.posts) {
+          try {
+            await mysqlPool.query(
+              `INSERT INTO blog_posts (
+                id, title, slug, excerpt, content, status, content_type,
+                category_id, author_id, reviewer_id, is_featured,
+                direct_answer_question, direct_answer_text, key_takeaways, important_note, faqs, sources, cta,
+                seo_title, meta_description, canonical_url, primary_keyword,
+                published_at, created_at, updated_at
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NOW())
+              ON DUPLICATE KEY UPDATE
+                title=VALUES(title), slug=VALUES(slug), excerpt=VALUES(excerpt), content=VALUES(content), status=VALUES(status),
+                category_id=VALUES(category_id), author_id=VALUES(author_id), reviewer_id=VALUES(reviewer_id),
+                updated_at=NOW()`,
+              [
+                p.id, p.title || 'Untitled', p.slug || `post-${Date.now()}`, p.excerpt || '', p.content || '', p.status || 'published', p.content_type || 'pillar',
+                p.category_id || 'cat_1_1791377157718', p.author_id || 'author_tayyab_ashfaq', p.reviewer_id || 'reviewer_ejaz_bukhari', p.is_featured || p.featured ? 1 : 0,
+                p.direct_answer_question || null, p.direct_answer_text || null, JSON.stringify(p.key_takeaways || []), JSON.stringify(p.important_note || {}), JSON.stringify(p.faqs || []), JSON.stringify(p.sources || []), JSON.stringify(p.cta || {}),
+                p.seo_title || p.title, p.meta_description || p.excerpt, p.canonical_url || null, p.primary_keyword || null
+              ]
+            );
+          } catch {}
+        }
+
+        for (const c of blogData.categories) {
+          try {
+            await mysqlPool.query(
+              `INSERT INTO blog_categories (id, name, slug, description, seo_title, meta_description, is_active, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
+               ON DUPLICATE KEY UPDATE name=VALUES(name), slug=VALUES(slug), description=VALUES(description), seo_title=VALUES(seo_title), meta_description=VALUES(meta_description), updated_at=NOW()`,
+              [c.id, c.name, c.slug, c.description || '', c.seo_title || c.name, c.meta_description || '']
+            );
+          } catch {}
+        }
+
+        for (const a of blogData.authors) {
+          try {
+            await mysqlPool.query(
+              `INSERT INTO blog_authors (id, name, slug, avatar_url, bio, credentials, is_active, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
+               ON DUPLICATE KEY UPDATE name=VALUES(name), slug=VALUES(slug), avatar_url=VALUES(avatar_url), bio=VALUES(bio), credentials=VALUES(credentials), updated_at=NOW()`,
+              [a.id, a.name, a.slug, a.profile_image || a.avatar_url || '', a.bio || '', a.credentials || '']
+            );
+          } catch {}
+        }
+
+        for (const r of blogData.reviewers) {
+          try {
+            await mysqlPool.query(
+              `INSERT INTO blog_reviewers (id, name, slug, avatar_url, bio, credentials, is_active, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
+               ON DUPLICATE KEY UPDATE name=VALUES(name), slug=VALUES(slug), avatar_url=VALUES(avatar_url), bio=VALUES(bio), credentials=VALUES(credentials), updated_at=NOW()`,
+              [r.id, r.name, r.slug, r.avatar_url || '', r.bio || '', r.qualifications || r.credentials || '']
+            );
+          } catch {}
+        }
       }
 
-      for (const c of blogData.categories) {
-        try {
-          await mysqlPool.query(
-            `INSERT INTO blog_categories (id, name, slug, description, seo_title, meta_description, is_active, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
-             ON DUPLICATE KEY UPDATE name=VALUES(name), slug=VALUES(slug), description=VALUES(description), seo_title=VALUES(seo_title), meta_description=VALUES(meta_description), updated_at=NOW()`,
-            [c.id, c.name, c.slug, c.description || '', c.seo_title || c.name, c.meta_description || '']
-          );
-        } catch {}
-      }
-
-      for (const a of blogData.authors) {
-        try {
-          await mysqlPool.query(
-            `INSERT INTO blog_authors (id, name, slug, avatar_url, bio, credentials, is_active, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
-             ON DUPLICATE KEY UPDATE name=VALUES(name), slug=VALUES(slug), avatar_url=VALUES(avatar_url), bio=VALUES(bio), credentials=VALUES(credentials), updated_at=NOW()`,
-            [a.id, a.name, a.slug, a.profile_image || a.avatar_url || '', a.bio || '', a.credentials || '']
-          );
-        } catch {}
-      }
-
-      for (const r of blogData.reviewers) {
-        try {
-          await mysqlPool.query(
-            `INSERT INTO blog_reviewers (id, name, slug, avatar_url, bio, credentials, is_active, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
-             ON DUPLICATE KEY UPDATE name=VALUES(name), slug=VALUES(slug), avatar_url=VALUES(avatar_url), bio=VALUES(bio), credentials=VALUES(credentials), updated_at=NOW()`,
-            [r.id, r.name, r.slug, r.avatar_url || '', r.bio || '', r.qualifications || r.credentials || '']
-          );
-        } catch {}
-      }
-
-      // 2. Fetch authoritative MySQL records
-      const [mysqlPosts]: any = await mysqlPool.query("SELECT * FROM blog_posts");
+      // Fetch authoritative MySQL records
+      const [mysqlPosts]: any = await mysqlPool.query("SELECT * FROM blog_posts ORDER BY created_at DESC");
       const [mysqlCats]: any = await mysqlPool.query("SELECT * FROM blog_categories");
       const [mysqlAuthors]: any = await mysqlPool.query("SELECT * FROM blog_authors");
       const [mysqlReviewers]: any = await mysqlPool.query("SELECT * FROM blog_reviewers");
 
-      // Merge categories
-      if (Array.isArray(mysqlCats)) {
-        for (const mc of mysqlCats) {
-          const idx = blogData.categories.findIndex((c: any) => c.id === mc.id || c.slug === mc.slug);
-          const catObj = {
-            id: mc.id,
-            name: mc.name,
-            slug: mc.slug,
-            description: mc.description || '',
-            seo_title: mc.seo_title || mc.name,
-            meta_description: mc.meta_description || '',
-            indexable: Boolean(mc.is_indexable !== 0),
-            display_order: mc.display_order || 1,
-            post_count: mc.post_count || 1
-          };
-          if (idx >= 0) blogData.categories[idx] = { ...blogData.categories[idx], ...catObj };
-          else blogData.categories.push(catObj);
-        }
-      }
+      // Rebuild arrays strictly from MySQL authoritative records
+      blogData.categories = Array.isArray(mysqlCats) ? mysqlCats.map((mc: any) => ({
+        id: mc.id,
+        name: mc.name,
+        slug: mc.slug,
+        description: mc.description || '',
+        seo_title: mc.seo_title || mc.name,
+        meta_description: mc.meta_description || '',
+        indexable: Boolean(mc.is_indexable !== 0),
+        display_order: mc.display_order || 1,
+        post_count: mc.post_count || 1
+      })) : [];
 
-      // Merge authors
-      if (Array.isArray(mysqlAuthors)) {
-        for (const ma of mysqlAuthors) {
-          const idx = blogData.authors.findIndex((a: any) => a.id === ma.id || a.slug === ma.slug);
-          const existing = idx >= 0 ? blogData.authors[idx] : {};
-          const img = ma.avatar_url || existing.profile_image || existing.avatar_url || '';
-          const authObj = {
-            id: ma.id,
-            name: ma.name,
-            slug: ma.slug,
-            profile_image: img,
-            avatar_url: img,
-            bio: ma.bio || existing.bio || '',
-            credentials: ma.credentials || existing.credentials || '',
-            organization: existing.organization || 'SEBS Institute',
-            expertise: existing.expertise || ['IELTS Academic & GT', 'Linguistics'],
-            social_links: existing.social_links || {},
-            indexable: existing.indexable !== false
-          };
-          if (idx >= 0) blogData.authors[idx] = { ...existing, ...authObj };
-          else blogData.authors.push(authObj);
-        }
-      }
+      blogData.authors = Array.isArray(mysqlAuthors) ? mysqlAuthors.map((ma: any) => ({
+        id: ma.id,
+        name: ma.name,
+        slug: ma.slug,
+        profile_image: ma.avatar_url || '',
+        avatar_url: ma.avatar_url || '',
+        bio: ma.bio || '',
+        credentials: ma.credentials || '',
+        organization: 'SEBS Institute',
+        expertise: ['IELTS Academic & GT', 'Linguistics'],
+        social_links: {},
+        indexable: true
+      })) : [];
 
-      // Merge reviewers
-      if (Array.isArray(mysqlReviewers)) {
-        for (const mr of mysqlReviewers) {
-          const idx = blogData.reviewers.findIndex((r: any) => r.id === mr.id || r.slug === mr.slug);
-          const existing = idx >= 0 ? blogData.reviewers[idx] : {};
-          const img = mr.avatar_url || existing.avatar_url || existing.profile_image || '';
-          const revObj = {
-            id: mr.id,
-            name: mr.name,
-            slug: mr.slug,
-            bio: mr.bio || existing.bio || '',
-            qualifications: mr.credentials || existing.qualifications || '',
-            avatar_url: img,
-            profile_image: img,
-            organization: existing.organization || 'SEBS Institute Assessment Board',
-            expertise: existing.expertise || ['Examiner Protocols'],
-            indexable: existing.indexable !== false
-          };
-          if (idx >= 0) blogData.reviewers[idx] = { ...existing, ...revObj };
-          else blogData.reviewers.push(revObj);
-        }
-      }
+      blogData.reviewers = Array.isArray(mysqlReviewers) ? mysqlReviewers.map((mr: any) => ({
+        id: mr.id,
+        name: mr.name,
+        slug: mr.slug,
+        bio: mr.bio || '',
+        qualifications: mr.credentials || '',
+        avatar_url: mr.avatar_url || '',
+        profile_image: mr.avatar_url || '',
+        organization: 'SEBS Institute Assessment Board',
+        expertise: ['Examiner Protocols'],
+        indexable: true
+      })) : [];
 
-      // Merge posts
-      if (Array.isArray(mysqlPosts)) {
-        for (const mp of mysqlPosts) {
-          const idx = blogData.posts.findIndex((p: any) => p.id === mp.id || p.slug === mp.slug);
-          const postObj = {
-            id: mp.id,
-            title: mp.title,
-            slug: mp.slug,
-            excerpt: mp.excerpt || '',
-            content: mp.content || '',
-            content_format: 'html',
-            featured_image: mp.featured_image_url || '/ielts_prep_banner_960.webp',
-            featured_image_alt: mp.featured_image_alt || mp.title,
-            status: mp.status || 'published',
-            content_type: mp.content_type || 'pillar',
-            category_id: mp.category_id || 'cat_1_1791377157718',
-            author_id: mp.author_id || 'author_tayyab_ashfaq',
-            reviewer_id: mp.reviewer_id || 'reviewer_ejaz_bukhari',
-            published_at: mp.published_at ? new Date(mp.published_at).toISOString() : new Date().toISOString(),
-            updated_at: mp.updated_at ? new Date(mp.updated_at).toISOString() : new Date().toISOString(),
-            last_reviewed_at: mp.last_reviewed_at ? new Date(mp.last_reviewed_at).toISOString() : new Date().toISOString(),
-            seo_title: mp.seo_title || mp.title,
-            meta_description: mp.meta_description || mp.excerpt,
-            canonical_url: mp.canonical_url || `https://sebsinstitute.com/blog/${mp.slug}`,
-            robots_index: Boolean(mp.robots_index !== 0),
-            robots_follow: Boolean(mp.robots_follow !== 0),
-            primary_keyword: mp.primary_keyword || 'IELTS',
-            search_intent: mp.search_intent || 'informational',
-            reading_time: 8,
-            word_count: mp.content ? mp.content.replace(/<[^>]+>/g, '').split(/\s+/).filter(Boolean).length : 800,
-            featured: Boolean(mp.is_featured),
-            direct_answer_question: mp.direct_answer_question,
-            direct_answer_text: mp.direct_answer_text,
-            key_takeaways: Array.isArray(mp.key_takeaways) ? mp.key_takeaways : (typeof mp.key_takeaways === 'string' ? JSON.parse(mp.key_takeaways || '[]') : []),
-            important_note: typeof mp.important_note === 'string' ? JSON.parse(mp.important_note || '{}') : mp.important_note,
-            faqs: Array.isArray(mp.faqs) ? mp.faqs : (typeof mp.faqs === 'string' ? JSON.parse(mp.faqs || '[]') : []),
-            sources: Array.isArray(mp.sources) ? mp.sources : (typeof mp.sources === 'string' ? JSON.parse(mp.sources || '[]') : []),
-            cta: typeof mp.cta === 'string' ? JSON.parse(mp.cta || '{}') : mp.cta
-          };
-          if (idx >= 0) blogData.posts[idx] = { ...blogData.posts[idx], ...postObj };
-          else blogData.posts.unshift(postObj);
-        }
-      }
+      blogData.posts = Array.isArray(mysqlPosts) ? mysqlPosts.map((mp: any) => ({
+        id: mp.id,
+        title: mp.title,
+        slug: mp.slug,
+        excerpt: mp.excerpt || '',
+        content: mp.content || '',
+        content_format: 'html',
+        featured_image: mp.featured_image_url || '/ielts_prep_banner_960.webp',
+        featured_image_alt: mp.featured_image_alt || mp.title,
+        status: mp.status || 'published',
+        content_type: mp.content_type || 'pillar',
+        category_id: mp.category_id || 'cat_1_1791377157718',
+        author_id: mp.author_id || 'author_tayyab_ashfaq',
+        reviewer_id: mp.reviewer_id || 'reviewer_ejaz_bukhari',
+        published_at: mp.published_at ? new Date(mp.published_at).toISOString() : new Date().toISOString(),
+        updated_at: mp.updated_at ? new Date(mp.updated_at).toISOString() : new Date().toISOString(),
+        last_reviewed_at: mp.last_reviewed_at ? new Date(mp.last_reviewed_at).toISOString() : new Date().toISOString(),
+        seo_title: mp.seo_title || mp.title,
+        meta_description: mp.meta_description || mp.excerpt,
+        canonical_url: mp.canonical_url || `https://sebsinstitute.com/blog/${mp.slug}`,
+        robots_index: Boolean(mp.robots_index !== 0),
+        robots_follow: Boolean(mp.robots_follow !== 0),
+        primary_keyword: mp.primary_keyword || 'IELTS',
+        search_intent: mp.search_intent || 'informational',
+        reading_time: 8,
+        word_count: mp.content ? mp.content.replace(/<[^>]+>/g, '').split(/\s+/).filter(Boolean).length : 800,
+        featured: Boolean(mp.is_featured),
+        direct_answer_question: mp.direct_answer_question,
+        direct_answer_text: mp.direct_answer_text,
+        key_takeaways: safeJsonParse(mp.key_takeaways, []),
+        important_note: safeJsonParse(mp.important_note, {}),
+        faqs: safeJsonParse(mp.faqs, []),
+        sources: safeJsonParse(mp.sources, []),
+        cta: safeJsonParse(mp.cta, {})
+      })) : [];
 
       writeBlogData(blogData);
-      console.log(`[syncBlogFromMySQL] Synced ${mysqlPosts.length} posts, ${mysqlCats.length} categories from MySQL into blog_data.json.`);
+      console.log(`[syncBlogFromMySQL] Synced ${mysqlPosts.length} posts, ${mysqlCats.length} categories from MySQL authoritative DB.`);
     } catch (e: any) {
       console.warn("[syncBlogFromMySQL] Error syncing blog from MySQL:", e.message || e);
     }
@@ -2238,8 +2226,8 @@ async function startServer() {
   syncBlogFromMySQL().catch(() => {});
 
   // 1. Public Posts List with Category, Search, & Pagination
-  app.get("/api/blog/posts", (req, res) => {
-    const data = readBlogData();
+  app.get("/api/blog/posts", async (req, res) => {
+    const data = await getSyncedBlogData();
     const { category, search, page = "1", limit = "9" } = req.query;
     let posts = (data.posts || []).filter((p: any) => p.status === "published");
 
@@ -2273,8 +2261,8 @@ async function startServer() {
   });
 
   // 2. Single Post by Slug or ID
-  app.get("/api/blog/posts/:slug", (req, res) => {
-    const data = readBlogData();
+  app.get("/api/blog/posts/:slug", async (req, res) => {
+    const data = await getSyncedBlogData();
     const slug = req.params.slug;
 
     const redirectRule = (data.redirects || []).find((r: any) => r.active && (r.source_url === `/blog/${slug}` || r.source_url === slug));
@@ -2302,20 +2290,20 @@ async function startServer() {
   });
 
   // 3. Public Categories
-  app.get("/api/blog/categories", (_req, res) => {
-    const data = readBlogData();
+  app.get("/api/blog/categories", async (_req, res) => {
+    const data = await getSyncedBlogData();
     res.json(data.categories || []);
   });
 
   // 4. Public Authors
-  app.get("/api/blog/authors", (_req, res) => {
-    const data = readBlogData();
+  app.get("/api/blog/authors", async (_req, res) => {
+    const data = await getSyncedBlogData();
     res.json(data.authors || []);
   });
 
   // Single Author by slug or id
-  app.get("/api/blog/authors/:slugOrId", (req, res) => {
-    const data = readBlogData();
+  app.get("/api/blog/authors/:slugOrId", async (req, res) => {
+    const data = await getSyncedBlogData();
     const query = decodeURIComponent(req.params.slugOrId || "").trim().toLowerCase();
     const author = (data.authors || []).find((a: any) =>
       (a.slug || "").trim().toLowerCase() === query ||
@@ -2333,14 +2321,14 @@ async function startServer() {
   });
 
   // 5. Public Reviewers
-  app.get("/api/blog/reviewers", (_req, res) => {
-    const data = readBlogData();
+  app.get("/api/blog/reviewers", async (_req, res) => {
+    const data = await getSyncedBlogData();
     res.json(data.reviewers || []);
   });
 
   // Single Reviewer by slug or id
-  app.get("/api/blog/reviewers/:slugOrId", (req, res) => {
-    const data = readBlogData();
+  app.get("/api/blog/reviewers/:slugOrId", async (req, res) => {
+    const data = await getSyncedBlogData();
     const query = decodeURIComponent(req.params.slugOrId || "").trim().toLowerCase();
     const reviewer = (data.reviewers || []).find((r: any) =>
       (r.slug || "").trim().toLowerCase() === query ||
@@ -2358,14 +2346,14 @@ async function startServer() {
   });
 
   // 6. Public Settings
-  app.get("/api/blog/settings", (_req, res) => {
-    const data = readBlogData();
+  app.get("/api/blog/settings", async (_req, res) => {
+    const data = await getSyncedBlogData();
     res.json(data.settings || {});
   });
 
   // 7. Admin Posts List
-  app.get("/api/blog/admin/posts", (req, res) => {
-    const data = readBlogData();
+  app.get("/api/blog/admin/posts", async (req, res) => {
+    const data = await getSyncedBlogData();
     const { status, search, category } = req.query;
     let posts = data.posts || [];
     if (status && status !== "all") {
@@ -2388,8 +2376,8 @@ async function startServer() {
   });
 
   // 8. Admin Post by ID
-  app.get("/api/blog/admin/posts/:id", (req, res) => {
-    const data = readBlogData();
+  app.get("/api/blog/admin/posts/:id", async (req, res) => {
+    const data = await getSyncedBlogData();
     const post = (data.posts || []).find((p: any) => p.id === req.params.id);
     if (!post) return res.status(404).json({ error: "Post not found" });
     res.json(post);
@@ -2651,8 +2639,8 @@ async function startServer() {
   });
 
   // 13. Admin Stats
-  app.get("/api/blog/stats", (_req, res) => {
-    const data = readBlogData();
+  app.get("/api/blog/stats", async (_req, res) => {
+    const data = await getSyncedBlogData();
     const posts = data.posts || [];
     const stats = {
       total_posts: posts.length,
@@ -2674,8 +2662,8 @@ async function startServer() {
   });
 
   // 14. Admin SEO Audits
-  app.get("/api/blog/audits", (_req, res) => {
-    const data = readBlogData();
+  app.get("/api/blog/audits", async (_req, res) => {
+    const data = await getSyncedBlogData();
     const audits: any[] = [];
     (data.posts || []).forEach((p: any) => {
       if (!p.meta_description) {
@@ -2707,13 +2695,13 @@ async function startServer() {
   });
 
   // 15. Redirects
-  app.get("/api/blog/redirects", (_req, res) => {
-    const data = readBlogData();
+  app.get("/api/blog/redirects", async (_req, res) => {
+    const data = await getSyncedBlogData();
     res.json(data.redirects || []);
   });
 
-  app.post("/api/blog/redirects", (req, res) => {
-    const data = readBlogData();
+  app.post("/api/blog/redirects", async (req, res) => {
+    const data = await getSyncedBlogData();
     if (!data.redirects) data.redirects = [];
     const newRedir = { ...req.body, id: `redir-${Date.now()}`, created_at: new Date().toISOString(), active: true };
     data.redirects.push(newRedir);
@@ -2721,23 +2709,23 @@ async function startServer() {
     res.json(newRedir);
   });
 
-  app.delete("/api/blog/redirects/:id", (req, res) => {
-    const data = readBlogData();
+  app.delete("/api/blog/redirects/:id", async (req, res) => {
+    const data = await getSyncedBlogData();
     data.redirects = (data.redirects || []).filter((r: any) => r.id !== req.params.id);
     writeBlogData(data);
     res.json({ success: true });
   });
 
   // 16. Revisions
-  app.get("/api/blog/admin/posts/:postId/revisions", (req, res) => {
-    const data = readBlogData();
+  app.get("/api/blog/admin/posts/:postId/revisions", async (req, res) => {
+    const data = await getSyncedBlogData();
     const revs = (data.revisions || []).filter((r: any) => r.post_id === req.params.postId);
     res.json(revs);
   });
 
   // 17. Media
-  app.get("/api/blog/admin/media", (_req, res) => {
-    const data = readBlogData();
+  app.get("/api/blog/admin/media", async (_req, res) => {
+    const data = await getSyncedBlogData();
     res.json(data.media || []);
   });
 
