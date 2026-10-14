@@ -16,7 +16,8 @@ import {
   ShieldAlert, 
   Globe2,
   Sparkles,
-  ExternalLink
+  ExternalLink,
+  Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -36,6 +37,7 @@ export const BlogDashboardTab: React.FC<BlogDashboardTabProps> = ({ onNavigate }
     total_authors: number;
     total_reviewers: number;
     total_redirects: number;
+    total_views?: number;
   } | null>(null);
   const [audits, setAudits] = useState<BlogAuditItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -117,7 +119,7 @@ export const BlogDashboardTab: React.FC<BlogDashboardTabProps> = ({ onNavigate }
       </div>
 
       {/* 2. Main Metric Cards Grid (div:nth-of-type(2) matching CSS selector target) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
         {/* Card 1: Total Posts */}
         <div 
           onClick={() => onNavigate('posts')}
@@ -233,6 +235,27 @@ export const BlogDashboardTab: React.FC<BlogDashboardTabProps> = ({ onNavigate }
           </p>
           <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium">
             <span>Past revisions</span>
+            <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        </div>
+
+        {/* Card 7: Total Article Views */}
+        <div 
+          onClick={() => onNavigate('posts')}
+          className="p-5 bg-white dark:bg-slate-900 border border-primary/20 dark:border-primary/30 rounded-2xl space-y-2 shadow-sm hover:border-primary hover:shadow-md transition-all cursor-pointer group bg-gradient-to-br from-primary/5 via-transparent to-transparent"
+          title="Click to view article view analytics"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase tracking-wider text-primary">Article Views</span>
+            <div className="p-1 rounded-md bg-primary/10">
+              <Eye className="w-4 h-4 text-primary" />
+            </div>
+          </div>
+          <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+            {loading ? '...' : (stats?.total_views ?? 0).toLocaleString()}
+          </p>
+          <div className="flex items-center justify-between text-[10px] text-primary font-bold">
+            <span>Live Readers</span>
             <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         </div>

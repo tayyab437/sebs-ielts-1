@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Calendar, Clock, User, ShieldCheck, ArrowLeft, AlertCircle } from 'lucide-react';
-import { fetchPublicPostBySlug, fetchAdminPostById } from '../../lib/blogApi';
+import { Calendar, Clock, User, ShieldCheck, ArrowLeft, AlertCircle, Eye } from 'lucide-react';
+import { fetchPublicPostBySlug, fetchAdminPostById, recordPostView } from '../../lib/blogApi';
 import type { BlogPost } from '../../types/blog';
 import { BlogBreadcrumbs } from '../../components/blog/BlogBreadcrumbs';
 import { BlogJsonLd } from '../../components/blog/BlogJsonLd';
@@ -54,6 +54,14 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ isPreviewMode = fals
             return;
           }
           setPost(data);
+          // Record article view and update count in real-time
+          if (!isPreviewMode) {
+            recordPostView(data.slug || data.id).then((updatedViews) => {
+              if (typeof updatedViews === 'number') {
+                setPost((prev) => (prev ? { ...prev, views: updatedViews } : null));
+              }
+            });
+          }
         })
         .catch((err) => {
           setError(err.message || 'Article not found');
@@ -233,7 +241,7 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ isPreviewMode = fals
             )}
           </div>
 
-          <div className="flex items-center gap-3 text-slate-500">
+          <div className="flex items-center gap-3 text-slate-500 flex-wrap">
             <span className="flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5 text-primary" />
               {post.published_at ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
@@ -242,6 +250,11 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ isPreviewMode = fals
             <span className="flex items-center gap-1">
               <Clock className="w-3.5 h-3.5 text-primary" />
               {readTime} min read
+            </span>
+            <span>•</span>
+            <span className="flex items-center gap-1 font-bold text-primary">
+              <Eye className="w-3.5 h-3.5" />
+              {((post.views ?? 0)).toLocaleString()} {((post.views ?? 0)) === 1 ? 'view' : 'views'}
             </span>
           </div>
         </div>

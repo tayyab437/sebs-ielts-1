@@ -707,8 +707,8 @@ function Navbar() {
     return (
       <nav className="sticky top-0 z-50 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-300 w-full overflow-x-hidden box-border">
         {/* IOT Style Header Banner Top Bar */}
-        <div className="bg-gradient-to-r from-red-500 via-rose-500 to-amber-500 text-white py-2 px-4 sm:px-8 border-b border-rose-600/30">
-          <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="bg-gradient-to-r from-red-500 via-rose-500 to-amber-500 text-white py-2 px-4 sm:px-8 border-b border-rose-600/30 w-full box-border">
+          <div className="max-w-[1600px] mx-auto w-full flex flex-col md:flex-row items-center justify-between gap-3 box-border">
             {/* Left: Branding Logo Section */}
             <Link to="/" className="flex items-center gap-2 group shrink-0">
               <div className="bg-white/95 dark:bg-slate-900/95 rounded-xl px-3 py-1.5 shadow-md flex items-center gap-2 border border-white/40">
@@ -743,8 +743,8 @@ function Navbar() {
         </div>
 
         {/* Main Nav Bar below Top Banner */}
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+        <div className="max-w-[1600px] mx-auto w-full px-4 sm:px-6 lg:px-8 box-border">
+          <div className="flex justify-between items-center h-16 w-full box-border">
             {/* Primary Navigation Links */}
             <div className="flex items-center space-x-6">
               <Link to="/" className="flex items-center space-x-2 shrink-0 pr-2">
@@ -882,7 +882,7 @@ function Navbar() {
     <nav className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200/80 dark:border-white/5 transition-colors duration-300 w-full overflow-x-hidden box-border">
       {/* Top Academic Promotion Ticker Banner */}
       {offerBarActive && !isOfferBarDismissed && (
-        <div className="bg-gradient-to-r from-emerald-700 via-emerald-600 to-slate-900 dark:to-black text-white text-[10.5px] font-black items-center justify-center py-2 px-8 text-center tracking-widest flex gap-2 overflow-hidden uppercase italic min-h-[38px] shadow-inner select-none relative">
+        <div className="bg-gradient-to-r from-emerald-700 via-emerald-600 to-slate-900 dark:to-black text-white text-[10.5px] font-black items-center justify-center py-2 px-8 text-center tracking-widest flex gap-2 overflow-hidden uppercase italic min-h-[38px] shadow-inner select-none relative w-full box-border">
           <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse shrink-0" />
           <span className="truncate pr-4">{offerBarText}</span>
           <Link to={offerBarLink} className="underline hover:text-emerald-300 transition-all ml-1.5 flex items-center gap-0.5 font-bold shrink-0">
@@ -901,8 +901,8 @@ function Navbar() {
         </div>
       )}
 
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+      <div className="max-w-[1600px] mx-auto w-full px-4 sm:px-6 lg:px-8 box-border">
+        <div className="flex justify-between items-center h-20 w-full box-border">
           {/* Logo Brand Section */}
           <Link to="/" className="flex items-center space-x-3 group shrink-0">
             <div className="relative">

@@ -146,6 +146,7 @@ export interface BlogPost {
   word_count: number;
   featured: boolean;
   is_featured?: boolean;
+  views?: number;
   
   // Structured Content Blocks
   direct_answer_question?: string;

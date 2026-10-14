@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, Calendar, ArrowRight, CheckCircle2, User, ShieldCheck } from 'lucide-react';
+import { Clock, Calendar, ArrowRight, CheckCircle2, User, ShieldCheck, Eye } from 'lucide-react';
 import type { BlogPost } from '../../types/blog';
 
 interface BlogArticleCardProps {
@@ -44,7 +44,7 @@ export const BlogArticleCard: React.FC<BlogArticleCardProps> = ({ post, featured
 
         <div className={`${imgUrl ? 'lg:col-span-5' : 'col-span-full'} p-6 sm:p-8 lg:p-10 flex flex-col justify-between`}>
           <div className="space-y-4">
-            <div className="flex items-center gap-4 text-xs font-bold text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-4 text-xs font-bold text-slate-500 dark:text-slate-400 flex-wrap">
               <span className="flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5 text-primary" />
                 {formattedDate}
@@ -53,6 +53,11 @@ export const BlogArticleCard: React.FC<BlogArticleCardProps> = ({ post, featured
               <span className="flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5 text-primary" />
                 {readTime} min read
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1 font-bold text-primary">
+                <Eye className="w-3.5 h-3.5" />
+                {((post.views ?? 0)).toLocaleString()} {((post.views ?? 0)) === 1 ? 'view' : 'views'}
               </span>
             </div>
 
@@ -125,7 +130,7 @@ export const BlogArticleCard: React.FC<BlogArticleCardProps> = ({ post, featured
         )}
 
         <div className="p-5 sm:p-6 space-y-3 text-left">
-          <div className="flex items-center gap-3 text-[11px] font-bold text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-3 text-[11px] font-bold text-slate-500 dark:text-slate-400 flex-wrap">
             <span className="flex items-center gap-1">
               <Calendar className="w-3 h-3 text-primary" />
               {formattedDate}
@@ -134,6 +139,11 @@ export const BlogArticleCard: React.FC<BlogArticleCardProps> = ({ post, featured
             <span className="flex items-center gap-1">
               <Clock className="w-3 h-3 text-primary" />
               {readTime} min read
+            </span>
+            <span>•</span>
+            <span className="flex items-center gap-1 font-bold text-primary">
+              <Eye className="w-3 h-3" />
+              {((post.views ?? 0)).toLocaleString()} {((post.views ?? 0)) === 1 ? 'view' : 'views'}
             </span>
           </div>
 

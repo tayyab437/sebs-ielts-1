@@ -2286,6 +2286,12 @@ async function startServer() {
     try {
       await mysqlPool.query("UPDATE blog_posts SET views = COALESCE(views, 0) + 1 WHERE id = ? OR slug = ?", [post.id, post.slug]);
       post.views = (post.views || 0) + 1;
+      const bData = readBlogData();
+      const pIdx = (bData.posts || []).findIndex((p: any) => p.id === post.id || p.slug === post.slug);
+      if (pIdx >= 0) {
+        bData.posts[pIdx].views = post.views;
+        writeBlogData(bData);
+      }
     } catch {}
 
     const fullPost = {
@@ -2295,6 +2301,40 @@ async function startServer() {
       reviewer: (data.reviewers || []).find((r: any) => r.id === post.reviewer_id)
     };
     res.json({ post: fullPost, ...fullPost });
+  });
+
+  // Dedicated View Tracking Endpoint for blog visitors
+  app.post("/api/blog/posts/:slugOrId/view", async (req, res) => {
+    try {
+      const slugOrId = decodeURIComponent(req.params.slugOrId || "").trim();
+      if (!slugOrId) return res.status(400).json({ error: "Missing article identifier" });
+
+      await mysqlPool.query(
+        "UPDATE blog_posts SET views = COALESCE(views, 0) + 1 WHERE id = ? OR slug = ?",
+        [slugOrId, slugOrId]
+      );
+
+      const [rows]: any = await mysqlPool.query(
+        "SELECT id, slug, views FROM blog_posts WHERE id = ? OR slug = ? LIMIT 1",
+        [slugOrId, slugOrId]
+      );
+
+      const updatedViews = rows && rows[0] ? Number(rows[0].views || 0) : 1;
+
+      try {
+        const bData = readBlogData();
+        const pIdx = (bData.posts || []).findIndex((p: any) => p.id === slugOrId || p.slug === slugOrId);
+        if (pIdx >= 0) {
+          bData.posts[pIdx].views = updatedViews;
+          writeBlogData(bData);
+        }
+      } catch {}
+
+      return res.json({ success: true, views: updatedViews });
+    } catch (err: any) {
+      console.error("Error tracking post view:", err);
+      return res.status(500).json({ error: "Failed to track view" });
+    }
   });
 
   // 3. Public Categories
@@ -2671,6 +2711,7 @@ async function startServer() {
       total_authors: (data.authors || []).length,
       total_reviewers: (data.reviewers || []).length,
       total_redirects: (data.redirects || []).length,
+      total_views: posts.reduce((sum: number, p: any) => sum + (Number(p.views) || 0), 0),
       stale_reviews_count: 0
     };
     res.json({
@@ -4141,6 +4182,8 @@ Sitemap: https://sebsinstitute.com/sitemap.xml
       return next();
     }
     try {
+      // Increment views count in MySQL & cache on direct visit
+      mysqlPool.query("UPDATE blog_posts SET views = COALESCE(views, 0) + 1 WHERE slug = ? OR id = ?", [slug, slug]).catch(() => {});
       const baseHtml = getBaseHtml(isDev);
       const result = renderBlogPostHtml(slug, baseHtml);
       if (result.redirect) {

@@ -230,9 +230,9 @@ export const BlogPostListTab: React.FC<BlogPostListTabProps> = ({ onEditPost, on
                       {post.author?.name || 'Tayyab Ashfaq'}
                     </td>
                     <td className="p-4 font-bold text-slate-700 dark:text-slate-300">
-                      <span className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg text-xs">
+                      <span className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg text-xs font-bold text-slate-800 dark:text-slate-200">
                         <Eye className="w-3.5 h-3.5 text-primary" />
-                        {((post as any).views || 0).toLocaleString()}
+                        {((post.views ?? 0)).toLocaleString()} {((post.views ?? 0)) === 1 ? 'view' : 'views'}
                       </span>
                     </td>
                     <td className="p-4 text-[11px] text-slate-500">

@@ -740,6 +740,31 @@ export async function fetchPublicPostBySlug(slug: string): Promise<BlogPost | nu
   return null;
 }
 
+export async function recordPostView(slugOrId: string): Promise<number | null> {
+  try {
+    const res = await fetch(`/api/blog/posts/${encodeURIComponent(slugOrId)}/view`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (typeof data.views === 'number') {
+        // Also update local cache
+        const allCached = getLocalCache<BlogPost[]>(FALLBACK_CACHE_KEY, DEFAULT_POSTS);
+        const p = allCached.find(post => post.slug === slugOrId || post.id === slugOrId);
+        if (p) {
+          p.views = data.views;
+          setLocalCache(FALLBACK_CACHE_KEY, allCached);
+        }
+        return data.views;
+      }
+    }
+  } catch (err) {
+    console.warn("Could not record post view:", err);
+  }
+  return null;
+}
+
 export async function fetchCategories(): Promise<BlogCategory[]> {
   try {
     const res = await fetch('/api/blog/categories');

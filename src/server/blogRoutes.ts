@@ -142,7 +142,7 @@ export function createBlogRouter(mysqlPool: Pool, verifyTokenFn: (token: string)
         `SELECT 
           p.id, p.title, p.slug, p.excerpt, p.featured_image_url, p.featured_image_alt,
           p.content_type, p.is_featured, p.published_at, p.updated_at, p.last_reviewed_at,
-          p.primary_keyword, p.search_intent,
+          p.primary_keyword, p.search_intent, p.views,
           c.id as category_id, c.name as category_name, c.slug as category_slug,
           a.id as author_id, a.name as author_name, a.slug as author_slug, a.avatar_url as author_avatar, a.designation as author_designation,
           r.id as reviewer_id, r.name as reviewer_name, r.slug as reviewer_slug, r.avatar_url as reviewer_avatar, r.designation as reviewer_designation
@@ -165,6 +165,7 @@ export function createBlogRouter(mysqlPool: Pool, verifyTokenFn: (token: string)
         featured_image_alt: p.featured_image_alt,
         content_type: p.content_type,
         is_featured: Boolean(p.is_featured),
+        views: Number(p.views || 0),
         published_at: p.published_at,
         updated_at: p.updated_at,
         last_reviewed_at: p.last_reviewed_at,
@@ -231,6 +232,10 @@ export function createBlogRouter(mysqlPool: Pool, verifyTokenFn: (token: string)
       }
 
       const raw = posts[0];
+      try {
+        await mysqlPool.query("UPDATE blog_posts SET views = COALESCE(views, 0) + 1 WHERE id = ? OR slug = ?", [raw.id, raw.slug]);
+        raw.views = (raw.views || 0) + 1;
+      } catch {}
 
       // Parse JSON fields safely
       const parseJsonSafe = (val: any, fallback: any) => {
@@ -322,6 +327,7 @@ export function createBlogRouter(mysqlPool: Pool, verifyTokenFn: (token: string)
         og_title: raw.og_title || raw.seo_title || raw.title,
         og_description: raw.og_description || raw.meta_description || raw.excerpt,
         og_image_url: raw.og_image_url || raw.featured_image_url,
+        views: Number(raw.views || 0),
         published_at: raw.published_at,
         updated_at: raw.updated_at,
         last_reviewed_at: raw.last_reviewed_at,
@@ -578,6 +584,7 @@ export function createBlogRouter(mysqlPool: Pool, verifyTokenFn: (token: string)
         `SELECT 
           p.id, p.title, p.slug, p.status, p.content_type, p.is_featured,
           p.published_at, p.scheduled_at, p.created_at, p.updated_at, p.last_reviewed_at,
+          p.featured_image_url, p.views,
           c.id as category_id, c.name as category_name, c.slug as category_slug,
           a.id as author_id, a.name as author_name,
           r.id as reviewer_id, r.name as reviewer_name
