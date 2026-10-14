@@ -3,6 +3,7 @@ import { BlogDashboardTab } from './BlogDashboardTab';
 import { BlogPostListTab } from './BlogPostListTab';
 import { BlogPostEditorTab } from './BlogPostEditorTab';
 import { BlogCategoriesTab } from './BlogCategoriesTab';
+import { BlogAuthorsReviewersTab } from './BlogAuthorsReviewersTab';
 import { BlogSeoAuditsTab } from './BlogSeoAuditsTab';
 import { BlogRedirectsTab } from './BlogRedirectsTab';
 import { 
@@ -13,12 +14,15 @@ import {
   ShieldAlert, 
   ArrowLeft, 
   Globe2, 
-  ExternalLink 
+  ExternalLink,
+  Users,
+  ShieldCheck
 } from 'lucide-react';
 
 export const BlogManager: React.FC = () => {
-  const [activeView, setActiveView] = useState<'overview' | 'posts' | 'editor' | 'categories' | 'audits' | 'redirects'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'posts' | 'editor' | 'categories' | 'authors' | 'audits' | 'redirects'>('overview');
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [initialStatusFilter, setInitialStatusFilter] = useState<string>('');
 
   const handleEditPost = (postId: string) => {
     setEditingPostId(postId);
@@ -89,6 +93,7 @@ export const BlogManager: React.FC = () => {
             { id: 'overview', label: 'Dashboard & Metrics', icon: <BarChart3 className="w-3.5 h-3.5" /> },
             { id: 'posts', label: 'All Articles', icon: <FileText className="w-3.5 h-3.5" /> },
             { id: 'categories', label: 'Topic Clusters & Categories', icon: <Layers className="w-3.5 h-3.5" /> },
+            { id: 'authors', label: 'Authors & Reviewers', icon: <Users className="w-3.5 h-3.5" /> },
             { id: 'audits', label: 'SEO Health & Audits', icon: <ShieldAlert className="w-3.5 h-3.5" /> },
             { id: 'redirects', label: '301 Redirect Rules', icon: <Globe2 className="w-3.5 h-3.5" /> },
           ].map((tab) => (
@@ -113,17 +118,24 @@ export const BlogManager: React.FC = () => {
       <div>
         {activeView === 'overview' && (
           <BlogDashboardTab
-            onNavigate={(view) => {
+            onNavigate={(view, filter) => {
               if (view === 'create') handleCreateNew();
-              else if (view === 'posts') setActiveView('posts');
+              else if (view === 'posts') {
+                setInitialStatusFilter(filter || '');
+                setActiveView('posts');
+              }
               else if (view === 'categories') setActiveView('categories');
+              else if (view === 'authors') setActiveView('authors');
               else if (view === 'audits') setActiveView('audits');
+              else if (view === 'redirects') setActiveView('redirects');
             }}
           />
         )}
 
         {activeView === 'posts' && (
           <BlogPostListTab
+            key={initialStatusFilter}
+            initialStatus={initialStatusFilter}
             onEditPost={handleEditPost}
             onCreateNew={handleCreateNew}
           />
@@ -140,6 +152,8 @@ export const BlogManager: React.FC = () => {
         )}
 
         {activeView === 'categories' && <BlogCategoriesTab />}
+
+        {activeView === 'authors' && <BlogAuthorsReviewersTab />}
 
         {activeView === 'audits' && <BlogSeoAuditsTab onEditPost={handleEditPost} />}
 

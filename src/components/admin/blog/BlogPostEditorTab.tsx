@@ -684,9 +684,34 @@ export const BlogPostEditorTab: React.FC<BlogPostEditorTabProps> = ({
                 >
                   <option value="">-- Select Author --</option>
                   {authors.map((a) => (
-                    <option key={a.id} value={a.id}>{a.name} ({a.designation || 'Author'})</option>
+                    <option key={a.id} value={a.id}>{a.name} ({a.credentials || a.designation || 'Author'})</option>
                   ))}
                 </select>
+
+                {/* Author Preview Card */}
+                {(() => {
+                  const selAuthor = authors.find(a => a.id === formData.author_id);
+                  if (!selAuthor) return null;
+                  const img = selAuthor.profile_image || (selAuthor as any).avatar_url;
+                  return (
+                    <div className="mt-3 p-3.5 bg-slate-50 dark:bg-slate-950/60 rounded-2xl border border-slate-200/80 dark:border-white/10 flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 overflow-hidden flex items-center justify-center shrink-0">
+                        {img ? (
+                          <img src={img} alt={selAuthor.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="w-6 h-6 text-primary" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-black text-slate-900 dark:text-white truncate">{selAuthor.name}</span>
+                          <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">Author</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 truncate mt-0.5">{selAuthor.credentials || selAuthor.organization}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               <div>
@@ -700,9 +725,34 @@ export const BlogPostEditorTab: React.FC<BlogPostEditorTabProps> = ({
                 >
                   <option value="">-- Select Reviewer --</option>
                   {reviewers.map((r) => (
-                    <option key={r.id} value={r.id}>{r.name} ({r.designation || 'Reviewer'})</option>
+                    <option key={r.id} value={r.id}>{r.name} ({r.qualifications || r.designation || 'Reviewer'})</option>
                   ))}
                 </select>
+
+                {/* Reviewer Preview Card */}
+                {(() => {
+                  const selReviewer = reviewers.find(r => r.id === formData.reviewer_id);
+                  if (!selReviewer) return null;
+                  const img = selReviewer.avatar_url || (selReviewer as any).profile_image;
+                  return (
+                    <div className="mt-3 p-3.5 bg-slate-50 dark:bg-slate-950/60 rounded-2xl border border-slate-200/80 dark:border-white/10 flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 overflow-hidden flex items-center justify-center shrink-0">
+                        {img ? (
+                          <img src={img} alt={selReviewer.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <ShieldCheck className="w-6 h-6 text-emerald-600" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-black text-slate-900 dark:text-white truncate">{selReviewer.name}</span>
+                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">Peer Reviewer</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 truncate mt-0.5">{selReviewer.qualifications || selReviewer.organization}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>

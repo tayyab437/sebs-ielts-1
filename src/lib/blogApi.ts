@@ -94,7 +94,8 @@ export const DEFAULT_AUTHORS: BlogAuthor[] = [
     id: "author_tayyab_ashfaq",
     name: "Tayyab Ashfaq",
     slug: "tayyab-ashfaq",
-    profile_image: "/syed_ejaz_bukhari_hero.webp",
+    profile_image: "https://i.ibb.co/TMDSq4cK/Whats-App-Image-2026-10-14-at-11-17-47-AM.jpg",
+    avatar_url: "https://i.ibb.co/TMDSq4cK/Whats-App-Image-2026-10-14-at-11-17-47-AM.jpg",
     bio: "Lead IELTS Research Analyst & Academic Essay Specialist at SEBS Institute.",
     credentials: "IELTS Senior Academic Evaluator • Master of Applied Linguistics",
     organization: "SEBS Institute",
@@ -109,6 +110,7 @@ export const DEFAULT_AUTHORS: BlogAuthor[] = [
     name: "Syed Ejaz Bukhari",
     slug: "syed-ejaz-bukhari",
     profile_image: "/syed_ejaz_bukhari_hero.webp",
+    avatar_url: "/syed_ejaz_bukhari_hero.webp",
     bio: "Founder and Principal Mentor at SEBS Institute. Over 34 years of instructional leadership in English phonetics, linguistic retraining, and IELTS test coaching.",
     credentials: "Founder & Master English Coach • 34+ Years Experience • British Council Certified Instructor",
     organization: "SEBS Institute",
@@ -123,7 +125,7 @@ export const DEFAULT_AUTHORS: BlogAuthor[] = [
     id: "author-za",
     name: "Zoha Ali",
     slug: "zoha-ali",
-    bio: "Senior Linguistics Specialist and EFL mentor focusing on cognitive language processing and cognitive lexical acquisition.",
+    bio: "Senior Linguistics Specialist and EFL mentor focusing on cognitive language processing and structured lexical acquisition.",
     credentials: "MS ELTL • CELTA Qualified • 10+ Years Pedagogy",
     organization: "SEBS Institute",
     expertise: ["EFL Pedagogy", "Grammatical Cohesion", "Cambridge Assessment Framework"],
@@ -743,9 +745,10 @@ export async function fetchCategories(): Promise<BlogCategory[]> {
     const res = await fetch('/api/blog/categories');
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data.categories)) {
-        setLocalCache(CATEGORIES_CACHE_KEY, data.categories);
-        return data.categories;
+      const list = Array.isArray(data) ? data : (Array.isArray(data?.categories) ? data.categories : null);
+      if (list && list.length > 0) {
+        setLocalCache(CATEGORIES_CACHE_KEY, list);
+        return list;
       }
     }
   } catch {}
@@ -762,9 +765,15 @@ export async function fetchAuthors(): Promise<BlogAuthor[]> {
     const res = await fetch('/api/blog/authors');
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data.authors)) {
-        setLocalCache(AUTHORS_CACHE_KEY, data.authors);
-        return data.authors;
+      const list = Array.isArray(data) ? data : (Array.isArray(data?.authors) ? data.authors : null);
+      if (list && list.length > 0) {
+        const normalized: BlogAuthor[] = list.map((a: any) => ({
+          ...a,
+          profile_image: a.profile_image || a.avatar_url || '',
+          avatar_url: a.avatar_url || a.profile_image || ''
+        }));
+        setLocalCache(AUTHORS_CACHE_KEY, normalized);
+        return normalized;
       }
     }
   } catch {}
@@ -772,8 +781,51 @@ export async function fetchAuthors(): Promise<BlogAuthor[]> {
 }
 
 export async function fetchAuthorBySlug(slug: string): Promise<BlogAuthor | null> {
+  const norm = slug.trim().toLowerCase();
+  try {
+    const res = await fetch(`/api/blog/authors/${norm}`);
+    if (res.ok) {
+      const data = await res.json();
+      const a = data.author || data;
+      if (a && (a.id || a.slug)) {
+        return {
+          ...a,
+          profile_image: a.profile_image || a.avatar_url || '',
+          avatar_url: a.avatar_url || a.profile_image || ''
+        };
+      }
+    }
+  } catch {}
+
   const authors = await fetchAuthors();
-  return authors.find(a => a.slug === slug || a.id === slug) || null;
+  const found = authors.find(a => (a.slug || '').toLowerCase() === norm || (a.id || '').toLowerCase() === norm);
+  if (found) {
+    return {
+      ...found,
+      profile_image: found.profile_image || found.avatar_url || '',
+      avatar_url: found.avatar_url || found.profile_image || ''
+    };
+  }
+
+  // Also check reviewers if accessed via /blog/author/:slug
+  const reviewers = await fetchReviewers();
+  const rev = reviewers.find(r => (r.slug || '').toLowerCase() === norm || (r.id || '').toLowerCase() === norm);
+  if (rev) {
+    return {
+      id: rev.id,
+      name: rev.name,
+      slug: rev.slug,
+      bio: rev.bio,
+      credentials: rev.qualifications,
+      designation: rev.qualifications,
+      organization: rev.organization,
+      profile_image: rev.avatar_url || rev.profile_image || '',
+      avatar_url: rev.avatar_url || rev.profile_image || '',
+      expertise: rev.expertise,
+      indexable: rev.indexable
+    };
+  }
+  return null;
 }
 
 export async function fetchReviewers(): Promise<BlogReviewer[]> {
@@ -781,9 +833,15 @@ export async function fetchReviewers(): Promise<BlogReviewer[]> {
     const res = await fetch('/api/blog/reviewers');
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data.reviewers)) {
-        setLocalCache(REVIEWERS_CACHE_KEY, data.reviewers);
-        return data.reviewers;
+      const list = Array.isArray(data) ? data : (Array.isArray(data?.reviewers) ? data.reviewers : null);
+      if (list && list.length > 0) {
+        const normalized: BlogReviewer[] = list.map((r: any) => ({
+          ...r,
+          avatar_url: r.avatar_url || r.profile_image || '',
+          profile_image: r.profile_image || r.avatar_url || ''
+        }));
+        setLocalCache(REVIEWERS_CACHE_KEY, normalized);
+        return normalized;
       }
     }
   } catch {}
@@ -997,7 +1055,7 @@ export async function saveAdminCategory(category: Partial<BlogCategory>): Promis
     });
     if (res.ok) {
       const data = await res.json();
-      return data.category;
+      return data?.category || data;
     }
   } catch {}
 
@@ -1036,28 +1094,51 @@ export async function fetchAdminAuthors(): Promise<BlogAuthor[]> {
 }
 
 export async function saveAdminAuthor(author: Partial<BlogAuthor>): Promise<BlogAuthor> {
+  const imgUrl = author.profile_image || (author as any).avatar_url || '';
+  const toSend = {
+    ...author,
+    profile_image: imgUrl,
+    avatar_url: imgUrl
+  };
+
   try {
     const res = await fetch('/api/blog/admin/authors', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(author)
+      body: JSON.stringify(toSend)
     });
     if (res.ok) {
       const data = await res.json();
-      return data.author;
+      const rawSaved = data?.author || data;
+      const normalizedSaved: BlogAuthor = {
+        ...rawSaved,
+        profile_image: rawSaved.profile_image || rawSaved.avatar_url || imgUrl,
+        avatar_url: rawSaved.avatar_url || rawSaved.profile_image || imgUrl
+      };
+      const authors = getLocalCache<BlogAuthor[]>(AUTHORS_CACHE_KEY, DEFAULT_AUTHORS);
+      const existingIdx = authors.findIndex(a => a.id === normalizedSaved.id || a.slug === normalizedSaved.slug);
+      if (existingIdx >= 0) authors[existingIdx] = normalizedSaved;
+      else authors.push(normalizedSaved);
+      setLocalCache(AUTHORS_CACHE_KEY, authors);
+      return normalizedSaved;
     }
-  } catch {}
+  } catch (err) {
+    console.warn("Failed to save author to API, updating client cache:", err);
+  }
 
   const authors = getLocalCache<BlogAuthor[]>(AUTHORS_CACHE_KEY, DEFAULT_AUTHORS);
-  const existingIdx = authors.findIndex(a => a.id === author.id);
+  const existingIdx = authors.findIndex(a => a.id === author.id || (author.slug && a.slug === author.slug));
   const savedAuthor: BlogAuthor = {
     id: author.id || `author-${Date.now()}`,
     name: author.name || "New Author",
-    slug: author.slug || `author-${Date.now()}`,
+    slug: author.slug || author.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || `author-${Date.now()}`,
     bio: author.bio || "",
     credentials: author.credentials || "",
     organization: author.organization || "SEBS Institute",
     expertise: author.expertise || [],
+    profile_image: imgUrl,
+    avatar_url: imgUrl,
+    social_links: author.social_links || { linkedin: '', website: '', twitter: '' },
     indexable: author.indexable !== false
   };
 
@@ -1068,33 +1149,69 @@ export async function saveAdminAuthor(author: Partial<BlogAuthor>): Promise<Blog
   return savedAuthor;
 }
 
+export async function deleteAdminAuthor(authorId: string): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/blog/admin/authors/${authorId}`, { method: 'DELETE' });
+    if (res.ok) {
+      const authors = getLocalCache<BlogAuthor[]>(AUTHORS_CACHE_KEY, DEFAULT_AUTHORS);
+      setLocalCache(AUTHORS_CACHE_KEY, authors.filter(a => a.id !== authorId));
+      return true;
+    }
+  } catch {}
+  const authors = getLocalCache<BlogAuthor[]>(AUTHORS_CACHE_KEY, DEFAULT_AUTHORS);
+  setLocalCache(AUTHORS_CACHE_KEY, authors.filter(a => a.id !== authorId));
+  return true;
+}
+
 export async function fetchAdminReviewers(): Promise<BlogReviewer[]> {
   return fetchReviewers();
 }
 
 export async function saveAdminReviewer(reviewer: Partial<BlogReviewer>): Promise<BlogReviewer> {
+  const imgUrl = reviewer.avatar_url || (reviewer as any).profile_image || '';
+  const toSend = {
+    ...reviewer,
+    avatar_url: imgUrl,
+    profile_image: imgUrl
+  };
+
   try {
     const res = await fetch('/api/blog/admin/reviewers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(reviewer)
+      body: JSON.stringify(toSend)
     });
     if (res.ok) {
       const data = await res.json();
-      return data.reviewer;
+      const rawSaved = data?.reviewer || data;
+      const normalizedSaved: BlogReviewer = {
+        ...rawSaved,
+        avatar_url: rawSaved.avatar_url || rawSaved.profile_image || imgUrl,
+        profile_image: rawSaved.profile_image || rawSaved.avatar_url || imgUrl
+      };
+      const reviewers = getLocalCache<BlogReviewer[]>(REVIEWERS_CACHE_KEY, DEFAULT_REVIEWERS);
+      const existingIdx = reviewers.findIndex(r => r.id === normalizedSaved.id || r.slug === normalizedSaved.slug);
+      if (existingIdx >= 0) reviewers[existingIdx] = normalizedSaved;
+      else reviewers.push(normalizedSaved);
+      setLocalCache(REVIEWERS_CACHE_KEY, reviewers);
+      return normalizedSaved;
     }
-  } catch {}
+  } catch (err) {
+    console.warn("Failed to save reviewer to API, updating client cache:", err);
+  }
 
   const reviewers = getLocalCache<BlogReviewer[]>(REVIEWERS_CACHE_KEY, DEFAULT_REVIEWERS);
-  const existingIdx = reviewers.findIndex(r => r.id === reviewer.id);
+  const existingIdx = reviewers.findIndex(r => r.id === reviewer.id || (reviewer.slug && r.slug === reviewer.slug));
   const savedRev: BlogReviewer = {
     id: reviewer.id || `reviewer-${Date.now()}`,
     name: reviewer.name || "New Reviewer",
-    slug: reviewer.slug || `reviewer-${Date.now()}`,
+    slug: reviewer.slug || reviewer.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || `reviewer-${Date.now()}`,
     bio: reviewer.bio || "",
     qualifications: reviewer.qualifications || "",
     organization: reviewer.organization || "SEBS Institute Assessment Board",
     expertise: reviewer.expertise || [],
+    avatar_url: imgUrl,
+    profile_image: imgUrl,
     indexable: reviewer.indexable !== false
   };
 
@@ -1103,6 +1220,20 @@ export async function saveAdminReviewer(reviewer: Partial<BlogReviewer>): Promis
 
   setLocalCache(REVIEWERS_CACHE_KEY, reviewers);
   return savedRev;
+}
+
+export async function deleteAdminReviewer(reviewerId: string): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/blog/admin/reviewers/${reviewerId}`, { method: 'DELETE' });
+    if (res.ok) {
+      const reviewers = getLocalCache<BlogReviewer[]>(REVIEWERS_CACHE_KEY, DEFAULT_REVIEWERS);
+      setLocalCache(REVIEWERS_CACHE_KEY, reviewers.filter(r => r.id !== reviewerId));
+      return true;
+    }
+  } catch {}
+  const reviewers = getLocalCache<BlogReviewer[]>(REVIEWERS_CACHE_KEY, DEFAULT_REVIEWERS);
+  setLocalCache(REVIEWERS_CACHE_KEY, reviewers.filter(r => r.id !== reviewerId));
+  return true;
 }
 
 export async function fetchAdminStats(): Promise<{
@@ -1121,9 +1252,25 @@ export async function fetchAdminStats(): Promise<{
     const res = await fetch('/api/blog/stats');
     if (res.ok) {
       const data = await res.json();
-      return data.stats;
+      const raw = data?.stats || data;
+      if (raw && typeof raw === 'object') {
+        return {
+          total_posts: Number(raw.total_posts) || 0,
+          published_posts: Number(raw.published_posts) || 0,
+          draft_posts: Number(raw.draft_posts) || 0,
+          pending_posts: Number(raw.pending_posts) || 0,
+          scheduled_posts: Number(raw.scheduled_posts) || 0,
+          archived_posts: Number(raw.archived_posts) || 0,
+          total_categories: Number(raw.total_categories) || 0,
+          total_authors: Number(raw.total_authors) || 0,
+          total_reviewers: Number(raw.total_reviewers) || 0,
+          total_redirects: Number(raw.total_redirects) || 0
+        };
+      }
     }
-  } catch {}
+  } catch (err) {
+    console.error('Failed to fetch /api/blog/stats:', err);
+  }
 
   const posts = getLocalCache<BlogPost[]>(FALLBACK_CACHE_KEY, DEFAULT_POSTS);
   const cats = getLocalCache<BlogCategory[]>(CATEGORIES_CACHE_KEY, DEFAULT_CATEGORIES);
@@ -1149,6 +1296,7 @@ export async function fetchAdminAudits(): Promise<BlogAuditItem[]> {
     const res = await fetch('/api/blog/audits');
     if (res.ok) {
       const data = await res.json();
+      if (Array.isArray(data)) return data;
       if (Array.isArray(data.audits)) return data.audits;
     }
   } catch {}

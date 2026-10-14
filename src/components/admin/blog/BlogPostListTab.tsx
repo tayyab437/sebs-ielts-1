@@ -8,9 +8,10 @@ import { Search, Plus, Edit, Copy, Eye, Archive, Trash2, Filter, CheckCircle2, C
 interface BlogPostListTabProps {
   onEditPost: (postId: string) => void;
   onCreateNew: () => void;
+  initialStatus?: string;
 }
 
-export const BlogPostListTab: React.FC<BlogPostListTabProps> = ({ onEditPost, onCreateNew }) => {
+export const BlogPostListTab: React.FC<BlogPostListTabProps> = ({ onEditPost, onCreateNew, initialStatus }) => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [categories, setCategories] = useState<BlogCategory[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -18,7 +19,7 @@ export const BlogPostListTab: React.FC<BlogPostListTabProps> = ({ onEditPost, on
 
   // Filters
   const [search, setSearch] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>(initialStatus || '');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [pagination, setPagination] = useState({ page: 1, limit: 15, total: 0, totalPages: 1 });
 

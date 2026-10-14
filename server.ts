@@ -2046,16 +2046,75 @@ async function startServer() {
 
   const syncBlogFromMySQL = async () => {
     try {
-      const [mysqlPosts]: any = await mysqlPool.query("SELECT * FROM blog_posts");
-      const [mysqlCats]: any = await mysqlPool.query("SELECT * FROM blog_categories");
-      const [mysqlAuthors]: any = await mysqlPool.query("SELECT * FROM blog_authors");
-      const [mysqlReviewers]: any = await mysqlPool.query("SELECT * FROM blog_reviewers");
-
       const blogData = readBlogData();
       if (!Array.isArray(blogData.posts)) blogData.posts = [];
       if (!Array.isArray(blogData.categories)) blogData.categories = [];
       if (!Array.isArray(blogData.authors)) blogData.authors = [];
       if (!Array.isArray(blogData.reviewers)) blogData.reviewers = [];
+
+      // 1. First push any local items into MySQL if MySQL is missing them
+      for (const p of blogData.posts) {
+        try {
+          await mysqlPool.query(
+            `INSERT INTO blog_posts (
+              id, title, slug, excerpt, content, status, content_type,
+              category_id, author_id, reviewer_id, is_featured,
+              direct_answer_question, direct_answer_text, key_takeaways, important_note, faqs, sources, cta,
+              seo_title, meta_description, canonical_url, primary_keyword,
+              published_at, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NOW())
+            ON DUPLICATE KEY UPDATE
+              title=VALUES(title), slug=VALUES(slug), excerpt=VALUES(excerpt), content=VALUES(content), status=VALUES(status),
+              category_id=VALUES(category_id), author_id=VALUES(author_id), reviewer_id=VALUES(reviewer_id),
+              updated_at=NOW()`,
+            [
+              p.id, p.title || 'Untitled', p.slug || `post-${Date.now()}`, p.excerpt || '', p.content || '', p.status || 'published', p.content_type || 'pillar',
+              p.category_id || 'cat_1_1791377157718', p.author_id || 'author_tayyab_ashfaq', p.reviewer_id || 'reviewer_ejaz_bukhari', p.is_featured || p.featured ? 1 : 0,
+              p.direct_answer_question || null, p.direct_answer_text || null, JSON.stringify(p.key_takeaways || []), JSON.stringify(p.important_note || {}), JSON.stringify(p.faqs || []), JSON.stringify(p.sources || []), JSON.stringify(p.cta || {}),
+              p.seo_title || p.title, p.meta_description || p.excerpt, p.canonical_url || null, p.primary_keyword || null
+            ]
+          );
+        } catch {}
+      }
+
+      for (const c of blogData.categories) {
+        try {
+          await mysqlPool.query(
+            `INSERT INTO blog_categories (id, name, slug, description, seo_title, meta_description, is_active, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
+             ON DUPLICATE KEY UPDATE name=VALUES(name), slug=VALUES(slug), description=VALUES(description), seo_title=VALUES(seo_title), meta_description=VALUES(meta_description), updated_at=NOW()`,
+            [c.id, c.name, c.slug, c.description || '', c.seo_title || c.name, c.meta_description || '']
+          );
+        } catch {}
+      }
+
+      for (const a of blogData.authors) {
+        try {
+          await mysqlPool.query(
+            `INSERT INTO blog_authors (id, name, slug, avatar_url, bio, credentials, is_active, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
+             ON DUPLICATE KEY UPDATE name=VALUES(name), slug=VALUES(slug), avatar_url=VALUES(avatar_url), bio=VALUES(bio), credentials=VALUES(credentials), updated_at=NOW()`,
+            [a.id, a.name, a.slug, a.profile_image || a.avatar_url || '', a.bio || '', a.credentials || '']
+          );
+        } catch {}
+      }
+
+      for (const r of blogData.reviewers) {
+        try {
+          await mysqlPool.query(
+            `INSERT INTO blog_reviewers (id, name, slug, avatar_url, bio, credentials, is_active, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
+             ON DUPLICATE KEY UPDATE name=VALUES(name), slug=VALUES(slug), avatar_url=VALUES(avatar_url), bio=VALUES(bio), credentials=VALUES(credentials), updated_at=NOW()`,
+            [r.id, r.name, r.slug, r.avatar_url || '', r.bio || '', r.qualifications || r.credentials || '']
+          );
+        } catch {}
+      }
+
+      // 2. Fetch authoritative MySQL records
+      const [mysqlPosts]: any = await mysqlPool.query("SELECT * FROM blog_posts");
+      const [mysqlCats]: any = await mysqlPool.query("SELECT * FROM blog_categories");
+      const [mysqlAuthors]: any = await mysqlPool.query("SELECT * FROM blog_authors");
+      const [mysqlReviewers]: any = await mysqlPool.query("SELECT * FROM blog_reviewers");
 
       // Merge categories
       if (Array.isArray(mysqlCats)) {
@@ -2081,18 +2140,22 @@ async function startServer() {
       if (Array.isArray(mysqlAuthors)) {
         for (const ma of mysqlAuthors) {
           const idx = blogData.authors.findIndex((a: any) => a.id === ma.id || a.slug === ma.slug);
+          const existing = idx >= 0 ? blogData.authors[idx] : {};
+          const img = ma.avatar_url || existing.profile_image || existing.avatar_url || '';
           const authObj = {
             id: ma.id,
             name: ma.name,
             slug: ma.slug,
-            profile_image: ma.avatar_url || '/syed_ejaz_bukhari_hero.webp',
-            bio: ma.bio || '',
-            credentials: ma.credentials || '',
-            organization: 'SEBS Institute',
-            expertise: ['IELTS Academic & GT', 'Linguistics'],
-            indexable: true
+            profile_image: img,
+            avatar_url: img,
+            bio: ma.bio || existing.bio || '',
+            credentials: ma.credentials || existing.credentials || '',
+            organization: existing.organization || 'SEBS Institute',
+            expertise: existing.expertise || ['IELTS Academic & GT', 'Linguistics'],
+            social_links: existing.social_links || {},
+            indexable: existing.indexable !== false
           };
-          if (idx >= 0) blogData.authors[idx] = { ...blogData.authors[idx], ...authObj };
+          if (idx >= 0) blogData.authors[idx] = { ...existing, ...authObj };
           else blogData.authors.push(authObj);
         }
       }
@@ -2101,17 +2164,21 @@ async function startServer() {
       if (Array.isArray(mysqlReviewers)) {
         for (const mr of mysqlReviewers) {
           const idx = blogData.reviewers.findIndex((r: any) => r.id === mr.id || r.slug === mr.slug);
+          const existing = idx >= 0 ? blogData.reviewers[idx] : {};
+          const img = mr.avatar_url || existing.avatar_url || existing.profile_image || '';
           const revObj = {
             id: mr.id,
             name: mr.name,
             slug: mr.slug,
-            bio: mr.bio || '',
-            qualifications: mr.credentials || '',
-            organization: 'SEBS Institute Assessment Board',
-            expertise: ['Examiner Protocols'],
-            indexable: true
+            bio: mr.bio || existing.bio || '',
+            qualifications: mr.credentials || existing.qualifications || '',
+            avatar_url: img,
+            profile_image: img,
+            organization: existing.organization || 'SEBS Institute Assessment Board',
+            expertise: existing.expertise || ['Examiner Protocols'],
+            indexable: existing.indexable !== false
           };
-          if (idx >= 0) blogData.reviewers[idx] = { ...blogData.reviewers[idx], ...revObj };
+          if (idx >= 0) blogData.reviewers[idx] = { ...existing, ...revObj };
           else blogData.reviewers.push(revObj);
         }
       }
@@ -2161,7 +2228,7 @@ async function startServer() {
       }
 
       writeBlogData(blogData);
-      console.log(`[syncBlogFromMySQL] Synced ${mysqlPosts.length} posts from MySQL into blog_data.json.`);
+      console.log(`[syncBlogFromMySQL] Synced ${mysqlPosts.length} posts, ${mysqlCats.length} categories from MySQL into blog_data.json.`);
     } catch (e: any) {
       console.warn("[syncBlogFromMySQL] Error syncing blog from MySQL:", e.message || e);
     }
@@ -2246,10 +2313,48 @@ async function startServer() {
     res.json(data.authors || []);
   });
 
+  // Single Author by slug or id
+  app.get("/api/blog/authors/:slugOrId", (req, res) => {
+    const data = readBlogData();
+    const query = decodeURIComponent(req.params.slugOrId || "").trim().toLowerCase();
+    const author = (data.authors || []).find((a: any) =>
+      (a.slug || "").trim().toLowerCase() === query ||
+      (a.id || "").trim().toLowerCase() === query
+    );
+    if (!author) {
+      return res.status(404).json({ error: "Author not found" });
+    }
+    const fullAuthor = {
+      ...author,
+      profile_image: author.profile_image || author.avatar_url || '',
+      avatar_url: author.avatar_url || author.profile_image || ''
+    };
+    res.json({ author: fullAuthor, ...fullAuthor });
+  });
+
   // 5. Public Reviewers
   app.get("/api/blog/reviewers", (_req, res) => {
     const data = readBlogData();
     res.json(data.reviewers || []);
+  });
+
+  // Single Reviewer by slug or id
+  app.get("/api/blog/reviewers/:slugOrId", (req, res) => {
+    const data = readBlogData();
+    const query = decodeURIComponent(req.params.slugOrId || "").trim().toLowerCase();
+    const reviewer = (data.reviewers || []).find((r: any) =>
+      (r.slug || "").trim().toLowerCase() === query ||
+      (r.id || "").trim().toLowerCase() === query
+    );
+    if (!reviewer) {
+      return res.status(404).json({ error: "Reviewer not found" });
+    }
+    const fullReviewer = {
+      ...reviewer,
+      avatar_url: reviewer.avatar_url || reviewer.profile_image || '',
+      profile_image: reviewer.profile_image || reviewer.avatar_url || ''
+    };
+    res.json({ reviewer: fullReviewer, ...fullReviewer });
   });
 
   // 6. Public Settings
@@ -2397,25 +2502,151 @@ async function startServer() {
   });
 
   // 12. Admin Categories CRUD
-  app.post("/api/blog/admin/categories", (req, res) => {
+  app.post("/api/blog/admin/categories", async (req, res) => {
     const data = readBlogData();
     if (!data.categories) data.categories = [];
+    let savedCat: any;
     const existingIdx = data.categories.findIndex((c: any) => c.id === req.body.id);
     if (existingIdx !== -1) {
       data.categories[existingIdx] = { ...data.categories[existingIdx], ...req.body };
-      writeBlogData(data);
-      return res.json(data.categories[existingIdx]);
+      savedCat = data.categories[existingIdx];
+    } else {
+      savedCat = { ...req.body, id: req.body.id || `cat-${Date.now()}` };
+      data.categories.push(savedCat);
     }
-    const newCat = { ...req.body, id: req.body.id || `cat-${Date.now()}` };
-    data.categories.push(newCat);
     writeBlogData(data);
-    res.json(newCat);
+
+    try {
+      await mysqlPool.query(
+        `INSERT INTO blog_categories (id, name, slug, description, seo_title, meta_description, is_active, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
+         ON DUPLICATE KEY UPDATE name=VALUES(name), slug=VALUES(slug), description=VALUES(description), seo_title=VALUES(seo_title), meta_description=VALUES(meta_description), updated_at=NOW()`,
+        [savedCat.id, savedCat.name, savedCat.slug, savedCat.description || '', savedCat.seo_title || savedCat.name, savedCat.meta_description || '']
+      );
+    } catch (e: any) {
+      console.warn("MySQL category sync warning:", e.message);
+    }
+
+    res.json(savedCat);
   });
 
-  app.delete("/api/blog/admin/categories/:id", (req, res) => {
+  app.delete("/api/blog/admin/categories/:id", async (req, res) => {
     const data = readBlogData();
     data.categories = (data.categories || []).filter((c: any) => c.id !== req.params.id);
     writeBlogData(data);
+
+    try {
+      await mysqlPool.query('DELETE FROM blog_categories WHERE id = ?', [req.params.id]);
+    } catch (e: any) {
+      console.warn("MySQL category delete warning:", e.message);
+    }
+
+    res.json({ success: true });
+  });
+
+  // Admin Authors CRUD
+  app.post("/api/blog/admin/authors", async (req, res) => {
+    const data = readBlogData();
+    if (!data.authors) data.authors = [];
+    let savedAuthor: any;
+    const img = req.body.profile_image || req.body.avatar_url || '';
+    const payload = {
+      ...req.body,
+      profile_image: img,
+      avatar_url: img
+    };
+    const existingIdx = data.authors.findIndex((a: any) => a.id === req.body.id || (req.body.slug && a.slug === req.body.slug));
+    if (existingIdx !== -1) {
+      data.authors[existingIdx] = { ...data.authors[existingIdx], ...payload };
+      savedAuthor = data.authors[existingIdx];
+    } else {
+      savedAuthor = {
+        ...payload,
+        id: req.body.id || `author-${Date.now()}`,
+        slug: req.body.slug || req.body.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || `author-${Date.now()}`
+      };
+      data.authors.push(savedAuthor);
+    }
+    writeBlogData(data);
+
+    try {
+      await mysqlPool.query(
+        `INSERT INTO blog_authors (id, name, slug, avatar_url, bio, credentials, is_active, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
+         ON DUPLICATE KEY UPDATE name=VALUES(name), slug=VALUES(slug), avatar_url=VALUES(avatar_url), bio=VALUES(bio), credentials=VALUES(credentials), updated_at=NOW()`,
+        [savedAuthor.id, savedAuthor.name, savedAuthor.slug, img, savedAuthor.bio || '', savedAuthor.credentials || '']
+      );
+    } catch (e: any) {
+      console.warn("MySQL author sync warning:", e.message);
+    }
+
+    res.json(savedAuthor);
+  });
+
+  app.delete("/api/blog/admin/authors/:id", async (req, res) => {
+    const data = readBlogData();
+    data.authors = (data.authors || []).filter((a: any) => a.id !== req.params.id);
+    writeBlogData(data);
+
+    try {
+      await mysqlPool.query('DELETE FROM blog_authors WHERE id = ?', [req.params.id]);
+    } catch (e: any) {
+      console.warn("MySQL author delete warning:", e.message);
+    }
+
+    res.json({ success: true });
+  });
+
+  // Admin Reviewers CRUD
+  app.post("/api/blog/admin/reviewers", async (req, res) => {
+    const data = readBlogData();
+    if (!data.reviewers) data.reviewers = [];
+    let savedRev: any;
+    const img = req.body.avatar_url || req.body.profile_image || '';
+    const payload = {
+      ...req.body,
+      avatar_url: img,
+      profile_image: img
+    };
+    const existingIdx = data.reviewers.findIndex((r: any) => r.id === req.body.id || (req.body.slug && r.slug === req.body.slug));
+    if (existingIdx !== -1) {
+      data.reviewers[existingIdx] = { ...data.reviewers[existingIdx], ...payload };
+      savedRev = data.reviewers[existingIdx];
+    } else {
+      savedRev = {
+        ...payload,
+        id: req.body.id || `reviewer-${Date.now()}`,
+        slug: req.body.slug || req.body.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || `reviewer-${Date.now()}`
+      };
+      data.reviewers.push(savedRev);
+    }
+    writeBlogData(data);
+
+    try {
+      await mysqlPool.query(
+        `INSERT INTO blog_reviewers (id, name, slug, avatar_url, bio, credentials, is_active, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
+         ON DUPLICATE KEY UPDATE name=VALUES(name), slug=VALUES(slug), avatar_url=VALUES(avatar_url), bio=VALUES(bio), credentials=VALUES(credentials), updated_at=NOW()`,
+        [savedRev.id, savedRev.name, savedRev.slug, img, savedRev.bio || '', savedRev.qualifications || savedRev.credentials || '']
+      );
+    } catch (e: any) {
+      console.warn("MySQL reviewer sync warning:", e.message);
+    }
+
+    res.json(savedRev);
+  });
+
+  app.delete("/api/blog/admin/reviewers/:id", async (req, res) => {
+    const data = readBlogData();
+    data.reviewers = (data.reviewers || []).filter((r: any) => r.id !== req.params.id);
+    writeBlogData(data);
+
+    try {
+      await mysqlPool.query('DELETE FROM blog_reviewers WHERE id = ?', [req.params.id]);
+    } catch (e: any) {
+      console.warn("MySQL reviewer delete warning:", e.message);
+    }
+
     res.json({ success: true });
   });
 
@@ -2423,16 +2654,22 @@ async function startServer() {
   app.get("/api/blog/stats", (_req, res) => {
     const data = readBlogData();
     const posts = data.posts || [];
-    res.json({
+    const stats = {
       total_posts: posts.length,
       published_posts: posts.filter((p: any) => p.status === "published").length,
       draft_posts: posts.filter((p: any) => p.status === "draft").length,
       pending_posts: posts.filter((p: any) => p.status === "pending_review").length,
+      scheduled_posts: posts.filter((p: any) => p.status === "scheduled").length,
       archived_posts: posts.filter((p: any) => p.status === "archived").length,
       total_categories: (data.categories || []).length,
       total_authors: (data.authors || []).length,
       total_reviewers: (data.reviewers || []).length,
+      total_redirects: (data.redirects || []).length,
       stale_reviews_count: 0
+    };
+    res.json({
+      ...stats,
+      stats
     });
   });
 

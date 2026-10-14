@@ -14,6 +14,7 @@ export const BlogAuthorView: React.FC = () => {
   const page = parseInt(searchParams.get('page') || '1');
 
   const [author, setAuthor] = useState<BlogAuthor | null>(null);
+  const [imgError, setImgError] = useState<boolean>(false);
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 9, total: 0, totalPages: 1 });
   const [loading, setLoading] = useState<boolean>(true);
@@ -23,6 +24,7 @@ export const BlogAuthorView: React.FC = () => {
     if (!authorSlug) return;
     setLoading(true);
     setError(null);
+    setImgError(false);
 
     fetchAuthorBySlug(authorSlug)
       .then((auth) => {
@@ -72,6 +74,8 @@ export const BlogAuthorView: React.FC = () => {
     );
   }
 
+  const profileImg = author.profile_image || author.avatar_url;
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans pb-24 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
@@ -79,11 +83,16 @@ export const BlogAuthorView: React.FC = () => {
 
         {/* Author Bio Header Card */}
         <header className="p-8 sm:p-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl shadow-xl flex flex-col md:flex-row items-center md:items-start gap-8">
-          <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-3xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center shrink-0 overflow-hidden shadow-md">
-            {author.avatar_url ? (
-              <img src={author.avatar_url} alt={author.name} className="w-full h-full object-cover" />
+          <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center shrink-0 overflow-hidden shadow-md">
+            {profileImg && !imgError ? (
+              <img
+                src={profileImg}
+                alt={author.name}
+                onError={() => setImgError(true)}
+                className="w-full h-full object-cover"
+              />
             ) : (
-              <User className="w-12 h-12 text-primary" />
+              <User className="w-14 h-14 text-primary" />
             )}
           </div>
 
@@ -97,18 +106,62 @@ export const BlogAuthorView: React.FC = () => {
               {author.name}
             </h1>
 
-            {author.designation && (
-              <p className="text-sm font-bold text-primary">{author.designation}</p>
+            {(author.credentials || author.designation) && (
+              <p className="text-sm font-bold text-primary">
+                {author.credentials || author.designation}
+              </p>
             )}
 
-            {author.credentials && (
-              <p className="text-xs text-slate-500 italic">{author.credentials}</p>
+            {author.organization && (
+              <p className="text-xs font-medium text-slate-400">
+                {author.organization}
+              </p>
             )}
 
             {author.bio && (
               <p className="text-sm text-slate-600 dark:text-slate-300 max-w-3xl leading-relaxed pt-2">
                 {author.bio}
               </p>
+            )}
+
+            {/* Expertise pills */}
+            {Array.isArray(author.expertise) && author.expertise.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-2 justify-center md:justify-start">
+                {author.expertise.map((exp, idx) => (
+                  <span
+                    key={idx}
+                    className="text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-xl"
+                  >
+                    {exp}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Social links */}
+            {author.social_links && (author.social_links.linkedin || author.social_links.website) && (
+              <div className="flex items-center gap-3 pt-3 justify-center md:justify-start">
+                {author.social_links.linkedin && (
+                  <a
+                    href={author.social_links.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                  >
+                    LinkedIn Profile &rarr;
+                  </a>
+                )}
+                {author.social_links.website && (
+                  <a
+                    href={author.social_links.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-bold text-slate-500 hover:text-primary hover:underline flex items-center gap-1"
+                  >
+                    Official Website &rarr;
+                  </a>
+                )}
+              </div>
             )}
           </div>
         </header>
