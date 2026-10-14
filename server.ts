@@ -2186,8 +2186,10 @@ async function startServer() {
         excerpt: mp.excerpt || '',
         content: mp.content || '',
         content_format: 'html',
-        featured_image: mp.featured_image_url || '/ielts_prep_banner_960.webp',
-        featured_image_alt: mp.featured_image_alt || mp.title,
+        featured_image: mp.featured_image_url || mp.featured_image || null,
+        featured_image_url: mp.featured_image_url || mp.featured_image || null,
+        featured_image_alt: mp.featured_image_alt || mp.title || '',
+        featured_image_caption: mp.featured_image_caption || '',
         status: mp.status || 'published',
         content_type: mp.content_type || 'pillar',
         category_id: mp.category_id || 'cat_1_1791377157718',
@@ -2388,6 +2390,7 @@ async function startServer() {
     const data = readBlogData();
     const newPost = {
       ...req.body,
+      featured_image_url: req.body.featured_image_url || req.body.featured_image || null,
       id: req.body.id || `post-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       status: req.body.status || 'published',
       created_at: new Date().toISOString(),
@@ -2403,17 +2406,20 @@ async function startServer() {
         `INSERT INTO blog_posts (
           id, title, slug, excerpt, content, status, content_type,
           category_id, author_id, reviewer_id, is_featured,
+          featured_image_url, featured_image_alt, featured_image_caption,
           direct_answer_question, direct_answer_text, key_takeaways, important_note, faqs, sources, cta,
           seo_title, meta_description, canonical_url, primary_keyword,
           published_at, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NOW())
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NOW())
         ON DUPLICATE KEY UPDATE
           title=VALUES(title), slug=VALUES(slug), excerpt=VALUES(excerpt), content=VALUES(content), status=VALUES(status),
           category_id=VALUES(category_id), author_id=VALUES(author_id), reviewer_id=VALUES(reviewer_id),
+          featured_image_url=VALUES(featured_image_url), featured_image_alt=VALUES(featured_image_alt), featured_image_caption=VALUES(featured_image_caption),
           updated_at=NOW()`,
         [
           newPost.id, newPost.title || 'Untitled', newPost.slug || `post-${Date.now()}`, newPost.excerpt || '', newPost.content || '', newPost.status || 'published', newPost.content_type || 'pillar',
           newPost.category_id || 'cat_1_1791377157718', newPost.author_id || 'author_tayyab_ashfaq', newPost.reviewer_id || 'reviewer_ejaz_bukhari', newPost.is_featured || newPost.featured ? 1 : 0,
+          newPost.featured_image_url || null, newPost.featured_image_alt || newPost.title || null, newPost.featured_image_caption || null,
           newPost.direct_answer_question || null, newPost.direct_answer_text || null, JSON.stringify(newPost.key_takeaways || []), JSON.stringify(newPost.important_note || {}), JSON.stringify(newPost.faqs || []), JSON.stringify(newPost.sources || []), JSON.stringify(newPost.cta || {}),
           newPost.seo_title || newPost.title, newPost.meta_description || newPost.excerpt, newPost.canonical_url || null, newPost.primary_keyword || null
         ]
@@ -2441,9 +2447,13 @@ async function startServer() {
       metadata_snapshot: { title: data.posts[idx].title, excerpt: data.posts[idx].excerpt }
     });
 
+    const updatedImg = req.body.featured_image_url !== undefined ? req.body.featured_image_url : (req.body.featured_image !== undefined ? req.body.featured_image : data.posts[idx].featured_image_url);
+
     data.posts[idx] = {
       ...data.posts[idx],
       ...req.body,
+      featured_image_url: updatedImg,
+      featured_image: updatedImg,
       updated_at: new Date().toISOString()
     };
     writeBlogData(data);
@@ -2455,6 +2465,7 @@ async function startServer() {
         `UPDATE blog_posts SET
           title = ?, slug = ?, excerpt = ?, content = ?, status = ?,
           category_id = ?, author_id = ?, reviewer_id = ?, is_featured = ?,
+          featured_image_url = ?, featured_image_alt = ?, featured_image_caption = ?,
           direct_answer_question = ?, direct_answer_text = ?, key_takeaways = ?, important_note = ?, faqs = ?, sources = ?, cta = ?,
           seo_title = ?, meta_description = ?, canonical_url = ?, primary_keyword = ?,
           updated_at = NOW()
@@ -2462,6 +2473,7 @@ async function startServer() {
         [
           p.title || 'Untitled', p.slug, p.excerpt || '', p.content || '', p.status || 'published',
           p.category_id || 'cat_1_1791377157718', p.author_id || 'author_tayyab_ashfaq', p.reviewer_id || 'reviewer_ejaz_bukhari', p.is_featured || p.featured ? 1 : 0,
+          p.featured_image_url || null, p.featured_image_alt || p.title || null, p.featured_image_caption || null,
           p.direct_answer_question || null, p.direct_answer_text || null, JSON.stringify(p.key_takeaways || []), JSON.stringify(p.important_note || {}), JSON.stringify(p.faqs || []), JSON.stringify(p.sources || []), JSON.stringify(p.cta || {}),
           p.seo_title || p.title, p.meta_description || p.excerpt, p.canonical_url || null, p.primary_keyword || null,
           req.params.id, p.slug
