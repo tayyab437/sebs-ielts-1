@@ -590,6 +590,19 @@ async function initTables(attempt = 1) {
     await ensureTableExists("quizzes");
     await ensureTableExists("students");
 
+    // Ensure student_submissions has content column and real student names synced
+    try {
+      await mysqlPool.query(`ALTER TABLE student_submissions ADD COLUMN content LONGTEXT`);
+    } catch (e) {}
+    try {
+      await mysqlPool.query(`
+        UPDATE student_submissions s 
+        JOIN profiles p ON s.student_id = p.id 
+        SET s.student_name = COALESCE(NULLIF(TRIM(p.full_name), ''), NULLIF(TRIM(CONCAT(COALESCE(p.first_name, ''), ' ', COALESCE(p.last_name, ''))), ''), p.email) 
+        WHERE (s.student_name IN ('Anonymous Student', 'Anonymous', '') OR s.student_name IS NULL) AND s.student_id IS NOT NULL
+      `);
+    } catch (e) {}
+
     // Ensure courses table has columns for rich speaking test data
     try {
       await mysqlPool.query(`ALTER TABLE courses ADD COLUMN speaking_questions LONGTEXT`);
@@ -659,6 +672,7 @@ async function ensureTableExists(tableName: string, sampleRow?: any): Promise<bo
           lesson_type VARCHAR(50),
           module_idx INT DEFAULT 0,
           lesson_idx INT DEFAULT 0,
+          content LONGTEXT,
           answers JSON,
           evaluation JSON,
           score INT DEFAULT 0,
@@ -1329,6 +1343,25 @@ async function startServer() {
           }
           return row;
         });
+
+        // Enrich student_name from profiles if missing in student_submissions
+        if (table === "student_submissions") {
+          for (const row of insertArr) {
+            const uId = row.student_id || targetUserId;
+            if ((!row.student_name || row.student_name === "Anonymous Student" || row.student_name === "Anonymous") && uId) {
+              try {
+                const [profRows]: any = await mysqlPool.query(
+                  "SELECT full_name, first_name, last_name, email FROM profiles WHERE id = ? LIMIT 1",
+                  [uId]
+                );
+                if (profRows && profRows.length > 0) {
+                  const p = profRows[0];
+                  row.student_name = p.full_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || p.email;
+                }
+              } catch (e) {}
+            }
+          }
+        }
 
         const rawKeys = Object.keys(insertArr[0]);
         const keys = validCols ? rawKeys.filter(k => validCols!.has(k)) : rawKeys;

@@ -147,6 +147,7 @@ export const getCourseUrlMeta = (course: any) => {
     }
   }
 
+  console.log("Course URL Meta:", { examType, testType, testNumber, courseTitle: course.title, courseId: course.id });
   return {
     examType,
     testType,
@@ -358,6 +359,9 @@ function StudentCoursesInner({
   const [activeSkillFilter, setActiveSkillFilter] = useState<string>(() => {
     return initialFilter || (location.state as { activeType?: string })?.activeType || "all";
   });
+  const [viewMode, setViewMode] = useState<"categories" | "list">(() => {
+    return (initialFilter || (location.state as { activeType?: string })?.activeType) ? "list" : "categories";
+  });
 
   // Match helper for skills, media courses, academic, and general training
   const isMatchForFilter = (course: any, filter: string) => {
@@ -400,13 +404,13 @@ function StudentCoursesInner({
 
   const filterPills = [
     { id: "all", label: "All Skills", icon: LayoutGrid },
-    { id: "listening", label: "Listening", icon: Headphones },
-    { id: "reading", label: "Reading", icon: BookOpen },
-    { id: "writing", label: "Writing", icon: PenTool },
-    { id: "speaking", label: "Speaking", icon: Mic },
-    { id: "media", label: "Media Courses", icon: Film },
-    { id: "academic", label: "Academic (AC)", icon: GraduationCap },
-    { id: "general_training", label: "General Training", icon: Briefcase },
+    { id: "listening", label: "Listening", icon: Headphones, description: "Master your listening comprehension with our curated practice tracks and audio lessons.", image: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=800&q=80" },
+    { id: "reading", label: "Reading", icon: BookOpen, description: "Improve your speed and accuracy with diverse reading passages and expert techniques.", image: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f1?w=800&q=80" },
+    { id: "writing", label: "Writing", icon: PenTool, description: "Develop clear, coherent writing skills with guided prompts and automated feedback.", image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&q=80" },
+    { id: "speaking", label: "Speaking", icon: Mic, description: "Boost your fluency and confidence through guided speaking practice and AI-powered assessments.", image: "https://images.unsplash.com/photo-1589003077984-894e133dabab?w=800&q=80" },
+    { id: "media", label: "Media Courses", icon: Film, description: "Engage with immersive video masterclasses and audio podcasts for deep learning.", image: "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=800&q=80" },
+    { id: "academic", label: "Academic (AC)", icon: GraduationCap, description: "Comprehensive preparation for IELTS Academic, focusing on university-level tasks.", image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&q=80" },
+    { id: "general_training", label: "General Training", icon: Briefcase, description: "Practical training for daily life and work-related English communication.", image: "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80" },
   ];
 
   useEffect(() => {
@@ -638,10 +642,9 @@ function StudentCoursesInner({
       return;
     }
 
-    const { examType, testType, testNumber } = getCourseUrlMeta(course);
     const targetUrl = isDashboardMode
-      ? `/dashboard/courses/${examType}/${testType}/${testNumber}`
-      : `/courses/${examType}/${testType}/${testNumber}`;
+      ? `/dashboard/courses/${course.id}`
+      : `/courses/${course.id}`;
 
     if (location.pathname !== targetUrl) {
       navigate(targetUrl);
@@ -1124,7 +1127,7 @@ function StudentCoursesInner({
         className={`group relative overflow-hidden rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 hover:border-primary/30 transition-all duration-500 flex flex-col h-full shadow-lg shadow-slate-200/50 dark:shadow-none hover:shadow-xl hover:-translate-y-1 card-border-effect cursor-pointer ${isCompact ? 'p-1' : ''}`}
       >
         {/* Thumbnail Area */}
-        <div className={`relative overflow-hidden shrink-0 ${isCompact ? 'aspect-[2/1] rounded-[2rem]' : 'aspect-video'}`}>
+        <div className={`relative overflow-hidden shrink-0 bg-slate-200 dark:bg-slate-800 ${isCompact ? 'aspect-[2/1] rounded-[2rem]' : 'aspect-video'}`}>
           {course.featured_image && !course.featured_image.includes("1543269865-cbf427effbad") ? (
             <img 
               src={course.featured_image} 
@@ -3642,7 +3645,7 @@ function StudentCoursesInner({
                       <Sliders className="w-4 h-4" />
                     </div>
                     <h3 className="text-sm font-black uppercase tracking-widest text-slate-900 dark:text-white">
-                      {isDashboardMode ? "Your Learning Universe" : `Published Training Tracks (${catalogCourses.length})`}
+                      {isDashboardMode ? "Your Learning Universe" : viewMode === "list" ? `Published Training Tracks (${catalogCourses.filter(c => isMatchForFilter(c, activeSkillFilter)).length})` : "Course Categories"}
                     </h3>
                   </div>
                 </div>
@@ -3837,37 +3840,68 @@ function StudentCoursesInner({
                     )}
                   </div>
                 ) : (
-                  (() => {
-                    const displayedCatalogCourses = catalogCourses.filter(course => isMatchForFilter(course, activeSkillFilter));
-                    if (displayedCatalogCourses.length === 0) {
+                  viewMode === "categories" ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {filterPills.filter(p => p.id !== 'all').map(p => (
+                        <Card 
+                          key={p.id}
+                          onClick={() => { setActiveSkillFilter(p.id); setViewMode("list"); }}
+                          className="group relative overflow-hidden rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 hover:border-primary/30 transition-all duration-500 shadow-lg cursor-pointer flex flex-col items-center hover:-translate-y-1"
+                        >
+                            <img 
+                                src={p.image} 
+                                alt={p.label} 
+                                className="w-full h-64 object-cover"
+                                onError={(e: any) => { e.target.src = "https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=800&q=80"; }}
+                            />
+                            <div className="p-6 flex flex-col items-center gap-2">
+                                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                    <p.icon className="w-6 h-6" />
+                                </div>
+                                <h4 className="text-lg font-black text-slate-900 dark:text-white">{p.label}</h4>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 px-4">{p.description}</p>
+                            </div>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    (() => {
+                      const displayedCatalogCourses = catalogCourses.filter(course => isMatchForFilter(course, activeSkillFilter));
+                      if (displayedCatalogCourses.length === 0) {
+                        return (
+                          <div className="col-span-full py-16 text-center space-y-4 bg-white dark:bg-slate-900/40 rounded-3xl border border-dashed border-slate-200 dark:border-white/10 p-8">
+                            <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
+                              <BookOpen className="w-6 h-6" />
+                            </div>
+                            <div className="space-y-1">
+                              <h4 className="font-bold text-base text-slate-800 dark:text-white">No courses match this filter</h4>
+                              <p className="text-xs text-slate-400">Try selecting another filter or choose "All Skills" to view all available courses.</p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => { setActiveSkillFilter("all"); setViewMode("categories"); }}
+                              className="rounded-full text-xs font-bold"
+                            >
+                              View All Categories
+                            </Button>
+                          </div>
+                        );
+                      }
                       return (
-                        <div className="col-span-full py-16 text-center space-y-4 bg-white dark:bg-slate-900/40 rounded-3xl border border-dashed border-slate-200 dark:border-white/10 p-8">
-                          <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
-                            <BookOpen className="w-6 h-6" />
-                          </div>
-                          <div className="space-y-1">
-                            <h4 className="font-bold text-base text-slate-800 dark:text-white">No courses match this filter</h4>
-                            <p className="text-xs text-slate-400">Try selecting another filter or choose "All Skills" to view all available courses.</p>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setActiveSkillFilter("all")}
-                            className="rounded-full text-xs font-bold"
-                          >
-                            View All Skills & Courses
+                        <div className="space-y-8">
+                          <Button variant="ghost" size="sm" onClick={() => setViewMode("categories")} className="text-slate-500">
+                             &larr; Back to Categories
                           </Button>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {displayedCatalogCourses.map((course) => (
+                              <CourseCard key={course.id} course={course} />
+                            ))}
+                          </div>
                         </div>
                       );
-                    }
-                    return (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {displayedCatalogCourses.map((course) => (
-                          <CourseCard key={course.id} course={course} />
-                        ))}
-                      </div>
-                    );
-                  })()
+                    })()
+                  )
                 )}
                 {/* OLD GRID REMOVED */}
               </section>

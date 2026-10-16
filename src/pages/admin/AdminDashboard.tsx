@@ -984,6 +984,8 @@ export default function AdminDashboard() {
   });
   const [testimonialSearch, setTestimonialSearch] = useState("");
   const [submissionsFilter, setSubmissionsFilter] = useState<string>("all");
+  const [submissionsStudentFilter, setSubmissionsStudentFilter] = useState<string>("all");
+  const [submissionsSearchQuery, setSubmissionsSearchQuery] = useState<string>("");
   const [viewingHistorySub, setViewingHistorySub] = useState<any | null>(null);
   const [isStudentDetailOpen, setIsStudentDetailOpen] = useState(false);
 
@@ -993,6 +995,7 @@ export default function AdminDashboard() {
     const studentSubmissions = (submissions || []).filter((sub: any) => {
       return (
         (sub.studentId && student.id && String(sub.studentId) === String(student.id)) ||
+        (sub.studentEmail && student.email && String(sub.studentEmail).toLowerCase() === String(student.email).toLowerCase()) ||
         (sub.studentName && student.name && sub.studentName.trim().toLowerCase() === student.name.trim().toLowerCase())
       );
     }).sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
@@ -1370,7 +1373,7 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     try {
-      if (!supabase) {
+      if (false) {
         // LocalStorage fallback for demo/development environments
         const localCourses = safeGetItemAndParse<any[]>("mock_courses", [
               {
@@ -1643,22 +1646,17 @@ export default function AdminDashboard() {
         return;
       }
 
-      const { data: c } = await supabase
-        .from("courses")
-        .select("*")
-        .order("created_at", { ascending: false });
-      const { data: m } = await supabase
-        .from("mock_tests")
-        .select("*")
-        .order("created_at", { ascending: false });
-      const { data: r } = await supabase
-        .from("resources")
-        .select("*")
-        .order("created_at", { ascending: false });
-      const { data: q } = await supabase
-        .from("quizzes")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const [
+        { data: c },
+        { data: m },
+        { data: r },
+        { data: q }
+      ] = await Promise.all([
+        supabase.from("courses").select("*").order("created_at", { ascending: false }),
+        supabase.from("mock_tests").select("*").order("created_at", { ascending: false }),
+        supabase.from("resources").select("*").order("created_at", { ascending: false }),
+        supabase.from("quizzes").select("*").order("created_at", { ascending: false })
+      ]);
 
       let teamData: any[] = [];
       try {
@@ -1752,35 +1750,58 @@ export default function AdminDashboard() {
 
       let subCount: any[] = [];
       try {
-        const { data: subData } = await supabase
+        const result = await supabase
           .from("student_submissions")
           .select("*")
           .order("created_at", { ascending: false })
-          .limit(30);
-        subCount = (subData || []).map((s: any) => ({
-          id: s.id,
-          studentId: s.student_id,
-          studentName: s.student_name,
-          courseTitle: s.course_title,
-          lessonTitle: s.lesson_title,
-          lessonType: s.lesson_type || "WRITING",
-          content: s.content,
-          wordCount: s.content ? s.content.split(" ").filter((w: string) => w.length > 0).length : 0,
-          submittedAt: s.created_at
-        }));
+          .limit(300);
+        console.log("Submissions fetch result:", result);
+        const subData = result.data;
+        subCount = (subData || []).map((s: any) => {
+          const matchedStudent = (sCount || []).find((st: any) => 
+            (s.student_id && st.id && String(st.id) === String(s.student_id)) ||
+            (s.student_name && st.name && st.name.trim().toLowerCase() === s.student_name.trim().toLowerCase())
+          );
+          
+          let resolvedName = s.student_name;
+          if (!resolvedName || resolvedName === "Anonymous Student" || resolvedName === "Anonymous") {
+            resolvedName = matchedStudent?.name || (matchedStudent?.email ? matchedStudent.email.split("@")[0] : "Student");
+          }
+          const resolvedEmail = matchedStudent?.email || "";
+
+          return {
+            id: s.id,
+            studentId: s.student_id || matchedStudent?.id || null,
+            studentName: resolvedName,
+            studentEmail: resolvedEmail,
+            courseTitle: s.course_title || "Mock Examination",
+            lessonTitle: s.lesson_title || "General Evaluation",
+            lessonType: (s.lesson_type || "READING").toUpperCase(),
+            content: s.content,
+            wordCount: s.content ? String(s.content).split(" ").filter((w: string) => w.length > 0).length : 0,
+            submittedAt: s.created_at
+          };
+        });
       } catch (err) {
         const localSubs = safeGetItemAndParse<any[]>("admin_writing_submissions", []);
-        subCount = localSubs.map((s: any) => ({
-          id: s.id,
-          studentId: s.studentId || s.student_id || null,
-          studentName: s.studentName || s.student_name,
-          courseTitle: s.courseTitle || s.course_title,
-          lessonTitle: s.lessonTitle || s.lesson_title,
-          lessonType: s.lessonType || s.lesson_type || "WRITING",
-          content: s.content,
-          wordCount: s.content ? s.content.split(" ").filter((w: string) => w.length > 0).length : 0,
-          submittedAt: s.submittedAt || s.created_at
-        }));
+        subCount = localSubs.map((s: any) => {
+          const matchedStudent = (sCount || []).find((st: any) => 
+            (s.studentId && st.id && String(st.id) === String(s.studentId)) ||
+            (s.studentName && st.name && st.name.trim().toLowerCase() === s.studentName.trim().toLowerCase())
+          );
+          return {
+            id: s.id,
+            studentId: s.studentId || s.student_id || matchedStudent?.id || null,
+            studentName: s.studentName || s.student_name || matchedStudent?.name || "Student",
+            studentEmail: matchedStudent?.email || "",
+            courseTitle: s.courseTitle || s.course_title || "Course Test",
+            lessonTitle: s.lessonTitle || s.lesson_title || "Practice Drill",
+            lessonType: (s.lessonType || s.lesson_type || "WRITING").toUpperCase(),
+            content: s.content,
+            wordCount: s.content ? String(s.content).split(" ").filter((w: string) => w.length > 0).length : 0,
+            submittedAt: s.submittedAt || s.created_at
+          };
+        });
       }
 
       // Parse modules and questions if they are stored as JSON strings
@@ -8286,6 +8307,7 @@ export default function AdminDashboard() {
                               const studentFilteredSubmissions = submissions.filter((sub: any) => {
                                 return (
                                   (sub.studentId && selectedStudent.id && String(sub.studentId) === String(selectedStudent.id)) ||
+                                  (sub.studentEmail && selectedStudent.email && String(sub.studentEmail).toLowerCase() === String(selectedStudent.email).toLowerCase()) ||
                                   (sub.studentName && selectedStudent.name && sub.studentName.trim().toLowerCase() === selectedStudent.name.trim().toLowerCase())
                                 );
                               });
@@ -8621,36 +8643,138 @@ export default function AdminDashboard() {
                       </div>
                     </Card>
 
-                    {/* Filter categories tabs/pills */}
-                    <div className="flex flex-wrap gap-2 pb-1 border-b border-slate-150 dark:border-white/5">
-                      {[
-                        { id: "all", label: "All Achievements" },
-                        { id: "writing", label: "Writing Essays" },
-                        { id: "mock_test", label: "Academic Mock Tests" },
-                        { id: "practice", label: "Skills Drills & Quizzes" }
-                      ].map((tab) => (
-                        <button
-                          key={tab.id}
-                          onClick={() => setSubmissionsFilter(tab.id)}
-                          className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all border ${
-                            submissionsFilter === tab.id
-                              ? "bg-primary text-white border-transparent shadow-md shadow-primary/20 scale-105"
-                              : "bg-white hover:bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 dark:text-slate-350 dark:border-white/5"
-                          }`}
-                        >
-                          {tab.label}
-                        </button>
-                      ))}
+                    {/* Filter categories tabs/pills & Student Selector */}
+                    <div className="space-y-4 pb-2 border-b border-slate-150 dark:border-white/5">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            { id: "all", label: "All Achievements" },
+                            { id: "writing", label: "Writing Essays" },
+                            { id: "mock_test", label: "Academic Mock Tests" },
+                            { id: "practice", label: "Skills Drills & Quizzes" }
+                          ].map((tab) => (
+                            <button
+                              key={tab.id}
+                              onClick={() => setSubmissionsFilter(tab.id)}
+                              className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all border ${
+                                submissionsFilter === tab.id
+                                  ? "bg-primary text-white border-transparent shadow-md shadow-primary/20 scale-105"
+                                  : "bg-white hover:bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 dark:text-slate-350 dark:border-white/5"
+                              }`}
+                            >
+                              {tab.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        <Badge variant="outline" className="text-xs font-mono font-bold text-slate-500 py-1 px-3 rounded-full border-slate-200 dark:border-white/10">
+                          {submissions.length} Total Submissions
+                        </Badge>
+                      </div>
+
+                      {/* Student Selector & Live Search */}
+                      {(() => {
+                        const distinctStudentList = Array.from(
+                          new Map(
+                            (submissions || [])
+                              .filter((s: any) => s.studentName && s.studentName !== "Anonymous Student" && s.studentName !== "Anonymous")
+                              .map((s: any) => [s.studentId || s.studentEmail || s.studentName, {
+                                id: s.studentId || s.studentEmail || s.studentName,
+                                name: s.studentName,
+                                email: s.studentEmail || "",
+                                count: (submissions || []).filter((x: any) => 
+                                  (x.studentId && s.studentId && String(x.studentId) === String(s.studentId)) ||
+                                  (x.studentEmail && s.studentEmail && x.studentEmail === s.studentEmail) ||
+                                  (x.studentName && s.studentName && x.studentName === s.studentName)
+                                ).length
+                              }])
+                          ).values()
+                        ).sort((a: any, b: any) => a.name.localeCompare(b.name));
+
+                        return (
+                          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between bg-slate-50 dark:bg-white/5 p-3 rounded-2xl border border-slate-200/70 dark:border-white/5">
+                            <div className="flex-1 relative">
+                              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                              <Input
+                                value={submissionsSearchQuery}
+                                onChange={(e) => setSubmissionsSearchQuery(e.target.value)}
+                                placeholder="Search by student name, email, curriculum, or test title..."
+                                className="pl-9 h-9 text-xs rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10"
+                              />
+                              {submissionsSearchQuery && (
+                                <button
+                                  onClick={() => setSubmissionsSearchQuery("")}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1.5 shrink-0 text-slate-500 text-xs font-bold">
+                                <Users className="w-3.5 h-3.5 text-primary" />
+                                <span className="hidden md:inline">Single Student Filter:</span>
+                              </div>
+                              <select
+                                value={submissionsStudentFilter}
+                                onChange={(e) => setSubmissionsStudentFilter(e.target.value)}
+                                className="h-9 px-3 text-xs font-bold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/20 max-w-[220px] truncate"
+                              >
+                                <option value="all">All Students ({submissions.length} results)</option>
+                                {distinctStudentList.map((st: any) => (
+                                  <option key={st.id} value={st.id}>
+                                    {st.name} ({st.count} test{st.count === 1 ? "" : "s"})
+                                  </option>
+                                ))}
+                              </select>
+                              {(submissionsStudentFilter !== "all" || submissionsSearchQuery) && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSubmissionsStudentFilter("all");
+                                    setSubmissionsSearchQuery("");
+                                  }}
+                                  className="h-9 px-2 text-xs font-bold text-slate-500 hover:text-rose-500 shrink-0"
+                                >
+                                  Reset
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     <div className="grid grid-cols-1 gap-6">
                       {(() => {
                         const filtered = (submissions || []).filter((sub: any) => {
                           const type = (sub.lessonType || "").toUpperCase();
-                          if (submissionsFilter === "all") return true;
-                          if (submissionsFilter === "writing") return type === "WRITING";
-                          if (submissionsFilter === "mock_test") return type === "MOCK_TEST";
-                          if (submissionsFilter === "practice") return type !== "WRITING" && type !== "MOCK_TEST";
+                          // Category filter
+                          if (submissionsFilter === "writing" && type !== "WRITING") return false;
+                          if (submissionsFilter === "mock_test" && type !== "MOCK_TEST") return false;
+                          if (submissionsFilter === "practice" && (type === "WRITING" || type === "MOCK_TEST")) return false;
+
+                          // Student filter
+                          if (submissionsStudentFilter !== "all") {
+                            const matchesStudent = 
+                              (sub.studentId && String(sub.studentId) === String(submissionsStudentFilter)) ||
+                              (sub.studentEmail && String(sub.studentEmail).toLowerCase() === String(submissionsStudentFilter).toLowerCase()) ||
+                              (sub.studentName && String(sub.studentName) === String(submissionsStudentFilter));
+                            if (!matchesStudent) return false;
+                          }
+
+                          // Search query
+                          if (submissionsSearchQuery.trim()) {
+                            const q = submissionsSearchQuery.trim().toLowerCase();
+                            const nameMatch = (sub.studentName || "").toLowerCase().includes(q);
+                            const emailMatch = (sub.studentEmail || "").toLowerCase().includes(q);
+                            const courseMatch = (sub.courseTitle || "").toLowerCase().includes(q);
+                            const lessonMatch = (sub.lessonTitle || "").toLowerCase().includes(q);
+                            if (!nameMatch && !emailMatch && !courseMatch && !lessonMatch) return false;
+                          }
+
                           return true;
                         });
 
@@ -8658,8 +8782,26 @@ export default function AdminDashboard() {
                           return (
                             <Card className="rounded-[2rem] border-none shadow-xl p-12 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950/40 text-slate-400">
                               <FileText className="w-12 h-12 mb-4 text-slate-300" />
-                              <h4 className="font-bold text-lg text-slate-500">No matching submissions</h4>
-                              <p className="text-xs">Students have not recorded any activities in this category yet.</p>
+                              <h4 className="font-bold text-lg text-slate-500">No matching submissions found</h4>
+                              <p className="text-xs">
+                                {submissionsStudentFilter !== "all" || submissionsSearchQuery 
+                                  ? "No records matched your search or student filter. Try clearing the filters."
+                                  : "Students have not recorded any activities in this category yet."}
+                              </p>
+                              {(submissionsStudentFilter !== "all" || submissionsSearchQuery) && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSubmissionsStudentFilter("all");
+                                    setSubmissionsSearchQuery("");
+                                    setSubmissionsFilter("all");
+                                  }}
+                                  className="mt-4 rounded-xl text-xs font-bold"
+                                >
+                                  View All Submissions
+                                </Button>
+                              )}
                             </Card>
                           );
                         }
@@ -8677,32 +8819,92 @@ export default function AdminDashboard() {
                             }
                           }
 
+                          // Extract unified score metrics
+                          const correctCount = quizDetails?.score?.correct ?? quizDetails?.correct ?? quizDetails?.scoreDetails?.correct ?? 0;
+                          const totalCount = quizDetails?.score?.total ?? quizDetails?.total ?? quizDetails?.scoreDetails?.total ?? (Array.isArray(quizDetails?.results) ? quizDetails.results.length : 0);
+                          const percentScore = quizDetails?.score?.percent ?? quizDetails?.percentage ?? (totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0);
+                          const overallBand = quizDetails?.score?.overallBand || quizDetails?.bandScore || quizDetails?.band;
+
+                          const matchedStudent = students.find((st: any) => 
+                            (sub.studentId && st.id && String(st.id) === String(sub.studentId)) ||
+                            (sub.studentEmail && st.email && String(sub.studentEmail).toLowerCase() === String(st.email).toLowerCase()) ||
+                            (sub.studentName && st.name && st.name.trim().toLowerCase() === sub.studentName.trim().toLowerCase())
+                          );
+
                           return (
-                            <Card key={sub.id || idx} className="rounded-[1.5rem] border border-slate-100 dark:border-white/5 p-6 space-y-4 bg-white dark:bg-slate-900 shadow-md">
+                            <Card key={sub.id || idx} className="rounded-[1.5rem] border border-slate-100 dark:border-white/5 p-6 space-y-4 bg-white dark:bg-slate-900 shadow-md hover:shadow-lg transition-all">
                               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-white/5 pb-4">
-                                <div>
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <h4 className="font-black text-slate-800 dark:text-slate-100 text-lg">
-                                      {sub.studentName || "Anonymous Student"}
-                                    </h4>
-                                    <Badge className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border-none ${
-                                      isWriting
-                                        ? "bg-pink-500/15 text-pink-700 dark:text-pink-400"
-                                        : isMock
-                                          ? "bg-purple-500/15 text-purple-700 dark:text-purple-400"
-                                          : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                                    }`}>
-                                      {sub.lessonType || "READING"}
-                                    </Badge>
+                                <div className="flex items-start gap-3">
+                                  <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black text-sm shrink-0 mt-0.5 shadow-inner">
+                                    {String(sub.studentName || "S").charAt(0).toUpperCase()}
                                   </div>
-                                  <p className="text-[11px] font-semibold text-slate-500 italic mt-1">
-                                    {sub.courseTitle || "Skills Category"} - {sub.lessonTitle}
-                                  </p>
+                                  <div>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <h4 className="font-black text-slate-800 dark:text-slate-100 text-lg">
+                                        {sub.studentName || "Student Candidate"}
+                                      </h4>
+                                      <Badge className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border-none ${
+                                        isWriting
+                                          ? "bg-pink-500/15 text-pink-700 dark:text-pink-400"
+                                          : isMock
+                                            ? "bg-purple-500/15 text-purple-700 dark:text-purple-400"
+                                            : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                                      }`}>
+                                        {sub.lessonType || "READING"}
+                                      </Badge>
+                                      {overallBand && (
+                                        <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border-none text-[9px] font-black uppercase">
+                                          Band {overallBand}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-3 flex-wrap mt-1 text-[11px] text-slate-500">
+                                      {sub.studentEmail && (
+                                        <span className="flex items-center gap-1 font-medium font-mono text-slate-400">
+                                          <Mail className="w-3 h-3 text-primary/70" /> {sub.studentEmail}
+                                        </span>
+                                      )}
+                                      <span className="font-semibold italic">
+                                        {sub.courseTitle || "Skills Category"} — {sub.lessonTitle}
+                                      </span>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="text-right flex sm:flex-col items-end justify-between sm:justify-start gap-2 sm:gap-0">
-                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                    {new Date(sub.submittedAt || new Date()).toLocaleString()}
+                                <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 shrink-0">
+                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                    <Calendar className="w-3 h-3" /> {new Date(sub.submittedAt || new Date()).toLocaleString()}
                                   </p>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      if (matchedStudent) {
+                                        setSelectedStudent(matchedStudent);
+                                        setIsStudentDetailOpen(true);
+                                      } else {
+                                        setSelectedStudent({
+                                          id: sub.studentId || "student",
+                                          name: sub.studentName,
+                                          email: sub.studentEmail || "student@sebsinstitute.com",
+                                          currentBand: 6.5,
+                                          targetBand: 7.5,
+                                          speaking: 6.5,
+                                          writing: 6.5,
+                                          reading: 6.5,
+                                          listening: 6.5,
+                                          examType: "Academic",
+                                          enrolledPlan: "Student Member",
+                                          enrollmentDate: sub.submittedAt ? new Date(sub.submittedAt).toISOString().split('T')[0] : "2026-05-15",
+                                          status: "Active"
+                                        });
+                                        setIsStudentDetailOpen(true);
+                                      }
+                                    }}
+                                    className="h-7 px-2.5 rounded-lg text-[10px] font-bold border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:text-primary hover:border-primary/30 flex items-center gap-1"
+                                  >
+                                    <User className="w-3 h-3" />
+                                    Student Profile
+                                  </Button>
                                 </div>
                               </div>
 
@@ -8710,11 +8912,11 @@ export default function AdminDashboard() {
                                 <div className="space-y-4">
                                   <div className="bg-slate-50 dark:bg-slate-950/50 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-white/5">
                                     <p className="text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-loose font-sans">
-                                      {sub.content || "Empty content."}
+                                      {sub.content || "Empty response content."}
                                     </p>
                                   </div>
                                   <div className="flex justify-between items-center text-xs text-slate-450 font-bold italic">
-                                    <span>Word Count: <span className="text-slate-900 dark:text-white font-black">{sub.content ? sub.content.split(" ").filter((w: string) => w.length > 0).length : 0} words</span></span>
+                                    <span>Word Count: <span className="text-slate-900 dark:text-white font-black">{sub.content ? String(sub.content).split(" ").filter((w: string) => w.length > 0).length : 0} words</span></span>
                                     <Button
                                       onClick={() => setViewingHistorySub(sub)}
                                       variant="ghost"
@@ -8805,33 +9007,33 @@ export default function AdminDashboard() {
                                     </div>
                                   )}
                                   <div className="space-y-4">
-                                  {/* Progress Bar of score accuracy */}
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                                    <div className="space-y-1.5">
-                                      <div className="flex justify-between text-xs font-bold">
-                                        <span className="text-slate-400 uppercase tracking-wider text-[10px]">Test Accuracy</span>
-                                        <span className="text-primary font-bold font-mono">{quizDetails?.score?.percent ?? 0}%</span>
+                                    {/* Progress Bar of score accuracy */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                                      <div className="space-y-1.5">
+                                        <div className="flex justify-between text-xs font-bold">
+                                          <span className="text-slate-400 uppercase tracking-wider text-[10px]">Test Accuracy</span>
+                                          <span className="text-primary font-bold font-mono">{percentScore}%</span>
+                                        </div>
+                                        <Progress value={percentScore} className="h-2 rounded-full" />
                                       </div>
-                                      <Progress value={quizDetails?.score?.percent ?? 0} className="h-2 rounded-full" />
-                                    </div>
-                                    <div className="flex items-center justify-between md:justify-end gap-6 text-right">
-                                      <div>
-                                        <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-widest">Score Ratio</span>
-                                        <span className="text-2xl font-black font-mono text-primary">
-                                          {quizDetails?.score?.correct ?? 0} <span className="text-slate-300 font-normal">/</span> {quizDetails?.score?.total ?? 0}
-                                        </span>
+                                      <div className="flex items-center justify-between md:justify-end gap-6 text-right">
+                                        <div>
+                                          <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-widest">Score Ratio</span>
+                                          <span className="text-2xl font-black font-mono text-primary">
+                                            {correctCount} <span className="text-slate-300 font-normal">/</span> {totalCount}
+                                          </span>
+                                        </div>
+                                        <Button
+                                          onClick={() => setViewingHistorySub(sub)}
+                                          className="rounded-xl h-10 px-5 font-bold text-xs bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-800 dark:text-slate-200"
+                                        >
+                                          Inspect Transcript
+                                        </Button>
                                       </div>
-                                      <Button
-                                        onClick={() => setViewingHistorySub(sub)}
-                                        className="rounded-xl h-10 px-5 font-bold text-xs bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-800 dark:text-slate-200"
-                                      >
-                                        Inspect Transcript
-                                      </Button>
                                     </div>
                                   </div>
                                 </div>
-                              </div>
-                            )}
+                              )}
                             </Card>
                           );
                         });
@@ -11496,6 +11698,7 @@ export default function AdminDashboard() {
                       const studentFilteredSubmissions = submissions.filter((sub: any) => {
                         return (
                           (sub.studentId && selectedStudent.id && String(sub.studentId) === String(selectedStudent.id)) ||
+                          (sub.studentEmail && selectedStudent.email && String(sub.studentEmail).toLowerCase() === String(selectedStudent.email).toLowerCase()) ||
                           (sub.studentName && selectedStudent.name && sub.studentName.trim().toLowerCase() === selectedStudent.name.trim().toLowerCase())
                         );
                       });
@@ -11745,34 +11948,62 @@ export default function AdminDashboard() {
                         console.warn(e);
                       }
 
+                      const questionItems = Array.isArray(details?.results) 
+                        ? details.results 
+                        : Array.isArray(details?.answers) 
+                          ? details.answers 
+                          : Array.isArray(details?.sections) 
+                            ? details.sections.flatMap((sec: any) => sec.results || sec.answers || []) 
+                            : [];
+
+                      const correctAnsCount = details?.score?.correct ?? details?.correct ?? questionItems.filter((q: any) => q.isCorrect === true || q.is_correct === true).length;
+                      const totalAnsCount = details?.score?.total ?? details?.total ?? questionItems.length;
+                      const accuracyPercent = details?.score?.percent ?? details?.percentage ?? (totalAnsCount > 0 ? Math.round((correctAnsCount / totalAnsCount) * 100) : 0);
+                      const transcriptBand = details?.score?.overallBand || details?.bandScore || details?.band;
+
                       return (
                         <div className="space-y-4">
                           {/* High level progress metrics */}
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className={`grid gap-4 ${transcriptBand ? 'grid-cols-3' : 'grid-cols-2'}`}>
                             <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 text-center">
                               <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Correct Answers</span>
                               <span className="text-2xl font-black text-primary mt-1 block">
-                                {details?.score?.correct ?? "?"} / {details?.score?.total ?? "?"}
+                                {correctAnsCount} / {totalAnsCount}
                               </span>
                             </div>
                             <div className="bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/10 text-center">
                               <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Accuracy Percent</span>
                               <span className="text-2xl font-black text-emerald-500 mt-1 block">
-                                {details?.score?.percent ?? "0"}%
+                                {accuracyPercent}%
                               </span>
                             </div>
+                            {transcriptBand && (
+                              <div className="bg-amber-500/5 p-4 rounded-2xl border border-amber-500/10 text-center">
+                                <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Band Score</span>
+                                <span className="text-2xl font-black text-amber-500 mt-1 block">
+                                  Band {transcriptBand}
+                                </span>
+                              </div>
+                            )}
                           </div>
 
                           {/* Question by question transcript */}
                           <div className="space-y-3">
-                            <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">Core Evaluation Record</h5>
-                            <div className="space-y-2 max-h-[25vh] overflow-y-auto pr-1">
-                              {details?.answers && details.answers.length > 0 ? (
-                                details.answers.map((ans: any, idx: number) => {
-                                  const isCorrect = ans.isCorrect;
+                            <div className="flex justify-between items-center">
+                              <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">
+                                Core Evaluation Record ({questionItems.length} Questions)
+                              </h5>
+                              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                                {correctAnsCount} Correct • {totalAnsCount - correctAnsCount} Incorrect
+                              </span>
+                            </div>
+                            <div className="space-y-2 max-h-[35vh] overflow-y-auto pr-1">
+                              {questionItems && questionItems.length > 0 ? (
+                                questionItems.map((ans: any, idx: number) => {
+                                  const isCorrect = ans.isCorrect === true || ans.is_correct === true;
                                   return (
                                     <div 
-                                      key={idx}
+                                      key={ans.id || idx}
                                       className="p-3 bg-slate-50 dark:bg-white/2 border border-slate-150 dark:border-white/5 rounded-2xl flex items-start gap-3"
                                     >
                                       <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-black leading-none ${
@@ -11783,9 +12014,18 @@ export default function AdminDashboard() {
                                         {idx + 1}
                                       </div>
                                       <div className="min-w-0 flex-1">
-                                        <Badge className="px-1 py-0 h-4 text-[7px] font-black uppercase bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-slate-350 rounded border-none">
-                                          {ans.type || ans.questionType || "MCQ"}
-                                        </Badge>
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          <Badge className="px-1.5 py-0 h-4 text-[7px] font-black uppercase bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-slate-350 rounded border-none">
+                                            {ans.type || ans.questionType || "OBJECTIVE"}
+                                          </Badge>
+                                          <Badge className={`px-1.5 py-0 h-4 text-[7px] font-black uppercase border-none ${
+                                            isCorrect 
+                                              ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" 
+                                              : "bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                                          }`}>
+                                            {isCorrect ? "Correct" : "Incorrect"}
+                                          </Badge>
+                                        </div>
                                         <p className="text-xs font-black text-slate-700 dark:text-slate-200 mt-1.5 leading-snug">
                                           {ans.questionText || ans.question || `Question ${idx + 1}`}
                                         </p>
@@ -11793,14 +12033,14 @@ export default function AdminDashboard() {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-150/40 dark:border-white/5 text-[11px] font-bold">
                                           <div>
                                             <span className="text-slate-400 font-bold block text-[10px] uppercase">Candidate Response:</span>
-                                            <span className={`font-black uppercase ${isCorrect ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                              {ans.studentAnswer || "[No Response]"}
+                                            <span className={`font-black ${isCorrect ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                              {ans.studentAnswer || ans.userAnswer || ans.answer || "[No Response / Blank]"}
                                             </span>
                                           </div>
                                           <div>
                                             <span className="text-slate-400 font-bold block text-[10px] uppercase">Target Correct Answer:</span>
-                                            <span className="text-slate-700 dark:text-slate-200 font-black uppercase">
-                                              {ans.correctAnswer || "[Unspecified]"}
+                                            <span className="text-slate-700 dark:text-slate-200 font-black">
+                                              {ans.correctAnswer || ans.targetAnswer || "[Unspecified]"}
                                             </span>
                                           </div>
                                         </div>
