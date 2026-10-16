@@ -595,94 +595,265 @@ export function renderBlogPostHtml(slug: string, baseHtml: string): BlogRenderRe
         </div>
       </header>
 
-      <!-- Main Article Container -->
-      <article class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
-        <!-- Breadcrumbs -->
-        <nav aria-label="Breadcrumb" class="flex items-center gap-2 text-xs text-slate-400 font-medium">
-          <a href="/" class="hover:text-white">Home</a>
-          <span>/</span>
-          <a href="/blog" class="hover:text-white">Blog</a>
-          ${post.category ? `<span>/</span><a href="/blog/category/${post.category.slug}" class="text-[#00a8cc] hover:underline">${escapeHtml(post.category.name)}</a>` : ""}
-          <span>/</span>
-          <span class="text-slate-200 truncate max-w-xs">${escapeHtml(post.title)}</span>
-        </nav>
+      <!-- Main Article & Brochure Layout Container -->
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-12">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 xl:gap-12 items-start">
+          <!-- Left Column: Primary Blog Content -->
+          <article class="lg:col-span-8 space-y-6 min-w-0">
+            <!-- Breadcrumbs -->
+            <nav aria-label="Breadcrumb" class="flex items-center gap-2 text-xs text-slate-400 font-medium">
+              <a href="/" class="hover:text-white">Home</a>
+              <span>/</span>
+              <a href="/blog" class="hover:text-white">Blog</a>
+              ${post.category ? `<span>/</span><a href="/blog/category/${post.category.slug}" class="text-[#00a8cc] hover:underline">${escapeHtml(post.category.name)}</a>` : ""}
+              <span>/</span>
+              <span class="text-slate-200 truncate max-w-xs">${escapeHtml(post.title)}</span>
+            </nav>
 
-        <!-- Category Badge -->
-        <div class="flex items-center gap-2">
-          ${post.category ? `<a href="/blog/category/${post.category.slug}" class="px-3 py-1 rounded-full bg-[#00a8cc]/10 text-[#00a8cc] text-xs font-black uppercase tracking-wider">${escapeHtml(post.category.name)}</a>` : ""}
-          ${post.content_type === "pillar" ? `<span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-black uppercase tracking-wider">Pillar Guide</span>` : ""}
-        </div>
-
-        <!-- Title -->
-        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-[1.15]">
-          ${escapeHtml(post.title)}
-        </h1>
-
-        <!-- Excerpt -->
-        ${post.excerpt ? `<p class="text-lg sm:text-xl font-normal text-slate-300 leading-relaxed border-l-4 border-[#00a8cc] pl-4 py-1 italic">${escapeHtml(post.excerpt)}</p>` : ""}
-
-        <!-- Byline -->
-        <div class="flex items-center justify-between flex-wrap gap-4 py-4 border-y border-slate-800 text-xs text-slate-400">
-          <div class="flex items-center gap-4 flex-wrap">
+            <!-- Category Badge -->
             <div class="flex items-center gap-2">
-              <span class="font-bold text-white">${escapeHtml(authorName)}</span>
-              <span class="text-slate-500">•</span>
-              <span>${post.author?.credentials || "Master English & IELTS Coach"}</span>
+              ${post.category ? `<a href="/blog/category/${post.category.slug}" class="px-3 py-1 rounded-full bg-[#00a8cc]/10 text-[#00a8cc] text-xs font-black uppercase tracking-wider">${escapeHtml(post.category.name)}</a>` : ""}
+              ${post.content_type === "pillar" ? `<span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-black uppercase tracking-wider">Pillar Guide</span>` : ""}
             </div>
-            ${post.reviewer ? `
-              <div class="flex items-center gap-1 text-emerald-400 border-l border-slate-800 pl-4">
-                <span>Reviewed by:</span>
-                <span class="font-bold">${escapeHtml(post.reviewer.name)}</span>
-              </div>` : ""}
-          </div>
-          <div class="flex items-center gap-3">
-            <span>Published: ${formattedDate}</span>
-            <span>•</span>
-            <span>${readTime} min read</span>
-          </div>
-        </div>
 
-        <!-- Featured Image -->
-        <figure class="my-6 rounded-3xl overflow-hidden bg-slate-900 border border-slate-800 shadow-xl">
-          <img src="${escapeAttr(featImg)}" alt="${escapeAttr(post.featured_image_alt || post.title)}" class="w-full h-auto object-cover max-h-[480px]" width="1200" height="675" fetchpriority="high" loading="eager" decoding="async" />
-        </figure>
+            <!-- Title -->
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-[1.15]">
+              ${escapeHtml(post.title)}
+            </h1>
 
-        ${directAnswerHtml}
-        ${takeawaysHtml}
+            <!-- Excerpt -->
+            ${post.excerpt ? `<p class="text-lg sm:text-xl font-normal text-slate-300 leading-relaxed border-l-4 border-[#00a8cc] pl-4 py-1 italic">${escapeHtml(post.excerpt)}</p>` : ""}
 
-        <!-- Article Body -->
-        <div class="my-8 text-slate-200 leading-relaxed space-y-4 text-base">
-          ${post.content || ""}
-        </div>
-
-        ${faqsHtml}
-
-        <!-- Author Bio Box -->
-        <section class="my-10 p-6 sm:p-8 bg-slate-900 border border-slate-800 rounded-3xl space-y-4">
-          <div class="flex items-center gap-4">
-            <img src="/syed_ejaz_bukhari_hero.webp" alt="${escapeAttr(authorName)}" class="w-16 h-16 rounded-full object-cover border-2 border-[#00a8cc]" />
-            <div>
-              <span class="text-[10px] uppercase tracking-widest text-[#00a8cc] font-black block">About the Author</span>
-              <h3 class="text-lg font-black text-white">${escapeHtml(authorName)}</h3>
-              <p class="text-xs text-slate-400">${escapeHtml(post.author?.credentials || "Founder & Principal Mentor at SEBS Institute")}</p>
+            <!-- Byline -->
+            <div class="flex items-center justify-between flex-wrap gap-4 py-4 border-y border-slate-800 text-xs text-slate-400">
+              <div class="flex items-center gap-4 flex-wrap">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-white">${escapeHtml(authorName)}</span>
+                  <span class="text-slate-500">•</span>
+                  <span>${post.author?.credentials || "Master English & IELTS Coach"}</span>
+                </div>
+                ${post.reviewer ? `
+                  <div class="flex items-center gap-1 text-emerald-400 border-l border-slate-800 pl-4">
+                    <span>Reviewed by:</span>
+                    <span class="font-bold">${escapeHtml(post.reviewer.name)}</span>
+                  </div>` : ""}
+              </div>
+              <div class="flex items-center gap-3">
+                <span>Published: ${formattedDate}</span>
+                <span>•</span>
+                <span>${readTime} min read</span>
+              </div>
             </div>
-          </div>
-          <p class="text-xs text-slate-300 leading-relaxed">${escapeHtml(post.author?.bio || "Over 34 years of instructional leadership in English phonetics, linguistic retraining, and IELTS test coaching.")}</p>
-        </section>
 
-        <!-- CTA Box -->
-        <section class="my-10 p-8 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-850 to-slate-900 border border-[#00a8cc]/30 text-center space-y-4">
-          <h3 class="text-2xl font-black text-white">Aiming for Band 8.5+ in IELTS?</h3>
-          <p class="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto">
-            Join Syed Ejaz Bukhari’s intensive Master Batches for personalized essay evaluation and cue card drills.
-          </p>
-          <div class="pt-2">
-            <a href="/courses" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-[#00a8cc] hover:bg-[#0096b7] text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-lg">
-              Explore Live Masterclasses &rarr;
-            </a>
-          </div>
-        </section>
-      </article>
+            <!-- Featured Image -->
+            <figure class="my-6 rounded-3xl overflow-hidden bg-slate-900 border border-slate-800 shadow-xl">
+              <img src="${escapeAttr(featImg)}" alt="${escapeAttr(post.featured_image_alt || post.title)}" class="w-full h-auto object-cover max-h-[480px]" width="1200" height="675" fetchpriority="high" loading="eager" decoding="async" />
+            </figure>
+
+            ${directAnswerHtml}
+            ${takeawaysHtml}
+
+            <!-- Article Body -->
+            <div class="my-8 text-slate-200 leading-relaxed space-y-4 text-base">
+              ${post.content || ""}
+            </div>
+
+            ${faqsHtml}
+
+            <!-- Author Bio Box -->
+            <section class="my-10 p-6 sm:p-8 bg-slate-900 border border-slate-800 rounded-3xl space-y-4">
+              <div class="flex items-center gap-4">
+                <img src="/syed_ejaz_bukhari_hero.webp" alt="${escapeAttr(authorName)}" class="w-16 h-16 rounded-full object-cover border-2 border-[#00a8cc]" />
+                <div>
+                  <span class="text-[10px] uppercase tracking-widest text-[#00a8cc] font-black block">About the Author</span>
+                  <h3 class="text-lg font-black text-white">${escapeHtml(authorName)}</h3>
+                  <p class="text-xs text-slate-400">${escapeHtml(post.author?.credentials || "Founder & Principal Mentor at SEBS Institute")}</p>
+                </div>
+              </div>
+              <p class="text-xs text-slate-300 leading-relaxed">${escapeHtml(post.author?.bio || "Over 34 years of instructional leadership in English phonetics, linguistic retraining, and IELTS test coaching.")}</p>
+            </section>
+
+            <!-- CTA Box -->
+            <section class="my-10 p-8 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-850 to-slate-900 border border-[#00a8cc]/30 text-center space-y-4">
+              <h3 class="text-2xl font-black text-white">Aiming for Band 8.5+ in IELTS?</h3>
+              <p class="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto">
+                Join Syed Ejaz Bukhari’s intensive Master Batches for personalized essay evaluation and cue card drills.
+              </p>
+              <div class="pt-2">
+                <a href="/courses" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-[#00a8cc] hover:bg-[#0096b7] text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-lg">
+                  Explore Live Masterclasses &rarr;
+                </a>
+              </div>
+            </section>
+          </article>
+
+          <!-- Right Column: IELTS Enrollment Brochure Sidebar with All 6 Courses -->
+          <aside class="lg:col-span-4 min-w-0 space-y-6 text-left">
+            <!-- Next Batch Starts Monday Urgency Card (Submerged in White Theme with Red Urgency Timer) -->
+            <div class="bg-white dark:bg-slate-900 border-2 border-red-500/40 rounded-3xl p-6 text-slate-900 dark:text-white space-y-3 shadow-xl">
+              <div class="flex justify-between items-center">
+                <span class="text-[10px] font-black uppercase tracking-widest text-red-600 bg-red-50 dark:bg-red-950/40 px-2.5 py-1 rounded-full border border-red-200 dark:border-red-800">
+                  ⚡ Time Running Out!
+                </span>
+                <span class="text-[10px] text-red-600 dark:text-red-400 font-black uppercase">Weekly Cohort</span>
+              </div>
+              <h3 class="text-xl font-black text-slate-900 dark:text-white">Next Batch Starts on Monday</h3>
+              <p class="text-xs text-slate-600 dark:text-slate-300">Admissions closing soon for the upcoming Monday batch. Limited to 15 students per cohort for 1-on-1 evaluation with Sir Ejaz Bukhari.</p>
+              <div class="grid grid-cols-4 gap-2 text-center pt-2">
+                <div class="bg-white dark:bg-slate-800 border-2 border-red-500/50 rounded-xl p-2"><span class="text-xl font-black text-red-600 dark:text-red-500 font-mono">03</span><span class="text-[9px] block text-red-700 dark:text-red-400 font-bold uppercase mt-0.5">Days</span></div>
+                <div class="bg-white dark:bg-slate-800 border-2 border-red-500/50 rounded-xl p-2"><span class="text-xl font-black text-red-600 dark:text-red-500 font-mono">14</span><span class="text-[9px] block text-red-700 dark:text-red-400 font-bold uppercase mt-0.5">Hours</span></div>
+                <div class="bg-white dark:bg-slate-800 border-2 border-red-500/50 rounded-xl p-2"><span class="text-xl font-black text-red-600 dark:text-red-500 font-mono">28</span><span class="text-[9px] block text-red-700 dark:text-red-400 font-bold uppercase mt-0.5">Mins</span></div>
+                <div class="bg-white dark:bg-slate-800 border-2 border-red-500/50 rounded-xl p-2"><span class="text-xl font-black text-red-600 dark:text-red-500 font-mono">45</span><span class="text-[9px] block text-red-700 dark:text-red-400 font-bold uppercase mt-0.5">Secs</span></div>
+              </div>
+              <div class="flex justify-between items-center text-[11px] pt-1 text-slate-700 dark:text-slate-300 font-bold">
+                <span class="text-red-600 dark:text-red-400 font-black">Starts Monday: 09:00 AM & 06:00 PM</span>
+                <span class="text-red-600 font-black">🚨 4 Seats Left</span>
+              </div>
+            </div>
+
+            <!-- All 6 Course Brochures Displayed One After Another -->
+            <div class="space-y-6">
+              <!-- Course 1 -->
+              <article class="bg-slate-900 border border-slate-800 rounded-3xl p-5 text-white space-y-3 shadow-xl">
+                <div class="flex justify-between items-center">
+                  <span class="text-[10px] font-black uppercase text-slate-400">Course #1 • 1 Month</span>
+                  <span class="text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full">Spoken English</span>
+                </div>
+                <h3 class="text-lg font-black text-white">1 Month Spoken English</h3>
+                <p class="text-xs text-slate-300">Build speech fluency, boost confidence & master conversation basics under EBM system.</p>
+                <div class="p-3 bg-slate-950/60 rounded-2xl flex justify-between items-center">
+                  <span class="text-lg font-black text-white">PKR 25,000</span>
+                  <span class="text-xs text-rose-400 font-bold">Starts Monday</span>
+                </div>
+                <ul class="text-xs text-slate-300 space-y-1">
+                  <li>✓ Confidence removal of fear, shyness & hesitation</li>
+                  <li>✓ EBM (Ejaz Bukhari Method) core speech drills</li>
+                  <li>✓ Practical tenses & everyday conversation structures</li>
+                </ul>
+                <a href="https://wa.me/923304541573?text=i%20see%20your%20broucher%20about%201%20Month%20Spoken%20English%20course%20in%20sebs%20website%20how%20can%20i%20get%20more%20information" target="_blank" rel="noopener noreferrer" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 block text-center shadow-lg">
+                  Enroll Now — Starts Monday &rarr;
+                </a>
+              </article>
+
+              <!-- Course 2 -->
+              <article class="bg-slate-900 border border-slate-800 rounded-3xl p-5 text-white space-y-3 shadow-xl">
+                <div class="flex justify-between items-center">
+                  <span class="text-[10px] font-black uppercase text-slate-400">Course #2 • 1 Month</span>
+                  <span class="text-[10px] font-bold uppercase bg-[#00a8cc]/10 text-[#00a8cc] px-2 py-0.5 rounded-full">IELTS Writing</span>
+                </div>
+                <h3 class="text-lg font-black text-white">1 Month Writing Focus</h3>
+                <p class="text-xs text-slate-300">Dedicated intensive program for IELTS Writing Task 1 & 2 layout, coherence, and grammar range.</p>
+                <div class="p-3 bg-slate-950/60 rounded-2xl flex justify-between items-center">
+                  <span class="text-lg font-black text-white">PKR 35,000</span>
+                  <span class="text-xs text-rose-400 font-bold">Starts Monday</span>
+                </div>
+                <ul class="text-xs text-slate-300 space-y-1">
+                  <li>✓ Comprehensive Task 1 (graphs, diagrams) & Task 2 (essays)</li>
+                  <li>✓ 8 detailed live marking reviews by expert instructors</li>
+                  <li>✓ 1 Month unlimited instant AI structural evaluations</li>
+                </ul>
+                <a href="https://wa.me/923304541573?text=i%20see%20your%20broucher%20about%201%20Month%20Writing%20Focus%20course%20in%20sebs%20website%20how%20can%20i%20get%20more%20information" target="_blank" rel="noopener noreferrer" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 block text-center shadow-lg">
+                  Enroll Now — Starts Monday &rarr;
+                </a>
+              </article>
+
+              <!-- Course 3 -->
+              <article class="bg-slate-900 border border-slate-800 rounded-3xl p-5 text-white space-y-3 shadow-xl">
+                <div class="flex justify-between items-center">
+                  <span class="text-[10px] font-black uppercase text-slate-400">Course #3 • 2 Months</span>
+                  <span class="text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full">Spoken English</span>
+                </div>
+                <h3 class="text-lg font-black text-white">2 Month Spoken English</h3>
+                <p class="text-xs text-slate-300">Professional fluency, advanced speech control, interview preparation, and presentation training.</p>
+                <div class="p-3 bg-slate-950/60 rounded-2xl flex justify-between items-center">
+                  <span class="text-lg font-black text-white">PKR 40,000</span>
+                  <span class="text-xs text-rose-400 font-bold">Starts Monday</span>
+                </div>
+                <ul class="text-xs text-slate-300 space-y-1">
+                  <li>✓ Stronger fluency, tenses flow & speech pacing control</li>
+                  <li>✓ Public speaking workshops & storytelling opinion modules</li>
+                  <li>✓ Job interview bootcamps & professional self-introduction</li>
+                </ul>
+                <a href="https://wa.me/923304541573?text=i%20see%20your%20broucher%20about%202%20Month%20Spoken%20English%20course%20in%20sebs%20website%20how%20can%20i%20get%20more%20information" target="_blank" rel="noopener noreferrer" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 block text-center shadow-lg">
+                  Enroll Now — Starts Monday &rarr;
+                </a>
+              </article>
+
+              <!-- Course 4 -->
+              <article class="bg-slate-900 border-2 border-[#00a8cc] rounded-3xl p-5 text-white space-y-3 shadow-xl relative">
+                <div class="flex justify-between items-center">
+                  <span class="text-[10px] font-black uppercase text-slate-400">Course #4 • 4 Weeks</span>
+                  <span class="text-[10px] font-black uppercase bg-[#00a8cc] text-slate-950 px-2.5 py-0.5 rounded-full">Most Popular</span>
+                </div>
+                <h3 class="text-lg font-black text-white">SEB’s IELTS General Training Course Based on EBM</h3>
+                <p class="text-xs text-slate-300">Focused preparation, practical test strategy, band improvement, and exam confidence training.</p>
+                <div class="p-3 bg-slate-950/60 rounded-2xl flex justify-between items-center">
+                  <span class="text-lg font-black text-white">PKR 44,000</span>
+                  <span class="text-xs text-rose-400 font-bold">Starts Monday</span>
+                </div>
+                <ul class="text-xs text-slate-300 space-y-1">
+                  <li>✓ Strategic IELTS GT confidence building for all 4 modules</li>
+                  <li>✓ Regular Letter Writing (Task 1) & Essay (Task 2) evaluations</li>
+                  <li>✓ Comprehensive speaking drills and listening strategy sheets</li>
+                </ul>
+                <a href="https://wa.me/923304541573?text=i%20see%20your%20broucher%20about%20SEB%E2%80%99s%20IELTS%20General%20Training%20Course%20Based%20on%20EBM%20course%20in%20sebs%20website%20how%20can%20i%20get%20more%20information" target="_blank" rel="noopener noreferrer" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 block text-center shadow-lg">
+                  Enroll Now — Starts Monday &rarr;
+                </a>
+              </article>
+
+              <!-- Course 5 -->
+              <article class="bg-slate-900 border border-slate-800 rounded-3xl p-5 text-white space-y-3 shadow-xl">
+                <div class="flex justify-between items-center">
+                  <span class="text-[10px] font-black uppercase text-slate-400">Course #5 • 4 Weeks</span>
+                  <span class="text-[10px] font-bold uppercase bg-[#00a8cc]/10 text-[#00a8cc] px-2 py-0.5 rounded-full">IELTS Academic</span>
+                </div>
+                <h3 class="text-lg font-black text-white">SEB’s IELTS Academic Course Based on EBM</h3>
+                <p class="text-xs text-slate-300">Build the strategy, confidence, and discipline needed for a Band 7.5 to 8.5+ score.</p>
+                <div class="p-3 bg-slate-950/60 rounded-2xl flex justify-between items-center">
+                  <span class="text-lg font-black text-white">PKR 44,000</span>
+                  <span class="text-xs text-rose-400 font-bold">Starts Monday</span>
+                </div>
+                <ul class="text-xs text-slate-300 space-y-1">
+                  <li>✓ IELTS Academic high-band coaching for all 4 modules</li>
+                  <li>✓ Regular Writing Task 1 (graphs, charts) & Task 2 evaluations</li>
+                  <li>✓ Interactive academic reading, diagnostic listening & exam drills</li>
+                </ul>
+                <a href="https://wa.me/923304541573?text=i%20see%20your%20broucher%20about%20SEB%E2%80%99s%20IELTS%20Academic%20Course%20Based%20on%20EBM%20course%20in%20sebs%20website%20how%20can%20i%20get%20more%20information" target="_blank" rel="noopener noreferrer" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 block text-center shadow-lg">
+                  Enroll Now — Starts Monday &rarr;
+                </a>
+              </article>
+
+              <!-- Course 6 -->
+              <article class="bg-slate-900 border border-purple-500/30 rounded-3xl p-5 text-white space-y-3 shadow-xl">
+                <div class="flex justify-between items-center">
+                  <span class="text-[10px] font-black uppercase text-slate-400">Course #6 • 6 Months</span>
+                  <span class="text-[10px] font-bold uppercase bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full">Spoken + AI Skills</span>
+                </div>
+                <h3 class="text-lg font-black text-white">SEB’s 6-Month Spoken English + AI Skills Program</h3>
+                <p class="text-xs text-slate-300">Master fluent English speaking of EBM integrated deeply with high-income AI digital skills.</p>
+                <div class="p-3 bg-slate-950/60 rounded-2xl flex justify-between items-center">
+                  <span class="text-lg font-black text-white">PKR 60,000</span>
+                  <span class="text-xs text-rose-400 font-bold">Starts Monday</span>
+                </div>
+                <ul class="text-xs text-slate-300 space-y-1">
+                  <li>✓ Complete spoken English fluency and EBM confidence building</li>
+                  <li>✓ AI tools prompting, content writing & digital freelance training</li>
+                  <li>✓ Verified executive diploma signed by Principal Coach Syed Ejaz Bukhari</li>
+                </ul>
+                <a href="https://wa.me/923304541573?text=i%20see%20your%20broucher%20about%20SEB%E2%80%99s%206-Month%20Spoken%20English%20%2B%20AI%20Skills%20Program%20course%20in%20sebs%20website%20how%20can%20i%20get%20more%20information" target="_blank" rel="noopener noreferrer" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 block text-center shadow-lg">
+                  Enroll Now — Starts Monday &rarr;
+                </a>
+              </article>
+            </div>
+
+            <!-- Helpline Card -->
+            <div class="pt-3 border-t border-slate-800 text-center text-xs text-slate-400">
+              <p>Admissions Hotline: <strong class="text-white">0330-4541573</strong></p>
+              <p class="text-[10px] text-slate-500 mt-1">3,800+ Students Certified • 4.9 ★ Student Rating</p>
+            </div>
+          </aside>
+        </div>
+      </div>
 
       <!-- Footer -->
       <footer class="bg-slate-950 border-t border-slate-850 py-12 px-4 sm:px-6 lg:px-8 text-xs text-slate-500 text-center">

@@ -751,7 +751,13 @@ export async function recordPostView(slugOrId: string): Promise<number | null> {
       if (typeof data.views === 'number') {
         // Also update local cache
         const allCached = getLocalCache<BlogPost[]>(FALLBACK_CACHE_KEY, DEFAULT_POSTS);
-        const p = allCached.find(post => post.slug === slugOrId || post.id === slugOrId);
+        const norm = decodeURIComponent(slugOrId).trim().toLowerCase().replace(/^\/+|\/+$/g, "");
+        const p = allCached.find(post => 
+          (post.slug && post.slug.toLowerCase() === norm) || 
+          (post.id && post.id.toLowerCase() === norm) ||
+          post.slug === slugOrId || 
+          post.id === slugOrId
+        );
         if (p) {
           p.views = data.views;
           setLocalCache(FALLBACK_CACHE_KEY, allCached);

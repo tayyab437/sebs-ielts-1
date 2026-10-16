@@ -226,3 +226,44 @@ button, a, input, select, textarea, [role="button"] {
   padding: 0.75rem 1rem;
   border: 1px solid rgba(148, 163, 184, 0.2);
 }
+
+/* High-Urgency Red Vibrating Timer Animations (Zero Layout Shift: pure horizontal micro-oscillation) */
+@keyframes timerUrgentVibrate {
+  0% { transform: translate3d(0, 0, 0); }
+  12% { transform: translate3d(-3px, 0, 0); }
+  25% { transform: translate3d(3px, 0, 0); }
+  37% { transform: translate3d(-3px, 0, 0); }
+  50% { transform: translate3d(3px, 0, 0); }
+  62% { transform: translate3d(-2px, 0, 0); }
+  75% { transform: translate3d(2px, 0, 0); }
+  87% { transform: translate3d(-1px, 0, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes timerVibrateCyclic10s {
+  0%, 89.9%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  90% {
+    transform: translate3d(-3px, 0, 0);
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
+  }
+  91.5% { transform: translate3d(3px, 0, 0); }
+  93% { transform: translate3d(-3px, 0, 0); box-shadow: 0 0 20px rgba(239, 68, 68, 0.55); }
+  94.5% { transform: translate3d(3px, 0, 0); }
+  96% { transform: translate3d(-2px, 0, 0); }
+  97.5% { transform: translate3d(2px, 0, 0); }
+  99% { transform: translate3d(-1px, 0, 0); }
+}
+
+.animate-vibrate-urgent {
+  animation: timerUrgentVibrate 0.65s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.animate-cyclic-10s {
+  animation: timerVibrateCyclic10s 10s ease-in-out infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+}

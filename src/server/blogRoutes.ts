@@ -232,10 +232,6 @@ export function createBlogRouter(mysqlPool: Pool, verifyTokenFn: (token: string)
       }
 
       const raw = posts[0];
-      try {
-        await mysqlPool.query("UPDATE blog_posts SET views = COALESCE(views, 0) + 1 WHERE id = ? OR slug = ?", [raw.id, raw.slug]);
-        raw.views = (raw.views || 0) + 1;
-      } catch {}
 
       // Parse JSON fields safely
       const parseJsonSafe = (val: any, fallback: any) => {

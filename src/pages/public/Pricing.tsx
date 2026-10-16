@@ -96,6 +96,53 @@ export default function PricingPage() {
   const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [isLoadingPlans, setIsLoadingPlans] = useState(true);
 
+  // Time remaining until upcoming Monday countdown state
+  const [timeLeft, setTimeLeft] = useState<{
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+  }>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [isVibrating, setIsVibrating] = useState(false);
+
+  // 10s vibration cycle for sense of hurry
+  useEffect(() => {
+    const vibrationInterval = setInterval(() => {
+      setIsVibrating(true);
+      const stopTimeout = setTimeout(() => {
+        setIsVibrating(false);
+      }, 900);
+      return () => clearTimeout(stopTimeout);
+    }, 10000);
+    return () => clearInterval(vibrationInterval);
+  }, []);
+
+  // Calculate live countdown to upcoming Monday 9:00 AM
+  useEffect(() => {
+    const calculateTimeUntilNextMonday = () => {
+      const now = new Date();
+      const nextMonday = new Date(now);
+      const currentDay = now.getDay();
+      let daysUntilMonday = (1 - currentDay + 7) % 7;
+      if (daysUntilMonday === 0 && now.getHours() >= 9) {
+        daysUntilMonday = 7;
+      }
+      nextMonday.setDate(now.getDate() + daysUntilMonday);
+      nextMonday.setHours(9, 0, 0, 0);
+      const diff = nextMonday.getTime() - now.getTime();
+      if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+      return {
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((diff % (1000 * 60)) / 1000),
+      };
+    };
+    setTimeLeft(calculateTimeUntilNextMonday());
+    const timer = setInterval(() => setTimeLeft(calculateTimeUntilNextMonday()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     async function loadPricingPlans() {
       setIsLoadingPlans(true);
@@ -285,6 +332,80 @@ export default function PricingPage() {
               >
                 Spoken English
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Next Batch Starts Monday Submerged Urgency Banner (Zero Layout Shift) */}
+        <div 
+          className={`max-w-4xl mx-auto mb-10 bg-white dark:bg-slate-900 border-2 rounded-3xl p-5 sm:p-6 transition-colors duration-200 shadow-sm ${
+            isVibrating 
+              ? 'border-red-600 ring-2 ring-red-500/30 shadow-md shadow-red-500/20' 
+              : 'border-red-500/30 dark:border-red-500/40'
+          }`}
+        >
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="space-y-1 text-center sm:text-left">
+              <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border inline-flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 ${
+                  isVibrating 
+                    ? 'bg-red-600 text-white border-red-600 shadow-sm shadow-red-600/30' 
+                    : 'bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800'
+                }`}>
+                  <Flame className={`w-3.5 h-3.5 shrink-0 transition-transform ${isVibrating ? 'text-amber-300 scale-110' : 'text-red-600'}`} />
+                  Time Running Out!
+                </span>
+                <span className="text-xs font-black uppercase text-red-600 dark:text-red-400 tracking-wider whitespace-nowrap shrink-0">
+                  Next Batch Starts on Monday
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                Admissions closing for upcoming cohort. Limited to 15 students per batch with Syed Ejaz Bukhari.
+              </p>
+            </div>
+
+            {/* 4-Unit Red Vibrating Urgency Countdown (Zero vertical displacement) */}
+            <div className={`grid grid-cols-4 gap-2 text-center shrink-0 w-full sm:w-auto ${isVibrating ? 'animate-vibrate-urgent' : ''}`}>
+              <div className={`bg-white dark:bg-slate-800 border-2 rounded-xl px-3 py-2 shadow-sm min-w-[62px] transition-colors ${
+                isVibrating ? 'border-red-600 ring-2 ring-red-500/30' : 'border-red-500/40 dark:border-red-500/50'
+              }`}>
+                <span className="text-2xl font-black text-red-600 dark:text-red-500 font-mono tabular-nums block leading-none">
+                  {String(timeLeft.days).padStart(2, '0')}
+                </span>
+                <span className="text-[9px] font-extrabold uppercase text-red-700 dark:text-red-400 block mt-0.5">
+                  Days
+                </span>
+              </div>
+              <div className={`bg-white dark:bg-slate-800 border-2 rounded-xl px-3 py-2 shadow-sm min-w-[62px] ${
+                isVibrating ? 'border-red-600 ring-2 ring-red-500/30' : 'border-red-500/40 dark:border-red-500/50'
+              }`}>
+                <span className="text-2xl font-black text-red-600 dark:text-red-500 font-mono tabular-nums block leading-none">
+                  {String(timeLeft.hours).padStart(2, '0')}
+                </span>
+                <span className="text-[9px] font-extrabold uppercase text-red-700 dark:text-red-400 block mt-0.5">
+                  Hours
+                </span>
+              </div>
+              <div className={`bg-white dark:bg-slate-800 border-2 rounded-xl px-3 py-2 shadow-sm min-w-[62px] ${
+                isVibrating ? 'border-red-600 ring-2 ring-red-500/30' : 'border-red-500/40 dark:border-red-500/50'
+              }`}>
+                <span className="text-2xl font-black text-red-600 dark:text-red-500 font-mono tabular-nums block leading-none">
+                  {String(timeLeft.minutes).padStart(2, '0')}
+                </span>
+                <span className="text-[9px] font-extrabold uppercase text-red-700 dark:text-red-400 block mt-0.5">
+                  Mins
+                </span>
+              </div>
+              <div className={`bg-white dark:bg-slate-800 border-2 rounded-xl px-3 py-2 shadow-sm min-w-[62px] ${
+                isVibrating ? 'border-red-600 ring-2 ring-red-500/30' : 'border-red-500/40 dark:border-red-500/50'
+              }`}>
+                <span className="text-2xl font-black text-red-600 dark:text-red-500 font-mono tabular-nums block leading-none">
+                  {String(timeLeft.seconds).padStart(2, '0')}
+                </span>
+                <span className="text-[9px] font-extrabold uppercase text-red-700 dark:text-red-400 block mt-0.5">
+                  Secs
+                </span>
+              </div>
             </div>
           </div>
         </div>

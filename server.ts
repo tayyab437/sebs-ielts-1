@@ -56,10 +56,11 @@ const mysqlPool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  connectTimeout: 8000,
   enableKeepAlive: true,
   keepAliveInitialDelay: 10000,
-  maxIdle: 10,
-  idleTimeout: 60000
+  maxIdle: 4,
+  idleTimeout: 30000
 });
 
 // Lazy Stripe initialization
@@ -69,9 +70,22 @@ const getStripe = () => {
   return new Stripe(key);
 };
 
-async function initTables() {
+let isMySQLReady = false;
+let initTablesRunning = false;
+
+async function initTables(attempt = 1) {
+  if (initTablesRunning) return;
+  initTablesRunning = true;
+  let connection: any = null;
   try {
-    const connection = await mysqlPool.getConnection();
+    const connPromise = mysqlPool.getConnection();
+    const timeoutPromise = new Promise<null>((_, reject) =>
+      setTimeout(() => reject(new Error("MySQL connection timed out (ETIMEDOUT)")), 8000)
+    );
+    connection = await Promise.race([connPromise, timeoutPromise]);
+    if (!connection) {
+      throw new Error("Unable to obtain MySQL connection");
+    }
     
     // Ensure profiles table exists
     await connection.query(`
@@ -584,10 +598,28 @@ async function initTables() {
       await mysqlPool.query(`ALTER TABLE courses ADD COLUMN speaking_data LONGTEXT`);
     } catch (e) {}
 
-    connection.release();
-    console.log("MySQL Tables initialized.");
-  } catch (e) {
-    console.error("Error initializing MySQL tables:", e);
+    isMySQLReady = true;
+    console.log("MySQL Tables initialized successfully.");
+  } catch (e: any) {
+    isMySQLReady = false;
+    const isTimeout = e.code === "ETIMEDOUT" || (e.message && (e.message.includes("ETIMEDOUT") || e.message.includes("timed out")));
+    if (isTimeout) {
+      console.warn(`[MySQL] Note: Remote database initialization deferred (ETIMEDOUT on attempt ${attempt}). App continues running with local storage; will retry in background.`);
+    } else {
+      console.warn(`[MySQL] Table initialization notice (${e.code || e.message}). Retrying in background...`);
+    }
+    // Exponential backoff background retry (capped at 60s)
+    const nextDelay = Math.min(60000, 15000 * Math.pow(1.5, Math.min(attempt, 4)));
+    setTimeout(() => {
+      initTables(attempt + 1).catch(() => {});
+    }, nextDelay);
+  } finally {
+    if (connection) {
+      try {
+        connection.release();
+      } catch {}
+    }
+    initTablesRunning = false;
   }
 }
 
@@ -2056,14 +2088,30 @@ async function startServer() {
     }
   };
 
+  let isBlogSyncing = false;
+  let lastBlogSyncTime = 0;
+  let blogSyncFailCount = 0;
+
   const getSyncedBlogData = async () => {
-    try {
-      await syncBlogFromMySQL();
-    } catch {}
+    // Non-blocking: Return local blog data instantly
+    const now = Date.now();
+    const cooldown = blogSyncFailCount > 0 ? 60000 : 5 * 60 * 1000;
+    if (!isBlogSyncing && (now - lastBlogSyncTime) > cooldown) {
+      // Trigger background sync without awaiting or blocking the current request
+      syncBlogFromMySQL().catch(() => {});
+    }
     return readBlogData();
   };
 
-  const syncBlogFromMySQL = async () => {
+  const syncBlogFromMySQL = async (force = false) => {
+    if (isBlogSyncing) return;
+    const now = Date.now();
+    const cooldown = blogSyncFailCount > 0 ? 60000 : 5 * 60 * 1000;
+    if (!force && (now - lastBlogSyncTime) < cooldown) return;
+
+    isBlogSyncing = true;
+    lastBlogSyncTime = now;
+
     try {
       const blogData = readBlogData();
       if (!Array.isArray(blogData.posts)) blogData.posts = [];
@@ -2071,13 +2119,21 @@ async function startServer() {
       if (!Array.isArray(blogData.authors)) blogData.authors = [];
       if (!Array.isArray(blogData.reviewers)) blogData.reviewers = [];
 
+      // Query runner with 6-second timeout to prevent ETIMEDOUT stalls
+      const runQuery = async (sql: string, params: any[] = []): Promise<any> => {
+        return Promise.race([
+          mysqlPool.query(sql, params),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("MySQL query timeout (ETIMEDOUT)")), 6000))
+        ]);
+      };
+
       // Check if MySQL blog_posts table is empty; if so, seed from initial blog_data.json once
-      const [countRows]: any = await mysqlPool.query("SELECT COUNT(*) as cnt FROM blog_posts");
+      const [countRows]: any = await runQuery("SELECT COUNT(*) as cnt FROM blog_posts");
       const cnt = countRows[0]?.cnt || 0;
       if (cnt === 0) {
         for (const p of blogData.posts) {
           try {
-            await mysqlPool.query(
+            await runQuery(
               `INSERT INTO blog_posts (
                 id, title, slug, excerpt, content, status, content_type,
                 category_id, author_id, reviewer_id, is_featured,
@@ -2101,7 +2157,7 @@ async function startServer() {
 
         for (const c of blogData.categories) {
           try {
-            await mysqlPool.query(
+            await runQuery(
               `INSERT INTO blog_categories (id, name, slug, description, seo_title, meta_description, is_active, created_at, updated_at)
                VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
                ON DUPLICATE KEY UPDATE name=VALUES(name), slug=VALUES(slug), description=VALUES(description), seo_title=VALUES(seo_title), meta_description=VALUES(meta_description), updated_at=NOW()`,
@@ -2112,7 +2168,7 @@ async function startServer() {
 
         for (const a of blogData.authors) {
           try {
-            await mysqlPool.query(
+            await runQuery(
               `INSERT INTO blog_authors (id, name, slug, avatar_url, bio, credentials, is_active, created_at, updated_at)
                VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
                ON DUPLICATE KEY UPDATE name=VALUES(name), slug=VALUES(slug), avatar_url=VALUES(avatar_url), bio=VALUES(bio), credentials=VALUES(credentials), updated_at=NOW()`,
@@ -2123,7 +2179,7 @@ async function startServer() {
 
         for (const r of blogData.reviewers) {
           try {
-            await mysqlPool.query(
+            await runQuery(
               `INSERT INTO blog_reviewers (id, name, slug, avatar_url, bio, credentials, is_active, created_at, updated_at)
                VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
                ON DUPLICATE KEY UPDATE name=VALUES(name), slug=VALUES(slug), avatar_url=VALUES(avatar_url), bio=VALUES(bio), credentials=VALUES(credentials), updated_at=NOW()`,
@@ -2134,10 +2190,10 @@ async function startServer() {
       }
 
       // Fetch authoritative MySQL records
-      const [mysqlPosts]: any = await mysqlPool.query("SELECT * FROM blog_posts ORDER BY created_at DESC");
-      const [mysqlCats]: any = await mysqlPool.query("SELECT * FROM blog_categories");
-      const [mysqlAuthors]: any = await mysqlPool.query("SELECT * FROM blog_authors");
-      const [mysqlReviewers]: any = await mysqlPool.query("SELECT * FROM blog_reviewers");
+      const [mysqlPosts]: any = await runQuery("SELECT * FROM blog_posts ORDER BY created_at DESC");
+      const [mysqlCats]: any = await runQuery("SELECT * FROM blog_categories");
+      const [mysqlAuthors]: any = await runQuery("SELECT * FROM blog_authors");
+      const [mysqlReviewers]: any = await runQuery("SELECT * FROM blog_reviewers");
 
       // Rebuild arrays strictly from MySQL authoritative records
       blogData.categories = Array.isArray(mysqlCats) ? mysqlCats.map((mc: any) => ({
@@ -2219,14 +2275,25 @@ async function startServer() {
       })) : [];
 
       writeBlogData(blogData);
+      blogSyncFailCount = 0;
       console.log(`[syncBlogFromMySQL] Synced ${mysqlPosts.length} posts, ${mysqlCats.length} categories from MySQL authoritative DB.`);
     } catch (e: any) {
-      console.warn("[syncBlogFromMySQL] Error syncing blog from MySQL:", e.message || e);
+      blogSyncFailCount++;
+      const isTimeout = e.code === "ETIMEDOUT" || (e.message && (e.message.includes("ETIMEDOUT") || e.message.includes("timed out")));
+      if (isTimeout) {
+        console.warn("[syncBlogFromMySQL] Note: Remote MySQL connection timed out. Serving content seamlessly from local blog cache; will retry in background.");
+      } else {
+        console.warn("[syncBlogFromMySQL] Note: MySQL sync deferred (" + (e.message || e.code) + "). Serving from local cache.");
+      }
+    } finally {
+      isBlogSyncing = false;
     }
   };
 
-  // Initial trigger
-  syncBlogFromMySQL().catch(() => {});
+  // Trigger non-blocking initial sync shortly after server start
+  setTimeout(() => {
+    syncBlogFromMySQL(true).catch(() => {});
+  }, 2500);
 
   // 1. Public Posts List with Category, Search, & Pagination
   app.get("/api/blog/posts", async (req, res) => {
@@ -2263,7 +2330,17 @@ async function startServer() {
     res.json({ posts: populated, total, page: pageNum, totalPages });
   });
 
-  // 2. Single Post by Slug or ID
+  // Deduplication cache for blog view tracking (prevents multiple counts within 15 minutes from same visitor/IP)
+  const recentPostViews = new Map<string, number>();
+  // Periodic cleanup every 30 minutes
+  setInterval(() => {
+    const cutoff = Date.now() - 30 * 60 * 1000;
+    for (const [k, time] of recentPostViews.entries()) {
+      if (time < cutoff) recentPostViews.delete(k);
+    }
+  }, 10 * 60 * 1000);
+
+  // 2. Single Post by Slug or ID (Idempotent GET - does NOT increment views)
   app.get("/api/blog/posts/:slug", async (req, res) => {
     const data = await getSyncedBlogData();
     const slug = req.params.slug;
@@ -2283,17 +2360,6 @@ async function startServer() {
       return res.status(404).json({ error: "Post not found" });
     }
 
-    try {
-      await mysqlPool.query("UPDATE blog_posts SET views = COALESCE(views, 0) + 1 WHERE id = ? OR slug = ?", [post.id, post.slug]);
-      post.views = (post.views || 0) + 1;
-      const bData = readBlogData();
-      const pIdx = (bData.posts || []).findIndex((p: any) => p.id === post.id || p.slug === post.slug);
-      if (pIdx >= 0) {
-        bData.posts[pIdx].views = post.views;
-        writeBlogData(bData);
-      }
-    } catch {}
-
     const fullPost = {
       ...post,
       category: (data.categories || []).find((c: any) => c.id === post.category_id),
@@ -2303,32 +2369,58 @@ async function startServer() {
     res.json({ post: fullPost, ...fullPost });
   });
 
-  // Dedicated View Tracking Endpoint for blog visitors
+  // Dedicated View Tracking Endpoint for blog visitors (Controlled, Deduplicated)
   app.post("/api/blog/posts/:slugOrId/view", async (req, res) => {
     try {
       const slugOrId = decodeURIComponent(req.params.slugOrId || "").trim();
       if (!slugOrId) return res.status(400).json({ error: "Missing article identifier" });
+      const normSlugOrId = slugOrId.toLowerCase().replace(/^\/+|\/+$/g, "");
 
-      await mysqlPool.query(
-        "UPDATE blog_posts SET views = COALESCE(views, 0) + 1 WHERE id = ? OR slug = ?",
-        [slugOrId, slugOrId]
-      );
+      const bData = readBlogData();
+      const pIdx = (bData.posts || []).findIndex((p: any) => {
+        const s = (p.slug || "").trim().toLowerCase();
+        const id = (p.id || "").trim().toLowerCase();
+        return s === normSlugOrId || id === normSlugOrId;
+      });
 
-      const [rows]: any = await mysqlPool.query(
-        "SELECT id, slug, views FROM blog_posts WHERE id = ? OR slug = ? LIMIT 1",
-        [slugOrId, slugOrId]
-      );
+      // Deduplication based on client IP and article identifier (15 minute window)
+      const rawIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "client";
+      const viewKey = `${rawIp}_${normSlugOrId}`;
+      const lastViewedAt = recentPostViews.get(viewKey);
+      const isDuplicate = Boolean(lastViewedAt && (Date.now() - lastViewedAt) < 15 * 60 * 1000);
 
-      const updatedViews = rows && rows[0] ? Number(rows[0].views || 0) : 1;
+      if (isDuplicate) {
+        // Return existing view count without incrementing
+        const currentViews = pIdx >= 0 ? Number(bData.posts[pIdx].views || 0) : 1;
+        return res.json({ success: true, views: currentViews, duplicate: true });
+      }
 
+      // Record timestamp to avoid duplicate increments within cooldown
+      recentPostViews.set(viewKey, Date.now());
+
+      let updatedViews = 1;
+      if (pIdx >= 0) {
+        bData.posts[pIdx].views = (Number(bData.posts[pIdx].views) || 0) + 1;
+        updatedViews = bData.posts[pIdx].views;
+        writeBlogData(bData);
+      }
+
+      // Non-blocking sync with MySQL authoritative database
+      const matchedPost = pIdx >= 0 ? bData.posts[pIdx] : null;
+      const targetId = matchedPost?.id || slugOrId;
+      const targetSlug = matchedPost?.slug || slugOrId;
       try {
-        const bData = readBlogData();
-        const pIdx = (bData.posts || []).findIndex((p: any) => p.id === slugOrId || p.slug === slugOrId);
-        if (pIdx >= 0) {
-          bData.posts[pIdx].views = updatedViews;
-          writeBlogData(bData);
-        }
-      } catch {}
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 3000));
+        await Promise.race([
+          mysqlPool.query(
+            "UPDATE blog_posts SET views = COALESCE(views, 0) + 1 WHERE id = ? OR slug = ?",
+            [targetId, targetSlug]
+          ),
+          timeoutPromise
+        ]);
+      } catch {
+        // Safe non-blocking fallback if remote MySQL has latency or is offline
+      }
 
       return res.json({ success: true, views: updatedViews });
     } catch (err: any) {

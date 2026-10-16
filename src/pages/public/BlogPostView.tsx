@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Calendar, Clock, User, ShieldCheck, ArrowLeft, AlertCircle, Eye } from 'lucide-react';
 import { fetchPublicPostBySlug, fetchAdminPostById, recordPostView } from '../../lib/blogApi';
@@ -14,6 +14,7 @@ import { BlogSourcesSection } from '../../components/blog/BlogSourcesSection';
 import { BlogAuthorBox } from '../../components/blog/BlogAuthorBox';
 import { BlogCtaSection } from '../../components/blog/BlogCtaSection';
 import { BlogArticleCard } from '../../components/blog/BlogArticleCard';
+import { IeltsEnrollmentBrochure } from '../../components/blog/IeltsEnrollmentBrochure';
 
 interface BlogPostViewProps {
   isPreviewMode?: boolean;
@@ -26,6 +27,9 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ isPreviewMode = fals
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Track recorded views during component lifecycle to prevent duplicate counts from double mounting or re-renders
+  const recordedViewSlugRef = useRef<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -54,13 +58,28 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ isPreviewMode = fals
             return;
           }
           setPost(data);
-          // Record article view and update count in real-time
-          if (!isPreviewMode) {
-            recordPostView(data.slug || data.id).then((updatedViews) => {
-              if (typeof updatedViews === 'number') {
-                setPost((prev) => (prev ? { ...prev, views: updatedViews } : null));
-              }
-            });
+          
+          // Accurately record article view exactly once per visitor session
+          const targetIdentifier = data.slug || data.id || slug;
+          if (!isPreviewMode && targetIdentifier) {
+            const sessionKey = `sebs_blog_viewed_${targetIdentifier}`;
+            let hasViewedInSession = false;
+            try {
+              hasViewedInSession = Boolean(sessionStorage.getItem(sessionKey));
+            } catch (_) {}
+
+            if (!hasViewedInSession && recordedViewSlugRef.current !== targetIdentifier) {
+              recordedViewSlugRef.current = targetIdentifier;
+              try {
+                sessionStorage.setItem(sessionKey, '1');
+              } catch (_) {}
+
+              recordPostView(targetIdentifier).then((updatedViews) => {
+                if (typeof updatedViews === 'number') {
+                  setPost((prev) => (prev ? { ...prev, views: updatedViews } : null));
+                }
+              });
+            }
           }
         })
         .catch((err) => {
@@ -177,150 +196,160 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ isPreviewMode = fals
         </div>
       )}
 
-      {/* Article Header & Main Container */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
-        {/* 1. Breadcrumbs */}
-        <BlogBreadcrumbs items={breadcrumbs} />
+      {/* Main Reading Container: Shifted to Left with IELTS Enrollment Brochure on Right */}
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 xl:gap-12 items-start">
+          {/* Left Column: Primary Blog Content */}
+          <div className="lg:col-span-7 xl:col-span-8 space-y-6 min-w-0">
+            {/* 1. Breadcrumbs */}
+            <BlogBreadcrumbs items={breadcrumbs} />
 
-        {/* 2. Category & Meta Badges */}
-        <div className="flex flex-wrap items-center gap-2">
-          {post.category && (
-            <Link
-              to={`/blog/category/${post.category.slug}`}
-              className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-wider hover:bg-primary hover:text-white transition-colors"
-            >
-              {post.category.name}
-            </Link>
-          )}
-          {post.content_type === 'pillar' && (
-            <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-black uppercase tracking-wider">
-              Pillar Guide
-            </span>
-          )}
-        </div>
+            {/* 2. Category & Meta Badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              {post.category && (
+                <Link
+                  to={`/blog/category/${post.category.slug}`}
+                  className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-wider hover:bg-primary hover:text-white transition-colors"
+                >
+                  {post.category.name}
+                </Link>
+              )}
+              {post.content_type === 'pillar' && (
+                <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-black uppercase tracking-wider">
+                  Pillar Guide
+                </span>
+              )}
+            </div>
 
-        {/* 3. Article H1 Title */}
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.15]">
-          {post.title}
-        </h1>
+            {/* 3. Article H1 Title */}
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.15]">
+              {post.title}
+            </h1>
 
-        {/* 4. Excerpt / Lead Subtitle */}
-        {post.excerpt && (
-          <p className="text-lg sm:text-xl font-normal text-slate-600 dark:text-slate-300 leading-relaxed border-l-4 border-primary pl-4 py-1 italic">
-            {post.excerpt}
-          </p>
-        )}
+            {/* 4. Excerpt / Lead Subtitle */}
+            {post.excerpt && (
+              <p className="text-lg sm:text-xl font-normal text-slate-600 dark:text-slate-300 leading-relaxed border-l-4 border-primary pl-4 py-1 italic">
+                {post.excerpt}
+              </p>
+            )}
 
-        {/* 5. Author, Reviewer & Reading Time Bar */}
-        <div className="flex items-center justify-between flex-wrap gap-4 py-4 border-y border-slate-200/80 dark:border-white/10 text-xs font-bold text-slate-600 dark:text-slate-300">
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
-                {post.author?.profile_image || (post.author as any)?.avatar_url ? (
-                  <img src={post.author?.profile_image || (post.author as any)?.avatar_url} alt={post.author?.name} className="w-full h-full object-cover" />
-                ) : (
-                  <User className="w-4 h-4 text-primary" />
+            {/* 5. Author, Reviewer & Reading Time Bar */}
+            <div className="flex items-center justify-between flex-wrap gap-4 py-4 border-y border-slate-200/80 dark:border-white/10 text-xs font-bold text-slate-600 dark:text-slate-300">
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
+                    {post.author?.profile_image || (post.author as any)?.avatar_url ? (
+                      <img src={post.author?.profile_image || (post.author as any)?.avatar_url} alt={post.author?.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-4 h-4 text-primary" />
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase text-slate-400 font-bold block leading-none">Author</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{post.author?.name || 'Syed Ejaz Bukhari'}</span>
+                  </div>
+                </div>
+
+                {post.reviewer && (
+                  <div className="flex items-center gap-2 border-l border-slate-200 dark:border-white/10 pl-4">
+                    <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center overflow-hidden shrink-0">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase text-emerald-600 font-bold block leading-none">Reviewed By</span>
+                      <span className="font-bold text-slate-900 dark:text-white">{post.reviewer.name}</span>
+                    </div>
+                  </div>
                 )}
               </div>
-              <div>
-                <span className="text-[10px] uppercase text-slate-400 font-bold block leading-none">Author</span>
-                <span className="font-bold text-slate-900 dark:text-white">{post.author?.name || 'Syed Ejaz Bukhari'}</span>
+
+              <div className="flex items-center gap-3 text-slate-500 flex-wrap">
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-primary" />
+                  {post.published_at ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
+                </span>
+                <span>•</span>
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-primary" />
+                  {readTime} min read
+                </span>
+                <span>•</span>
+                <span className="flex items-center gap-1 font-bold text-primary">
+                  <Eye className="w-3.5 h-3.5" />
+                  {((post.views ?? 0)).toLocaleString()} {((post.views ?? 0)) === 1 ? 'view' : 'views'}
+                </span>
               </div>
             </div>
 
-            {post.reviewer && (
-              <div className="flex items-center gap-2 border-l border-slate-200 dark:border-white/10 pl-4">
-                <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center overflow-hidden shrink-0">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            {/* 6. Featured Image */}
+            {(post.featured_image || (post as any).featured_image_url) && (
+              <figure className="my-6">
+                <div className="rounded-3xl overflow-hidden bg-slate-950 aspect-[16/9] shadow-xl border border-slate-200/80 dark:border-white/10">
+                  <img
+                    src={post.featured_image || (post as any).featured_image_url}
+                    alt={post.featured_image_alt || post.title}
+                    className="w-full h-full object-cover"
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
+                    width={1200}
+                    height={675}
+                  />
                 </div>
-                <div>
-                  <span className="text-[10px] uppercase text-emerald-600 font-bold block leading-none">Reviewed By</span>
-                  <span className="font-bold text-slate-900 dark:text-white">{post.reviewer.name}</span>
-                </div>
-              </div>
+                {(post as any).featured_image_caption && (
+                  <figcaption className="text-center text-xs text-slate-500 italic mt-2">
+                    {(post as any).featured_image_caption}
+                  </figcaption>
+                )}
+              </figure>
             )}
+
+            {/* 7. Direct Answer Block */}
+            {post.direct_answer_question && post.direct_answer_text && (
+              <BlogDirectAnswer question={post.direct_answer_question} answer={post.direct_answer_text} />
+            )}
+
+            {/* 8. Key Takeaways Block */}
+            {Array.isArray(post.key_takeaways) && post.key_takeaways.length > 0 && (
+              <BlogKeyTakeaways items={post.key_takeaways} />
+            )}
+
+            {/* 8b. Important Note / Callout */}
+            {post.important_note && <BlogImportantNote note={post.important_note} />}
+
+            {/* 9. Table of Contents */}
+            <BlogTableOfContents contentHtml={post.content} />
+
+            {/* 10. Main Article Body */}
+            <main
+              className="my-8 max-w-none prose dark:prose-invert prose-slate prose-headings:font-black prose-headings:tracking-tight prose-h2:text-2xl prose-h2:sm:text-3xl prose-h2:mt-10 prose-h2:mb-4 prose-h2:text-slate-900 dark:prose-h2:text-white prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3 prose-p:text-base prose-p:leading-relaxed prose-p:text-slate-800 dark:prose-p:text-slate-200 prose-li:text-slate-800 dark:prose-li:text-slate-200 prose-a:text-primary prose-a:font-bold prose-a:no-underline hover:prose-a:underline prose-img:rounded-2xl text-left"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
+
+            {/* 11. FAQs Accordion */}
+            {Array.isArray(post.faqs) && post.faqs.length > 0 && <BlogFaqSection faqs={post.faqs} />}
+
+            {/* 12. Sources & References */}
+            {Array.isArray(post.sources) && post.sources.length > 0 && <BlogSourcesSection sources={post.sources} />}
+
+            {/* 13. E-E-A-T Author & Reviewer Bio Box */}
+            <BlogAuthorBox
+              author={post.author}
+              reviewer={post.reviewer}
+              publishedDate={post.published_at}
+              updatedDate={post.updated_at}
+              lastReviewedDate={post.last_reviewed_at}
+            />
+
+            {/* 14. SEBS CTA Block */}
+            {post.cta && <BlogCtaSection cta={post.cta} />}
           </div>
 
-          <div className="flex items-center gap-3 text-slate-500 flex-wrap">
-            <span className="flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5 text-primary" />
-              {post.published_at ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5 text-primary" />
-              {readTime} min read
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1 font-bold text-primary">
-              <Eye className="w-3.5 h-3.5" />
-              {((post.views ?? 0)).toLocaleString()} {((post.views ?? 0)) === 1 ? 'view' : 'views'}
-            </span>
+          {/* Right Column: IELTS Enrollment Brochure Sidebar */}
+          <div className="lg:col-span-5 xl:col-span-4 min-w-0">
+            <IeltsEnrollmentBrochure />
           </div>
         </div>
-
-        {/* 6. Featured Image */}
-        {(post.featured_image || (post as any).featured_image_url) && (
-          <figure className="my-6">
-            <div className="rounded-3xl overflow-hidden bg-slate-950 aspect-[16/9] shadow-xl border border-slate-200/80 dark:border-white/10">
-              <img
-                src={post.featured_image || (post as any).featured_image_url}
-                alt={post.featured_image_alt || post.title}
-                className="w-full h-full object-cover"
-                loading="eager"
-                decoding="async"
-                fetchPriority="high"
-                width={1200}
-                height={675}
-              />
-            </div>
-            {(post as any).featured_image_caption && (
-              <figcaption className="text-center text-xs text-slate-500 italic mt-2">
-                {(post as any).featured_image_caption}
-              </figcaption>
-            )}
-          </figure>
-        )}
-
-        {/* 7. Direct Answer Block */}
-        {post.direct_answer_question && post.direct_answer_text && (
-          <BlogDirectAnswer question={post.direct_answer_question} answer={post.direct_answer_text} />
-        )}
-
-        {/* 8. Key Takeaways Block */}
-        {Array.isArray(post.key_takeaways) && post.key_takeaways.length > 0 && (
-          <BlogKeyTakeaways items={post.key_takeaways} />
-        )}
-
-        {/* 8b. Important Note / Callout */}
-        {post.important_note && <BlogImportantNote note={post.important_note} />}
-
-        {/* 9. Table of Contents */}
-        <BlogTableOfContents contentHtml={post.content} />
-
-        {/* 10. Main Article Body */}
-        <main
-          className="my-8 max-w-none prose dark:prose-invert prose-slate prose-headings:font-black prose-headings:tracking-tight prose-h2:text-2xl prose-h2:sm:text-3xl prose-h2:mt-10 prose-h2:mb-4 prose-h2:text-slate-900 dark:prose-h2:text-white prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3 prose-p:text-base prose-p:leading-relaxed prose-p:text-slate-800 dark:prose-p:text-slate-200 prose-li:text-slate-800 dark:prose-li:text-slate-200 prose-a:text-primary prose-a:font-bold prose-a:no-underline hover:prose-a:underline prose-img:rounded-2xl"
-          dangerouslySetInnerHTML={{ __html: post.content }}
-        />
-
-        {/* 11. FAQs Accordion */}
-        {Array.isArray(post.faqs) && post.faqs.length > 0 && <BlogFaqSection faqs={post.faqs} />}
-
-        {/* 12. Sources & References */}
-        {Array.isArray(post.sources) && post.sources.length > 0 && <BlogSourcesSection sources={post.sources} />}
-
-        {/* 13. E-E-A-T Author & Reviewer Bio Box */}
-        <BlogAuthorBox
-          author={post.author}
-          reviewer={post.reviewer}
-          publishedDate={post.published_at}
-          updatedDate={post.updated_at}
-          lastReviewedDate={post.last_reviewed_at}
-        />
-
-        {/* 14. SEBS CTA Block */}
-        {post.cta && <BlogCtaSection cta={post.cta} />}
 
         {/* 15. Related Articles Grid */}
         {Array.isArray(post.related_posts) && post.related_posts.length > 0 && (
@@ -328,7 +357,7 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ isPreviewMode = fals
             <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               Related Articles & Modules
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {post.related_posts.map((rel: any) => (
                 <BlogArticleCard key={rel.id} post={rel} />
               ))}
