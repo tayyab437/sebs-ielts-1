@@ -31,8 +31,8 @@ import { safeGetItemAndParse, safeSetItem } from "@/src/lib/safeStorage";
 import CourseCompletionCelebrationModal from "@/src/components/courses/CourseCompletionCelebrationModal";
 import OfficialAccreditedCertificate from "@/src/components/courses/OfficialAccreditedCertificate";
 
-const SEB_RED_LOGO_URL = "https://i.ibb.co/gMgHC2YQ/01-logo-curve63-3.png";
-const FALLBACK_LOGO_URL = typeof window !== "undefined" ? (localStorage.getItem("site_logo_url") || "https://i.ibb.co/Xxg75WQc/image-1.jpg") : "https://i.ibb.co/Xxg75WQc/image-1.jpg";
+const SEB_RED_LOGO_URL = "https://i.ibb.co/Xxg75WQc/image-1.jpg";
+const FALLBACK_LOGO_URL = "https://i.ibb.co/Xxg75WQc/image-1.jpg";
 
 interface CertificateRecord {
   id: string;

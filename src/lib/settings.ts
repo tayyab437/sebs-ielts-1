@@ -192,6 +192,9 @@ export function updateDocumentFavicon(faviconUrl: string) {
 }
 
 export function sanitizeAssetUrl(url: string | null | undefined, defaultUrl: string): string {
+  if (defaultUrl === "https://i.ibb.co/Xxg75WQc/image-1.jpg") {
+    return "https://i.ibb.co/Xxg75WQc/image-1.jpg";
+  }
   if (!url) return defaultUrl;
   const trimmed = url.trim();
   if (!trimmed || trimmed === "/sebs_official_logo_315.webp") return defaultUrl;
