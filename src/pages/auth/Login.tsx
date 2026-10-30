@@ -1,9 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { motion } from "motion/react";
-import { GraduationCap, ArrowRight, Github, Mail, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { useState, useEffect } from "react";
@@ -122,7 +121,7 @@ export default function LoginPage() {
         navigate("/dashboard");
         return;
       }
-      alert(friendlyMsg);
+      toast.error("Login Failed", { description: friendlyMsg || "Invalid email or password." });
     } finally {
       setIsLoading(false);
     }

@@ -1,3 +1,5 @@
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { supabase } from "../../lib/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -138,9 +140,6 @@ const moduleData = [
   { name: 'Writing', score: 6.5, color: '#f59e0b' },
   { name: 'Speaking', score: 7.0, color: '#10b981' },
 ];
-
-import { useState, useEffect, useMemo } from "react";
-import { supabase } from "../../lib/supabaseClient";
 
 export default function StudentDashboard() {
   const { tab: routeTab } = useParams<{ tab?: string }>();

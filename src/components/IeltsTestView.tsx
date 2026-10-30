@@ -35,6 +35,7 @@ import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import RichTextEditor from "./RichTextEditor";
 import { fetchSiteSettings, defaultSettings, sanitizeAssetUrl } from "@/src/lib/settings";
+import { isAnswerMatch, parseMultiPromptAnswers } from "@/src/utils/questionFlattener";
 
 interface IeltsTestViewProps {
   test: any;
@@ -299,12 +300,7 @@ export default function IeltsTestView({
         .filter(Boolean);
 
       if (prompts.length > 1) {
-        const correctCandidates =
-          typeof q.correctAnswer === "string"
-            ? q.correctAnswer.split(/[|\n]/)
-            : Array.isArray(q.correctAnswer)
-            ? q.correctAnswer
-            : [String(q.correctAnswer || "")];
+        const correctCandidates = parseMultiPromptAnswers(q.correctAnswer, prompts.length);
 
         return prompts.map((prompt, pIdx) => ({
           id: `${q.id}_${pIdx}`,
@@ -315,7 +311,7 @@ export default function IeltsTestView({
           type: "MATCHING",
           promptText: prompt,
           options: q.options || [],
-          correctAnswer: (correctCandidates[pIdx] || "").trim(),
+          correctAnswer: (correctCandidates[pIdx] || correctCandidates[0] || "").trim(),
           explanation: q.explanation,
         }));
       }
@@ -449,14 +445,8 @@ export default function IeltsTestView({
 
     // MATCHING
     if (qType.includes("MATCHING")) {
-      const valStr = String(val).trim().toLowerCase();
-      const correctStr = String(subItem.correctAnswer || "").trim().toLowerCase();
-      return (
-        valStr === correctStr ||
-        (subItem.options &&
-          subItem.correctIndex !== undefined &&
-          val === subItem.options[subItem.correctIndex])
-      );
+      const qOpts = subItem.options || subItem.parentQ?.options || [];
+      return isAnswerMatch(val, subItem.correctAnswer, qOpts);
     }
 
     // INLINE_BLANKS / TEXT / BLANK / PASSAGE

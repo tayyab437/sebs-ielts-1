@@ -1,3 +1,255 @@
+export const ROMAN_TO_NUM: Record<string, number> = {
+  i: 1, ii: 2, iii: 3, iv: 4, v: 5,
+  vi: 6, vii: 7, viii: 8, ix: 9, x: 10,
+  xi: 11, xii: 12, xiii: 13, xiv: 14, xv: 15,
+  xvi: 16, xvii: 17, xviii: 18, xix: 19, xx: 20
+};
+
+export const NUM_TO_ROMAN: Record<number, string> = {
+  1: "i", 2: "ii", 3: "iii", 4: "iv", 5: "v",
+  6: "vi", 7: "vii", 8: "viii", 9: "ix", 10: "x",
+  11: "xi", 12: "xii", 13: "xiii", 14: "xiv", 15: "xv",
+  16: "xvi", 17: "xvii", 18: "xviii", 19: "xix", 20: "xx"
+};
+
+export function parseRomanNumeral(str: string): number | null {
+  if (!str) return null;
+  const cleaned = str.trim().toLowerCase().replace(/^[\(\[\{]/, "").replace(/[\)\]\}\.:]$/, "").trim();
+  if (ROMAN_TO_NUM[cleaned] !== undefined) {
+    return ROMAN_TO_NUM[cleaned];
+  }
+  return null;
+}
+
+export function stripParagraphPrefix(str: string): string {
+  if (!str) return "";
+  return str
+    .trim()
+    .replace(/^(paragraph|para|section|part|passage|option)\s+/i, "")
+    .trim();
+}
+
+export function parseMultiPromptAnswers(raw: string | string[] | any, expectedCount: number = 0): string[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) {
+    return raw.map(s => String(s || "").trim()).filter(Boolean);
+  }
+  const str = String(raw || "").trim();
+  if (!str) return [];
+
+  // Try newline first
+  if (str.includes("\n")) {
+    const lines = str.split("\n").map(s => s.trim()).filter(Boolean);
+    if (lines.length > 1 || expectedCount <= 1) return lines;
+  }
+  // Try pipe
+  if (str.includes("|")) {
+    const items = str.split("|").map(s => s.trim()).filter(Boolean);
+    if (items.length > 1) return items;
+  }
+  // Try semicolon
+  if (str.includes(";")) {
+    const items = str.split(";").map(s => s.trim()).filter(Boolean);
+    if (items.length > 1) return items;
+  }
+  // Try comma
+  if (str.includes(",")) {
+    const items = str.split(",").map(s => s.trim()).filter(Boolean);
+    if (items.length > 1) {
+      if (!expectedCount || items.length === expectedCount || items.length > 1) {
+        return items;
+      }
+    }
+  }
+  // Try slash if item count matches expected count
+  if (expectedCount > 1 && str.includes("/")) {
+    const items = str.split("/").map(s => s.trim()).filter(Boolean);
+    if (items.length === expectedCount) return items;
+  }
+
+  return [str];
+}
+
+export function getCanonicalTokens(val: any, options?: any[]): Set<string> {
+  const tokens = new Set<string>();
+  if (val === undefined || val === null) return tokens;
+
+  if (typeof val === "number") {
+    tokens.add(String(val));
+    tokens.add(`idx:${val}`);
+    tokens.add(String(val + 1));
+    const r = NUM_TO_ROMAN[val + 1];
+    if (r) tokens.add(`roman:${r}`);
+    if (val >= 0 && val < 26) {
+      tokens.add(`letter:${String.fromCharCode(97 + val)}`);
+    }
+    if (options && options[val] !== undefined) {
+      const optStr = String(options[val]).trim().toLowerCase();
+      tokens.add(optStr);
+      tokens.add(optStr.replace(/[^a-z0-9]/g, ""));
+    }
+    return tokens;
+  }
+
+  const raw = String(val).trim();
+  if (!raw) return tokens;
+
+  const lower = raw.toLowerCase();
+  tokens.add(lower);
+
+  const clean = lower.replace(/[^a-z0-9]/g, "");
+  if (clean) tokens.add(clean);
+
+  // Strip Paragraph / Para / Section / Part / Option prefix
+  const strippedPara = stripParagraphPrefix(lower);
+  if (strippedPara) {
+    tokens.add(strippedPara);
+    tokens.add(strippedPara.replace(/[^a-z0-9]/g, ""));
+  }
+
+  // Check if it's a single letter A-Z
+  const singleLetterMatch = strippedPara.match(/^([a-z])$/i);
+  if (singleLetterMatch) {
+    const l = singleLetterMatch[1].toLowerCase();
+    const lIdx = l.charCodeAt(0) - 97;
+    tokens.add(`letter:${l}`);
+    tokens.add(`idx:${lIdx}`);
+    tokens.add(String(lIdx + 1));
+    const r = NUM_TO_ROMAN[lIdx + 1];
+    if (r) tokens.add(`roman:${r}`);
+  }
+
+  // Check if it's a Roman numeral
+  const rNum = parseRomanNumeral(strippedPara);
+  if (rNum !== null) {
+    tokens.add(`roman:${NUM_TO_ROMAN[rNum]}`);
+    tokens.add(String(rNum));
+    tokens.add(`idx:${rNum - 1}`);
+    if (rNum >= 1 && rNum <= 26) {
+      tokens.add(`letter:${String.fromCharCode(96 + rNum)}`);
+    }
+  }
+
+  // Check if it's a standalone digit
+  if (/^\d+$/.test(strippedPara)) {
+    const n = parseInt(strippedPara, 10);
+    tokens.add(String(n));
+    tokens.add(`idx:${n - 1}`);
+    const r = NUM_TO_ROMAN[n];
+    if (r) tokens.add(`roman:${r}`);
+    if (n >= 1 && n <= 26) {
+      tokens.add(`letter:${String.fromCharCode(96 + n)}`);
+    }
+  }
+
+  // Check for leading label like "iv. The origin of speech" or "B. Technological advances" or "4. Early navigation"
+  const headingMatch = lower.match(/^([a-z0-9]+)[\.\:\)\s\-]+(.+)$/i);
+  if (headingMatch) {
+    const prefix = headingMatch[1].trim();
+    const content = headingMatch[2].trim();
+    tokens.add(prefix);
+    tokens.add(content);
+    tokens.add(content.replace(/[^a-z0-9]/g, ""));
+
+    const prefixRNum = parseRomanNumeral(prefix);
+    if (prefixRNum !== null) {
+      tokens.add(`roman:${NUM_TO_ROMAN[prefixRNum]}`);
+      tokens.add(String(prefixRNum));
+      tokens.add(`idx:${prefixRNum - 1}`);
+      if (prefixRNum >= 1 && prefixRNum <= 26) {
+        tokens.add(`letter:${String.fromCharCode(96 + prefixRNum)}`);
+      }
+    }
+    if (/^[a-z]$/i.test(prefix)) {
+      const pl = prefix.toLowerCase();
+      const plIdx = pl.charCodeAt(0) - 97;
+      tokens.add(`letter:${pl}`);
+      tokens.add(`idx:${plIdx}`);
+      tokens.add(String(plIdx + 1));
+      const r = NUM_TO_ROMAN[plIdx + 1];
+      if (r) tokens.add(`roman:${r}`);
+    }
+    if (/^\d+$/.test(prefix)) {
+      const pn = parseInt(prefix, 10);
+      tokens.add(String(pn));
+      tokens.add(`idx:${pn - 1}`);
+      const r = NUM_TO_ROMAN[pn];
+      if (r) tokens.add(`roman:${r}`);
+      if (pn >= 1 && pn <= 26) {
+        tokens.add(`letter:${String.fromCharCode(96 + pn)}`);
+      }
+    }
+  }
+
+  // Correlate with options array if provided
+  if (Array.isArray(options) && options.length > 0) {
+    options.forEach((opt, optIdx) => {
+      const oStr = String(opt).trim().toLowerCase();
+      const oClean = oStr.replace(/[^a-z0-9]/g, "");
+      let matchesOpt = (oStr === lower || oClean === clean);
+      if (!matchesOpt && headingMatch) {
+        const oContent = oStr.replace(/^[a-z0-9]+[\.\:\)\s\-]+/i, "").trim();
+        if (oContent && (oContent === headingMatch[2].trim() || oContent.replace(/[^a-z0-9]/g, "") === headingMatch[2].replace(/[^a-z0-9]/g, ""))) {
+          matchesOpt = true;
+        }
+      }
+      if (matchesOpt) {
+        tokens.add(`idx:${optIdx}`);
+        tokens.add(String(optIdx + 1));
+        const r = NUM_TO_ROMAN[optIdx + 1];
+        if (r) tokens.add(`roman:${r}`);
+        if (optIdx >= 0 && optIdx < 26) {
+          tokens.add(`letter:${String.fromCharCode(97 + optIdx)}`);
+        }
+      }
+    });
+  }
+
+  return tokens;
+}
+
+export function isAnswerMatch(studentAns: any, correctAns: any, options?: any[]): boolean {
+  if (studentAns === undefined || studentAns === null || correctAns === undefined || correctAns === null) {
+    return false;
+  }
+  const sStr = String(studentAns).trim();
+  const cStr = String(correctAns).trim();
+  if (!sStr || !cStr) return false;
+
+  // Direct case-insensitive match
+  if (sStr.toLowerCase() === cStr.toLowerCase()) return true;
+
+  // If correctAns has comma or slash alternatives: e.g. "iv, 4" or "iv / 4" or "Paragraph A / A"
+  const alternatives = cStr.split(/[\/,|]/).map(x => x.trim()).filter(Boolean);
+  if (alternatives.length > 1) {
+    if (alternatives.some(alt => isAnswerMatch(studentAns, alt, options))) {
+      return true;
+    }
+  }
+
+  // Get tokens for both
+  const sTokens = getCanonicalTokens(studentAns, options);
+  const cTokens = getCanonicalTokens(correctAns, options);
+
+  // Check token intersection
+  for (const token of sTokens) {
+    if (cTokens.has(token)) {
+      return true;
+    }
+  }
+
+  // Substring matching for full heading vs prefix
+  const sClean = sStr.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const cClean = cStr.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (sClean && cClean && (sClean === cClean || sClean.includes(cClean) || cClean.includes(sClean))) {
+    if (Math.min(sClean.length, cClean.length) >= 4) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export function getQuestionCorrectIndex(q: any): number {
   if (!q) return 0;
 
@@ -32,21 +284,23 @@ export function getQuestionCorrectIndex(q: any): number {
   const defaultTfOpts = qType === "YN" ? ["YES", "NO", "NOT GIVEN"] : ["TRUE", "FALSE", "NOT GIVEN"];
   const options = Array.isArray(q.options) && q.options.length > 0 
     ? q.options 
-    : defaultTfOpts;
+    : (Array.isArray(q.data?.options) && q.data.options.length > 0 ? q.data.options : defaultTfOpts);
 
+  const rawLower = rawAns.toLowerCase();
   const rawUpper = rawAns.toUpperCase();
 
-  // Digit string ("0", "1", "2", "3")
-  if (/^\d+$/.test(rawAns)) {
-    const num = parseInt(rawAns, 10);
-    if (num >= 0 && num < (options.length || 10)) {
-      return num;
-    }
-  }
-
   // Exact match against options array
-  const exactIdx = options.findIndex((opt: any) => String(opt).toLowerCase().trim() === rawAns.toLowerCase());
+  const exactIdx = options.findIndex((opt: any) => String(opt).toLowerCase().trim() === rawLower);
   if (exactIdx !== -1) return exactIdx;
+
+  // Match option stripped of prefix vs raw stripped of prefix
+  const rawStripped = rawLower.replace(/^(paragraph|para|section|part|passage|option)\s+/i, "").trim();
+  const strippedIdx = options.findIndex((opt: any) => {
+    const oStr = String(opt).toLowerCase().trim();
+    const oStripped = oStr.replace(/^(paragraph|para|section|part|passage|option)\s+/i, "").trim();
+    return oStripped === rawStripped;
+  });
+  if (strippedIdx !== -1) return strippedIdx;
 
   // True / False / Not Given & Yes / No / Not Given
   if (qType === "TF" || qType === "YN" || qType === "TRUE-FALSE-NOT-GIVEN" || qType === "YES-NO-NOT-GIVEN" || options.includes("TRUE") || options.includes("YES")) {
@@ -64,17 +318,57 @@ export function getQuestionCorrectIndex(q: any): number {
     }
   }
 
-  // Letter choices ("A", "B", "C", "D", "Option A", "A.", "A)", "A: ")
-  if (rawUpper === "A" || rawUpper.startsWith("OPTION A") || /^A[\.\:\)\s]/.test(rawUpper)) return 0;
-  if (rawUpper === "B" || rawUpper.startsWith("OPTION B") || /^B[\.\:\)\s]/.test(rawUpper)) return 1;
-  if (rawUpper === "C" || rawUpper.startsWith("OPTION C") || /^C[\.\:\)\s]/.test(rawUpper)) return 2;
-  if (rawUpper === "D" || rawUpper.startsWith("OPTION D") || /^D[\.\:\)\s]/.test(rawUpper)) return 3;
+  // Roman numerals check (e.g. "i", "ii", "iv", "v", "ix", etc. or "iv. The heading")
+  const rNum = parseRomanNumeral(rawStripped);
+  if (rNum !== null) {
+    const targetIdx = rNum - 1;
+    const optRomanIdx = options.findIndex((opt: any) => {
+      const oLower = String(opt).toLowerCase().trim();
+      const oRoman = parseRomanNumeral(oLower);
+      if (oRoman === rNum) return true;
+      const m = oLower.match(/^([a-z]+)[\.\:\)\s]/);
+      if (m && parseRomanNumeral(m[1]) === rNum) return true;
+      return false;
+    });
+    if (optRomanIdx !== -1) return optRomanIdx;
+    if (targetIdx >= 0 && targetIdx < options.length) return targetIdx;
+    return targetIdx;
+  }
+
+  // Letter choices A through Z ("A", "B", "C", ... "H", "Option A", "A.", "A)", "Paragraph A")
+  const letterMatch = rawStripped.match(/^([a-z])([\.\:\)\s]|$)/i);
+  if (letterMatch) {
+    const letter = letterMatch[1].toUpperCase();
+    const lIdx = letter.charCodeAt(0) - 65;
+    const optLetterIdx = options.findIndex((opt: any, idx: number) => {
+      const oStr = String(opt).trim().toUpperCase();
+      const oStripped = oStr.replace(/^(PARAGRAPH|PARA|SECTION|PART|PASSAGE|OPTION)\s+/i, "").trim();
+      if (oStripped.startsWith(letter + ".") || oStripped.startsWith(letter + ":") || oStripped.startsWith(letter + ")") || oStripped === letter) {
+        return true;
+      }
+      return idx === lIdx;
+    });
+    if (optLetterIdx !== -1) return optLetterIdx;
+    if (lIdx >= 0 && lIdx < options.length) return lIdx;
+    return lIdx;
+  }
+
+  // Digit string ("0", "1", "2", "3")
+  if (/^\d+$/.test(rawStripped)) {
+    const num = parseInt(rawStripped, 10);
+    if (num >= 0 && num < options.length) {
+      return num;
+    }
+    if (num >= 1 && num <= options.length) {
+      return num - 1;
+    }
+  }
 
   // Partial string match against option texts
   const partialIdx = options.findIndex((opt: any) => {
     const oStr = String(opt).toLowerCase().trim();
-    const aStr = rawAns.toLowerCase();
-    const oClean = oStr.replace(/^(option\s+[a-d][:\s]*|[a-d][.\)\:\s]+)/i, "").trim();
+    const aStr = rawLower;
+    const oClean = oStr.replace(/^(option\s+[a-z][:\s]*|[a-z][.\)\:\s]+|[0-9]+[.\)\:\s]+)/i, "").trim();
     return oClean && (oClean === aStr || aStr.includes(oClean) || oClean.includes(aStr));
   });
   if (partialIdx !== -1) return partialIdx;
@@ -267,18 +561,22 @@ export function flattenQuestionsToIndividual(questionsList: any[], startQNum: nu
       const optionsList = getRawOptions();
       const startNum = q.qNum || q._origQNum || currentNum;
 
+      const rawAnsStr = String(q.correctAnswer ?? q.data?.correctAnswer ?? q.answer ?? q.data?.answer ?? "");
+
       if (Array.isArray(paragraphs) && paragraphs.length > 0) {
+        const paragraphAnswers = parseMultiPromptAnswers(rawAnsStr, paragraphs.length);
         paragraphs.forEach((p: any, pIdx: number) => {
           const itemQNum = p.qNum !== undefined ? p.qNum : startNum + pIdx;
+          const itemAns = p.answer || p.correctAnswer || paragraphAnswers[pIdx] || "";
           result.push({
             id: p.id || `${q.id || "match"}_p_${pIdx}_${itemQNum}`,
             type: "MATCHING",
             qNum: itemQNum,
             _origQNum: itemQNum,
-            text: p.text || p.name || "",
+            text: p.text || p.name || p.paragraph || `Paragraph ${String.fromCharCode(65 + pIdx)}`,
             options: optionsList,
             passageText: optionsList.join("\n"),
-            correctAnswer: p.answer || p.correctAnswer || "",
+            correctAnswer: itemAns,
             sectionHeading: pIdx === 0 ? heading : "",
             sectionInstruction: pIdx === 0 ? instruction : "",
             sectionNumber: q.sectionNumber || q.section
@@ -290,8 +588,7 @@ export function flattenQuestionsToIndividual(questionsList: any[], startQNum: nu
 
       const promptStr = String(q.text || q.data?.text || "");
       const promptsList = promptStr.split("\n").filter(Boolean);
-      const answersStr = String(q.correctAnswer || q.data?.correctAnswer || "");
-      const answersList = answersStr.split("\n").filter(Boolean);
+      const promptAnswersList = parseMultiPromptAnswers(rawAnsStr, promptsList.length);
 
       if (promptsList.length > 1) {
         promptsList.forEach((promptText, pIdx) => {
@@ -304,7 +601,7 @@ export function flattenQuestionsToIndividual(questionsList: any[], startQNum: nu
             text: promptText,
             options: optionsList,
             passageText: optionsList.join("\n"),
-            correctAnswer: answersList[pIdx] || answersList[0] || "",
+            correctAnswer: promptAnswersList[pIdx] || promptAnswersList[0] || "",
             sectionHeading: pIdx === 0 ? heading : "",
             sectionInstruction: pIdx === 0 ? instruction : "",
             sectionNumber: q.sectionNumber || q.section

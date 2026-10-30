@@ -221,7 +221,7 @@ export default function SignupPage() {
         }
         return;
       }
-      alert(friendlyMsg);
+      toast.error("Signup Failed", { description: friendlyMsg || "Please verify your details and try again." });
     } finally {
       setIsLoading(false);
     }

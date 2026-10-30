@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, Fragment, Component, ReactNode } from "rea
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { supabase } from "@/src/lib/supabaseClient";
-import { flattenQuestionsToIndividual, getQuestionCorrectIndex, normalizeCourseToSections } from "@/src/utils/questionFlattener";
+import { flattenQuestionsToIndividual, getQuestionCorrectIndex, normalizeCourseToSections, isAnswerMatch, parseMultiPromptAnswers } from "@/src/utils/questionFlattener";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -2435,11 +2435,12 @@ function StudentCoursesInner({
       }
       return true;
     }
-    if (qType === 'MATCHING') {
+    if (qType === 'MATCHING' || qType === 'MATCHING-HEADINGS' || qType === 'MATCHING-INFORMATION') {
       const prompts = (typeof q.text === "string" ? q.text : (Array.isArray(q.text) ? q.text.join("\n") : String(q.text || ""))).split(/\n/).filter(Boolean);
       if (prompts.length === 0) return true;
       for (let pIdx = 0; pIdx < prompts.length; pIdx++) {
-        if (answers[`${q.id}_${pIdx}`] === undefined || answers[`${q.id}_${pIdx}`]?.toString().trim() === "") {
+        const a = answers[`${q.id}_${pIdx}`] ?? (prompts.length === 1 ? answers[q.id] : undefined);
+        if (a === undefined || a?.toString().trim() === "") {
           return false;
         }
       }
@@ -2457,32 +2458,39 @@ function StudentCoursesInner({
       return studentAns.every((idx: number) => correctAns.includes(idx)) && correctAns.every((idx: number) => studentAns.includes(idx));
     }
     if (qType === 'BLANK' || qType === 'PASSAGE') {
-      const studentAns = (answers[q.id]?.toString() || "").trim().toLowerCase();
-      const correctOptions = (typeof q.correctAnswer === "string" ? q.correctAnswer : (Array.isArray(q.correctAnswer) ? q.correctAnswer.join("\n") : String(q.correctAnswer || ""))).split(",").map((x: string) => x.trim().toLowerCase());
-      return correctOptions.some((opt: string) => studentAns === opt && opt);
+      const studentAns = (answers[q.id]?.toString() || "").trim();
+      const rawAns = typeof q.correctAnswer === "string" ? q.correctAnswer : (Array.isArray(q.correctAnswer) ? q.correctAnswer.join(", ") : String(q.correctAnswer || ""));
+      return isAnswerMatch(studentAns, rawAns, q.options);
     } else if (qType === 'INLINE_BLANKS') {
       const parts = (typeof q.text === "string" ? q.text : (Array.isArray(q.text) ? q.text.join("\n") : String(q.text || ""))).split(/_____|\[BLANK\]/i);
       const blanksCount = Math.max(0, parts.length - 1);
       if (blanksCount === 0) return false;
       let allCorrect = true;
       for (let index = 0; index < blanksCount; index++) {
-        const studentAns = (answers[`${q.id}_${index}`]?.toString() || "").trim().toLowerCase();
+        const studentAns = (answers[`${q.id}_${index}`]?.toString() || "").trim();
         const ansGroup = (typeof q.correctAnswer === "string" ? q.correctAnswer : (Array.isArray(q.correctAnswer) ? q.correctAnswer.join("\n") : String(q.correctAnswer || ""))).split("|")[index] || "";
-        const correctOptions = ansGroup.split(",").map((x: string) => x.trim().toLowerCase());
-        if (!correctOptions.some((opt: string) => studentAns === opt && opt)) {
+        if (!isAnswerMatch(studentAns, ansGroup, q.options)) {
           allCorrect = false;
         }
       }
       return allCorrect;
-    } else if (qType === 'MATCHING') {
+    } else if (qType === 'MATCHING' || qType === 'MATCHING-HEADINGS' || qType === 'MATCHING-INFORMATION' || qType === 'MATCHING-FEATURES') {
       const prompts = (typeof q.text === "string" ? q.text : (Array.isArray(q.text) ? q.text.join("\n") : String(q.text || ""))).split(/\n/).filter(Boolean);
-      if (prompts.length === 0) return false;
+      const options = (typeof q.passageText === "string" ? q.passageText : (Array.isArray(q.passageText) ? q.passageText.join("\n") : String(q.passageText || ""))).split("\n").filter(Boolean);
+      const optList = options.length > 0 ? options : (q.options || []);
+      const corrList = parseMultiPromptAnswers(q.correctAnswer, prompts.length);
+
+      if (prompts.length <= 1) {
+        const studentAns = answers[`${q.id}_0`] ?? answers[q.id] ?? "";
+        const correctAns = corrList[0] || String(q.correctAnswer || "");
+        return isAnswerMatch(studentAns, correctAns, optList);
+      }
+
       let allCorrect = true;
       for (let pIdx = 0; pIdx < prompts.length; pIdx++) {
-        const studentAns = (answers[`${q.id}_${pIdx}`]?.toString() || "").trim().toLowerCase();
-        const correctAns = (typeof q.correctAnswer === "string" ? q.correctAnswer : (Array.isArray(q.correctAnswer) ? q.correctAnswer.join("\n") : String(q.correctAnswer || ""))).split(/\n/).filter(Boolean)[pIdx] || "";
-        const correctOptions = correctAns.split(",").map((x: string) => x.trim().toLowerCase());
-        if (!correctOptions.some((opt: string) => studentAns === opt && opt)) {
+        const studentAns = answers[`${q.id}_${pIdx}`] ?? (pIdx === 0 ? answers[q.id] : "") ?? "";
+        const correctAns = corrList[pIdx] || corrList[0] || "";
+        if (!isAnswerMatch(studentAns, correctAns, optList)) {
           allCorrect = false;
         }
       }
@@ -2496,7 +2504,10 @@ function StudentCoursesInner({
       }
       if (typeof userVal === "string") {
         const numVal = parseInt(userVal.trim(), 10);
-        if (!isNaN(numVal)) return numVal === expectedIdx;
+        if (!isNaN(numVal) && numVal === expectedIdx) return true;
+        if (isAnswerMatch(userVal, q.correctAnswer || (q.options ? q.options[expectedIdx] : ""), q.options)) {
+          return true;
+        }
         const userIdx = getQuestionCorrectIndex({ ...q, correctAnswer: userVal });
         return userIdx === expectedIdx;
       }
@@ -2637,18 +2648,20 @@ function StudentCoursesInner({
             type: qType
           });
         }
-      } else if (qType === 'MATCHING') {
+      } else if (qType === 'MATCHING' || qType === 'MATCHING-HEADINGS' || qType === 'MATCHING-INFORMATION') {
         const prompts = (typeof q.text === "string" ? q.text : (Array.isArray(q.text) ? q.text.join("\n") : String(q.text || ""))).split(/\n/).filter(Boolean);
+        const options = (typeof q.passageText === "string" ? q.passageText : (Array.isArray(q.passageText) ? q.passageText.join("\n") : String(q.passageText || ""))).split("\n").filter(Boolean);
+        const optList = options.length > 0 ? options : (q.options || []);
+        const corrList = parseMultiPromptAnswers(q.correctAnswer, prompts.length);
         prompts.forEach((_, pIdx) => {
           const subId = `${q.id}_${pIdx}`;
-          const isAns = answers[subId] !== undefined && answers[subId]?.toString().trim() !== "";
+          const isAns = (answers[subId] !== undefined && answers[subId]?.toString().trim() !== "") || (prompts.length === 1 && answers[q.id] !== undefined && answers[q.id]?.toString().trim() !== "");
           
           let subCorrect = false;
           if (isSubmitted) {
-            const studentAns = (answers[subId]?.toString() || "").trim().toLowerCase();
-            const correctAns = (typeof q.correctAnswer === "string" ? q.correctAnswer : (Array.isArray(q.correctAnswer) ? q.correctAnswer.join("\n") : String(q.correctAnswer || ""))).split(/\n/).filter(Boolean)[pIdx] || "";
-            const correctOptions = correctAns.split(",").map((x: string) => x.trim().toLowerCase());
-            subCorrect = correctOptions.some((opt: string) => studentAns === opt && opt);
+            const studentAns = (answers[subId]?.toString() || (prompts.length === 1 ? answers[q.id]?.toString() : "") || "").trim();
+            const correctAns = corrList[pIdx] || corrList[0] || (typeof q.correctAnswer === "string" ? q.correctAnswer : "");
+            subCorrect = isAnswerMatch(studentAns, correctAns, optList);
           }
 
           flat.push({
@@ -2774,15 +2787,17 @@ function StudentCoursesInner({
           const correctOptions = ansGroup.split(",").map((x: string) => x.trim().toLowerCase());
           if (correctOptions.some((opt: string) => studentAns === opt && opt)) correctCount++;
         }
-      } else if (qType === 'MATCHING') {
+      } else if (qType === 'MATCHING' || qType === 'MATCHING-HEADINGS' || qType === 'MATCHING-INFORMATION') {
         const prompts = (typeof q.text === "string" ? q.text : (Array.isArray(q.text) ? q.text.join("\n") : String(q.text || ""))).split(/\n/).filter(Boolean);
-        const promptsCount = prompts.length;
-        totalQuestions += promptsCount || 1;
+        const options = (typeof q.passageText === "string" ? q.passageText : (Array.isArray(q.passageText) ? q.passageText.join("\n") : String(q.passageText || ""))).split("\n").filter(Boolean);
+        const optList = options.length > 0 ? options : (q.options || []);
+        const promptsCount = prompts.length > 0 ? prompts.length : 1;
+        const corrList = parseMultiPromptAnswers(q.correctAnswer, promptsCount);
+        totalQuestions += promptsCount;
         for (let pIdx = 0; pIdx < promptsCount; pIdx++) {
-          const studentAns = (quizAnswers[`${q.id}_${pIdx}`]?.toString() || "").trim().toLowerCase();
-          const correctAns = (typeof q.correctAnswer === "string" ? q.correctAnswer : (Array.isArray(q.correctAnswer) ? q.correctAnswer.join("\n") : String(q.correctAnswer || ""))).split(/\n/).filter(Boolean)[pIdx] || "";
-          const correctOptions = correctAns.split(",").map((x: string) => x.trim().toLowerCase());
-          if (correctOptions.some((opt: string) => studentAns === opt && opt)) correctCount++;
+          const studentAns = (quizAnswers[`${q.id}_${pIdx}`]?.toString() || (pIdx === 0 ? quizAnswers[q.id]?.toString() : "") || "").trim();
+          const correctAns = corrList[pIdx] || corrList[0] || (typeof q.correctAnswer === "string" ? q.correctAnswer : "");
+          if (isAnswerMatch(studentAns, correctAns, optList)) correctCount++;
         }
       } else if (qType === 'BLANK' || qType === 'PASSAGE') {
         totalQuestions += 1;
@@ -2893,17 +2908,19 @@ function StudentCoursesInner({
             isCorrect = allCorrect;
           } else if (qType === 'MATCHING') {
             const prompts = (typeof q.text === "string" ? q.text : (Array.isArray(q.text) ? q.text.join("\n") : String(q.text || ""))).split(/\n/).filter(Boolean);
-            const promptsCount = prompts.length;
+            const options = (typeof q.passageText === "string" ? q.passageText : (Array.isArray(q.passageText) ? q.passageText.join("\n") : String(q.passageText || ""))).split("\n").filter(Boolean);
+            const optList = options.length > 0 ? options : (q.options || []);
+            const promptsCount = prompts.length > 0 ? prompts.length : 1;
+            const corrList = parseMultiPromptAnswers(q.correctAnswer, promptsCount);
             const studAnsArr: string[] = [];
             const corrAnsArr: string[] = [];
             let allCorrect = true;
             for (let pIdx = 0; pIdx < promptsCount; pIdx++) {
-              const studentAns = (quizAnswers[`${q.id}_${pIdx}`]?.toString() || "").trim();
-              const correctAns = (typeof q.correctAnswer === "string" ? q.correctAnswer : (Array.isArray(q.correctAnswer) ? q.correctAnswer.join("\n") : String(q.correctAnswer || ""))).split(/\n/).filter(Boolean)[pIdx] || "";
-              const correctOptions = correctAns.split(",").map((x: string) => x.trim());
+              const studentAns = (quizAnswers[`${q.id}_${pIdx}`]?.toString() || (pIdx === 0 ? quizAnswers[q.id]?.toString() : "") || "").trim();
+              const correctAns = corrList[pIdx] || corrList[0] || (typeof q.correctAnswer === "string" ? q.correctAnswer : "");
               studAnsArr.push(studentAns);
-              corrAnsArr.push(correctOptions.join(" / "));
-              if (!correctOptions.map(x => x.toLowerCase()).includes(studentAns.toLowerCase())) {
+              corrAnsArr.push(correctAns);
+              if (!isAnswerMatch(studentAns, correctAns, optList)) {
                  allCorrect = false;
               }
             }
@@ -4530,30 +4547,34 @@ function StudentCoursesInner({
                                                       const options = (typeof groupQ.passageText === "string" ? groupQ.passageText : (Array.isArray(groupQ.passageText) ? groupQ.passageText.join("\n") : String(groupQ.passageText || ""))).split("\n").filter(Boolean);
                                                       
                                                       const isSelectedCorrect = quizSubmitted ? (() => {
-                                                          const studentAns = (quizAnswers[groupQ.id]?.toString() || quizAnswers[`${groupQ.id}_${pIdx}`]?.toString() || "").trim().toLowerCase();
-                                                          const correctAns = (typeof groupQ.correctAnswer === "string" ? groupQ.correctAnswer : (Array.isArray(groupQ.correctAnswer) ? groupQ.correctAnswer.join("\n") : String(groupQ.correctAnswer || ""))).split("\n").filter(Boolean)[pIdx] || (typeof groupQ.correctAnswer === "string" ? groupQ.correctAnswer : "");
-                                                          const correctAlternatives = correctAns.split(",").map((x: string) => x.trim().toLowerCase());
-                                                          return correctAlternatives.some((opt: string) => studentAns === opt && opt);
-                                                      })() : null;
-                                                      
-                                                      return (
-                                                          <div key={`${groupQ.id}-${pIdx}`} className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3.5 sm:p-4 bg-white/40 dark:bg-slate-900/40 rounded-xl border border-slate-100 dark:border-white/5 shadow-sm max-w-full overflow-hidden">
-                                                              {(() => {
-                                                                  const subQ = getFlatSubQuestions(currentQuizQuestions, quizAnswers, quizSubmitted).find(s => s.blockIdx === originalIdx && s.subIdx === pIdx);
-                                                                  const subQuestionNumber = subQ ? subQ.qNum : (groupQ.qNum || originalIdx + 1);
-                                                                  return (
-                                                                      <span className="text-sm font-bold text-slate-900 dark:text-white flex-1 flex items-start gap-2.5 min-w-0 pr-2">
-                                                                          <span className="w-6 h-6 rounded bg-primary/10 text-primary text-xs font-black italic flex items-center justify-center shrink-0 mt-0.5">{subQuestionNumber}</span>
-                                                                          <span className="break-words self-center leading-relaxed">{prompt}</span>
-                                                                      </span>
-                                                                  );
-                                                              })()}
-                                                              <div className="relative w-full md:w-64 shrink-0 text-left">
-                                                                  <select
-                                                                      disabled={quizSubmitted}
-                                                                      value={quizAnswers[groupQ.id] || quizAnswers[`${groupQ.id}_${pIdx}`] || ""}
-                                                                      onChange={e => setQuizAnswers(prev => ({ ...prev, [groupQ.id]: e.target.value, [`${groupQ.id}_${pIdx}`]: e.target.value }))}
-                                                                      className={`w-full h-11 rounded-xl border bg-white dark:bg-slate-900 text-sm font-semibold focus:ring-1 focus:ring-primary focus-visible:outline-none pl-4 pr-10 appearance-none font-sans cursor-pointer truncate ${quizSubmitted ? (isSelectedCorrect ? "border-emerald-500 bg-emerald-500/5 text-emerald-600 font-bold" : "border-red-500 bg-red-500/5 text-red-600 font-bold") : "border-slate-200 dark:border-white/10"}`}
+                                                           const studentAns = (quizAnswers[`${groupQ.id}_${pIdx}`]?.toString() || (prompts.length === 1 ? quizAnswers[groupQ.id]?.toString() : "") || "").trim();
+                                                           const corrList = parseMultiPromptAnswers(groupQ.correctAnswer, prompts.length);
+                                                           const correctAns = corrList[pIdx] || corrList[0] || (typeof groupQ.correctAnswer === "string" ? groupQ.correctAnswer : "");
+                                                           return isAnswerMatch(studentAns, correctAns, options);
+                                                       })() : null;
+                                                       
+                                                       return (
+                                                           <div key={`${groupQ.id}-${pIdx}`} className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3.5 sm:p-4 bg-white/40 dark:bg-slate-900/40 rounded-xl border border-slate-100 dark:border-white/5 shadow-sm max-w-full overflow-hidden">
+                                                               {(() => {
+                                                                   const subQ = getFlatSubQuestions(currentQuizQuestions, quizAnswers, quizSubmitted).find(s => s.blockIdx === originalIdx && s.subIdx === pIdx);
+                                                                   const subQuestionNumber = subQ ? subQ.qNum : (groupQ.qNum || originalIdx + 1);
+                                                                   return (
+                                                                       <span className="text-sm font-bold text-slate-900 dark:text-white flex-1 flex items-start gap-2.5 min-w-0 pr-2">
+                                                                           <span className="w-6 h-6 rounded bg-primary/10 text-primary text-xs font-black italic flex items-center justify-center shrink-0 mt-0.5">{subQuestionNumber}</span>
+                                                                           <span className="break-words self-center leading-relaxed">{prompt}</span>
+                                                                       </span>
+                                                                   );
+                                                               })()}
+                                                               <div className="relative w-full md:w-64 shrink-0 text-left">
+                                                                   <select
+                                                                       disabled={quizSubmitted}
+                                                                       value={quizAnswers[`${groupQ.id}_${pIdx}`] || (prompts.length === 1 ? quizAnswers[groupQ.id] : "") || ""}
+                                                                       onChange={e => setQuizAnswers(prev => ({ 
+                                                                         ...prev, 
+                                                                         [`${groupQ.id}_${pIdx}`]: e.target.value,
+                                                                         ...(prompts.length === 1 ? { [groupQ.id]: e.target.value } : {})
+                                                                       }))}
+                                                                       className={`w-full h-11 rounded-xl border bg-white dark:bg-slate-900 text-sm font-semibold focus:ring-1 focus:ring-primary focus-visible:outline-none pl-4 pr-10 appearance-none font-sans cursor-pointer truncate ${quizSubmitted ? (isSelectedCorrect ? "border-emerald-500 bg-emerald-500/5 text-emerald-600 font-bold" : "border-red-500 bg-red-500/5 text-red-600 font-bold") : "border-slate-200 dark:border-white/10"}`}
                                                                   >
                                                                      <option value="" disabled>Select heading...</option>
                                                                      {options.map((opt: string, oIdx: number) => (
@@ -5063,29 +5084,17 @@ function StudentCoursesInner({
                                               <div className="text-sm sm:text-base font-medium text-slate-700 dark:text-slate-300 leading-loose whitespace-pre-wrap pl-0 sm:pl-12 mt-2">
                                                 {(typeof q.text === "string" ? q.text : (Array.isArray(q.text) ? q.text.join("\n") : String(q.text || ""))).split(/_____|\[BLANK\]/i).map((part: string, index: number, array: string[]) => {
                                                   if (index === array.length - 1) return <span key={index}>{part}</span>;
-                                                  
-                                                  const isSelectedCorrect = quizSubmitted ? (() => {
-                                                      const studentAns = (quizAnswers[`${q.id}_${index}`]?.toString() || "").trim().toLowerCase();
-                                                      const ansGroup = (typeof q.correctAnswer === "string" ? q.correctAnswer : (Array.isArray(q.correctAnswer) ? q.correctAnswer.join("\n") : String(q.correctAnswer || ""))).split("|")[index] || "";
-                                                      const correctOptions = ansGroup.split(",").map((x: string) => x.trim().toLowerCase());
-                                                      return correctOptions.some((opt: string) => studentAns === opt && opt);
-                                                  })() : null;
-
+                                                  const studAns = (quizAnswers[`${q.id}_${index}`] || "").trim().toLowerCase();
+                                                  const corrGroup = (typeof q.correctAnswer === "string" ? q.correctAnswer : (Array.isArray(q.correctAnswer) ? q.correctAnswer.join("\n") : String(q.correctAnswer || ""))).split("|")[index] || "";
+                                                  const isPartCorrect = corrGroup.split(",").map((x: string) => x.trim().toLowerCase()).includes(studAns);
                                                   const subQ = getFlatSubQuestions(currentQuizQuestions, quizAnswers, quizSubmitted).find(s => s.blockIdx === qIdx && s.subIdx === index);
                                                   const subQuestionNumber = subQ ? subQ.qNum : "";
-
                                                   return (
                                                     <Fragment key={index}>
                                                       <span>{part}</span>
                                                       <span className="inline-flex items-center gap-1 mx-1 select-none">
                                                         <span className="text-xs font-black text-primary bg-primary/10 rounded px-2 py-0.5 italic">{subQuestionNumber}</span>
-                                                        <input
-                                                          type="text"
-                                                          disabled={quizSubmitted}
-                                                          value={quizAnswers[`${q.id}_${index}`] || ""}
-                                                          onChange={e => setQuizAnswers(prev => ({ ...prev, [`${q.id}_${index}`]: e.target.value }))}
-                                                          className={`inline-block w-40 border-b-2 border-x-0 border-t-0 border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-slate-900/50 px-3 py-1 mx-2 focus:ring-0 focus:border-primary text-center font-bold outline-none ring-0 ${quizSubmitted ? (isSelectedCorrect ? "border-emerald-500 text-emerald-600 bg-emerald-500/10" : "border-red-500 text-red-600 bg-red-500/10") : ""}`}
-                                                        />
+                                                        <input type="text" disabled={quizSubmitted} value={quizAnswers[`${q.id}_${index}`] || ""} onChange={e => setQuizAnswers(p => ({ ...p, [`${q.id}_${index}`]: e.target.value }))} className={`inline-block w-48 border-b-4 border-x-0 border-t-0 border-slate-300 dark:border-white/20 bg-slate-100/50 dark:bg-slate-900/50 px-4 py-1 mx-2 focus:ring-0 focus:border-indigo-500 text-center font-black outline-none transition-all ${quizSubmitted ? (isPartCorrect ? "border-emerald-500 text-emerald-600" : "border-red-500 text-red-600") : ""}`} />
                                                       </span>
                                                     </Fragment>
                                                   );
@@ -5093,66 +5102,70 @@ function StudentCoursesInner({
                                               </div>
                                             )}
 
-                                                                                        {/* Matching Headings */}
+                                            {/* Matching Headings */}
                                             {qType === 'MATCHING' && (
-                                              <div className="pl-0 sm:pl-12 space-y-5 mt-2">
-                                                  <div className="bg-slate-100/50 dark:bg-white/5 p-5 py-6 rounded-3xl border border-slate-200 dark:border-white/10 space-y-4">
-                                                     <h5 className="text-[10px] sm:text-xs font-black uppercase text-indigo-500 tracking-wider">List of Headings</h5>
-                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                         {(typeof q.passageText === "string" ? q.passageText : (Array.isArray(q.passageText) ? q.passageText.join("\n") : String(q.passageText || ""))).split("\n").filter(Boolean).map((opt: string, oIdx: number) => (
-                                                             <div key={oIdx} className="text-sm font-semibold text-slate-700 dark:text-slate-300">{opt}</div>
-                                                         ))}
-                                                     </div>
+                                              <div className="pl-0 sm:pl-12 space-y-4 text-left">
+                                                <div className="bg-slate-100/50 dark:bg-white/5 p-4 sm:p-5 rounded-2xl border border-slate-150 dark:border-white/10 space-y-3 shadow-inner">
+                                                  <h5 className="text-[10px] sm:text-xs font-black uppercase text-indigo-500 tracking-wider">List of Headings</h5>
+                                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    {(typeof q.passageText === "string" ? q.passageText : (Array.isArray(q.passageText) ? q.passageText.join("\n") : String(q.passageText || ""))).split("\n").filter(Boolean).map((opt: string, oIdx: number) => (
+                                                      <div key={oIdx} className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">{opt}</div>
+                                                    ))}
                                                   </div>
-                                                  
-                                                  <div className="space-y-3">
-                                                      {matchingGroupQuestions.map(({ q: groupQ, originalIdx }) => {
-                                                         const prompts = (typeof groupQ.text === "string" ? groupQ.text : (Array.isArray(groupQ.text) ? groupQ.text.join("\n") : String(groupQ.text || ""))).split("\n").filter(Boolean);
-                                                         return prompts.map((prompt: string, pIdx: number) => {
-                                                            const options = (typeof groupQ.passageText === "string" ? groupQ.passageText : (Array.isArray(groupQ.passageText) ? groupQ.passageText.join("\n") : String(groupQ.passageText || ""))).split("\n").filter(Boolean);
-                                                            
-                                                            const isSelectedCorrect = quizSubmitted ? (() => {
-                                                                const studentAns = (quizAnswers[`${groupQ.id}_${pIdx}`]?.toString() || "").trim().toLowerCase();
-                                                                const correctAns = (typeof groupQ.correctAnswer === "string" ? groupQ.correctAnswer : (Array.isArray(groupQ.correctAnswer) ? groupQ.correctAnswer.join("\n") : String(groupQ.correctAnswer || ""))).split("\n").filter(Boolean)[pIdx] || "";
-                                                                const correctAlternatives = correctAns.split(",").map((x: string) => x.trim().toLowerCase());
-                                                                return correctAlternatives.some((opt: string) => studentAns === opt && opt);
-                                                            })() : null;
-                                                            
-                                                            return (
-                                                                <div key={`${groupQ.id}-${pIdx}`} className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3.5 sm:p-4 bg-white/40 dark:bg-slate-900/40 rounded-xl border border-slate-100 dark:border-white/5 shadow-sm max-w-full overflow-hidden">
-                                                                    {(() => {
-                                                                        const subQ = getFlatSubQuestions(currentQuizQuestions, quizAnswers, quizSubmitted).find(s => s.blockIdx === originalIdx && s.subIdx === pIdx);
-                                                                        const subQuestionNumber = subQ ? subQ.qNum : "";
-                                                                        return (
-                                                                            <span className="text-sm font-bold text-slate-900 dark:text-white flex-1 flex items-start gap-2.5 min-w-0 pr-2">
-                                                                                <span className="w-6 h-6 rounded bg-primary/10 text-primary text-xs font-black italic flex items-center justify-center shrink-0 mt-0.5">{subQuestionNumber}</span>
-                                                                                <span className="break-words self-center leading-relaxed">{prompt}</span>
-                                                                            </span>
-                                                                        );
-                                                                    })()}
-                                                                    <div className="relative w-full md:w-64 shrink-0 text-left">
-                                                                        <select
-                                                                            disabled={quizSubmitted}
-                                                                        value={quizAnswers[`${groupQ.id}_${pIdx}`] || ""}
-                                                                        onChange={e => setQuizAnswers(prev => ({ ...prev, [`${groupQ.id}_${pIdx}`]: e.target.value }))}
-                                                                        className={`w-full h-11 rounded-xl border bg-white dark:bg-slate-900 text-sm font-semibold focus:ring-1 focus:ring-primary focus-visible:outline-none pl-4 pr-10 appearance-none font-sans cursor-pointer truncate ${quizSubmitted ? (isSelectedCorrect ? "border-emerald-500 bg-emerald-500/5 text-emerald-600 font-bold" : "border-red-500 bg-red-500/5 text-red-600 font-bold") : "border-slate-200 dark:border-white/10"}`}
-                                                                        >
-                                                                           <option value="" disabled>Select heading...</option>
-                                                                           {options.map((opt: string, oIdx: number) => (
-                                                                               <option key={oIdx} value={opt}>{opt}</option>
-                                                                           ))}
-                                                                        </select>
-                                                                        <div className="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-slate-400 dark:text-white/40">
-                                                                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                                           </svg>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                         });
-                                                      })}
-                                                  </div>
+                                                </div>
+                                                
+                                                <div className="space-y-3">
+                                                  {matchingGroupQuestions.map(({ q: groupQ, originalIdx }) => {
+                                                    const prompts = (typeof groupQ.text === "string" ? groupQ.text : (Array.isArray(groupQ.text) ? groupQ.text.join("\n") : String(groupQ.text || ""))).split("\n").filter(Boolean);
+                                                    return prompts.map((prompt: string, pIdx: number) => {
+                                                      const options = (typeof groupQ.passageText === "string" ? groupQ.passageText : (Array.isArray(groupQ.passageText) ? groupQ.passageText.join("\n") : String(groupQ.passageText || ""))).split("\n").filter(Boolean);
+                                                      
+                                                      const isSelectedCorrect = quizSubmitted ? (() => {
+                                                          const studentAns = (quizAnswers[`${groupQ.id}_${pIdx}`]?.toString() || (prompts.length === 1 ? quizAnswers[groupQ.id]?.toString() : "") || "").trim();
+                                                          const corrList = parseMultiPromptAnswers(groupQ.correctAnswer, prompts.length);
+                                                          const correctAns = corrList[pIdx] || corrList[0] || (typeof groupQ.correctAnswer === "string" ? groupQ.correctAnswer : "");
+                                                          return isAnswerMatch(studentAns, correctAns, options);
+                                                      })() : null;
+                                                      
+                                                      return (
+                                                          <div key={`${groupQ.id}-${pIdx}`} className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3.5 sm:p-4 bg-white/40 dark:bg-slate-900/40 rounded-xl border border-slate-100 dark:border-white/5 shadow-sm max-w-full overflow-hidden">
+                                                              {(() => {
+                                                                  const subQ = getFlatSubQuestions(currentQuizQuestions, quizAnswers, quizSubmitted).find(s => s.blockIdx === originalIdx && s.subIdx === pIdx);
+                                                                  const subQuestionNumber = subQ ? subQ.qNum : (groupQ.qNum || originalIdx + 1);
+                                                                  return (
+                                                                      <span className="text-sm font-bold text-slate-900 dark:text-white flex-1 flex items-start gap-2.5 min-w-0 pr-2">
+                                                                          <span className="w-6 h-6 rounded bg-primary/10 text-primary text-xs font-black italic flex items-center justify-center shrink-0 mt-0.5">{subQuestionNumber}</span>
+                                                                          <span className="break-words self-center leading-relaxed">{prompt}</span>
+                                                                      </span>
+                                                                  );
+                                                              })()}
+                                                              <div className="relative w-full md:w-64 shrink-0 text-left">
+                                                                  <select
+                                                                      disabled={quizSubmitted}
+                                                                      value={quizAnswers[`${groupQ.id}_${pIdx}`] || (prompts.length === 1 ? quizAnswers[groupQ.id] : "") || ""}
+                                                                      onChange={e => setQuizAnswers(prev => ({ 
+                                                                        ...prev, 
+                                                                        [`${groupQ.id}_${pIdx}`]: e.target.value,
+                                                                        ...(prompts.length === 1 ? { [groupQ.id]: e.target.value } : {})
+                                                                      }))}
+                                                                      className={`w-full h-11 rounded-xl border bg-white dark:bg-slate-900 text-sm font-semibold focus:ring-1 focus:ring-primary focus-visible:outline-none pl-4 pr-10 appearance-none font-sans cursor-pointer truncate ${quizSubmitted ? (isSelectedCorrect ? "border-emerald-500 bg-emerald-500/5 text-emerald-600 font-bold" : "border-red-500 bg-red-500/5 text-red-600 font-bold") : "border-slate-200 dark:border-white/10"}`}
+                                                                  >
+                                                                     <option value="" disabled>Select heading...</option>
+                                                                     {options.map((opt: string, oIdx: number) => (
+                                                                         <option key={oIdx} value={opt}>{opt}</option>
+                                                                     ))}
+                                                                  </select>
+                                                                  <div className="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-slate-400 dark:text-white/40">
+                                                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                                     </svg>
+                                                                  </div>
+                                                              </div>
+                                                          </div>
+                                                      );
+                                                    });
+                                                  })}
+                                                </div>
                                               </div>
                                             )}
 
@@ -5793,106 +5806,96 @@ function StudentCoursesInner({
                                       )}
 
                                       {/* Inline Blanks Input */}
-                                      {qType === 'INLINE_BLANKS' && (
-                                        <div className="text-sm sm:text-base font-medium text-slate-700 dark:text-slate-300 leading-loose whitespace-pre-wrap pl-0 sm:pl-12 mt-2">
-                                          {(typeof q.text === "string" ? q.text : (Array.isArray(q.text) ? q.text.join("\n") : String(q.text || ""))).split(/_____|\[BLANK\]/i).map((part: string, index: number, array: string[]) => {
-                                            if (index === array.length - 1) return <span key={index}>{part}</span>;
-                                            
-                                            const isSelectedCorrect = quizSubmitted ? (() => {
-                                                const studentAns = (quizAnswers[`${q.id}_${index}`]?.toString() || "").trim().toLowerCase();
-                                                const ansGroup = (typeof q.correctAnswer === "string" ? q.correctAnswer : (Array.isArray(q.correctAnswer) ? q.correctAnswer.join("\n") : String(q.correctAnswer || ""))).split("|")[index] || "";
-                                                const correctOptions = ansGroup.split(",").map((x: string) => x.trim().toLowerCase());
-                                                return correctOptions.some((opt: string) => studentAns === opt && opt);
-                                            })() : null;
-
-                                            const subQ = getFlatSubQuestions(currentQuizQuestions, quizAnswers, quizSubmitted).find(s => s.blockIdx === qIdx && s.subIdx === index);
-                                            const subQuestionNumber = subQ ? subQ.qNum : "";
-
-                                            return (
-                                              <Fragment key={index}>
-                                                <span>{part}</span>
-                                                <span className="inline-flex items-center gap-1 mx-1 select-none">
-                                                  <span className="text-xs font-black text-primary bg-primary/10 rounded px-2 py-0.5 italic">{subQuestionNumber}</span>
-                                                  <input
-                                                    type="text"
-                                                    disabled={quizSubmitted}
-                                                    value={quizAnswers[`${q.id}_${index}`] || ""}
-                                                    onChange={e => setQuizAnswers(prev => ({ ...prev, [`${q.id}_${index}`]: e.target.value }))}
-                                                    className={`inline-block w-40 border-b-2 border-x-0 border-t-0 border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-slate-900/50 px-3 py-1 mx-2 focus:ring-0 focus:border-primary text-center font-bold outline-none ring-0 ${quizSubmitted ? (isSelectedCorrect ? "border-emerald-500 text-emerald-600 bg-emerald-500/10" : "border-red-500 text-red-600 bg-red-500/10") : ""}`}
-                                                  />
-                                                </span>
-                                              </Fragment>
-                                            );
-                                          })}
-                                        </div>
-                                      )}
-
-                                                                            {/* Matching Headings */}
-                                      {qType === 'MATCHING' && (() => {
-                                        return (
-                                          <div className="pl-0 sm:pl-12 space-y-5 mt-2">
-                                              <div className="bg-slate-100/50 dark:bg-white/5 p-5 py-6 rounded-3xl border border-slate-200 dark:border-white/10 space-y-4">
-                                                 <h5 className="text-[10px] sm:text-xs font-black uppercase text-indigo-500 tracking-wider">List of Headings / Features</h5>
-                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                     {(typeof q.passageText === "string" ? q.passageText : (Array.isArray(q.passageText) ? q.passageText.join("\n") : String(q.passageText || ""))).split("\n").filter(Boolean).map((opt: string, oIdx: number) => (
-                                                         <div key={oIdx} className="text-sm font-semibold text-slate-700 dark:text-slate-300">{opt}</div>
-                                                     ))}
-                                                 </div>
+                                            {qType === 'INLINE_BLANKS' && (
+                                              <div className="text-sm sm:text-base font-medium text-slate-700 dark:text-slate-300 leading-loose whitespace-pre-wrap pl-0 sm:pl-12 mt-2">
+                                                {(typeof q.text === "string" ? q.text : (Array.isArray(q.text) ? q.text.join("\n") : String(q.text || ""))).split(/_____|\[BLANK\]/i).map((part: string, index: number, array: string[]) => {
+                                                  if (index === array.length - 1) return <span key={index}>{part}</span>;
+                                                  const studAns = (quizAnswers[`${q.id}_${index}`] || "").trim().toLowerCase();
+                                                  const corrGroup = (typeof q.correctAnswer === "string" ? q.correctAnswer : (Array.isArray(q.correctAnswer) ? q.correctAnswer.join("\n") : String(q.correctAnswer || ""))).split("|")[index] || "";
+                                                  const isPartCorrect = corrGroup.split(",").map((x: string) => x.trim().toLowerCase()).includes(studAns);
+                                                  const subQ = getFlatSubQuestions(currentQuizQuestions, quizAnswers, quizSubmitted).find(s => s.blockIdx === qIdx && s.subIdx === index);
+                                                  const subQuestionNumber = subQ ? subQ.qNum : "";
+                                                  return (
+                                                    <Fragment key={index}>
+                                                      <span>{part}</span>
+                                                      <span className="inline-flex items-center gap-1 mx-1 select-none">
+                                                        <span className="text-xs font-black text-primary bg-primary/10 rounded px-2 py-0.5 italic">{subQuestionNumber}</span>
+                                                        <input type="text" disabled={quizSubmitted} value={quizAnswers[`${q.id}_${index}`] || ""} onChange={e => setQuizAnswers(p => ({ ...p, [`${q.id}_${index}`]: e.target.value }))} className={`inline-block w-48 border-b-4 border-x-0 border-t-0 border-slate-300 dark:border-white/20 bg-slate-100/50 dark:bg-slate-900/50 px-4 py-1 mx-2 focus:ring-0 focus:border-indigo-500 text-center font-black outline-none transition-all ${quizSubmitted ? (isPartCorrect ? "border-emerald-500 text-emerald-600" : "border-red-500 text-red-600") : ""}`} />
+                                                      </span>
+                                                    </Fragment>
+                                                  );
+                                                })}
                                               </div>
-                                              
-                                              <div className="space-y-3">
+                                            )}
+
+                                            {/* Matching Headings */}
+                                            {qType === 'MATCHING' && (
+                                              <div className="pl-0 sm:pl-12 space-y-4 text-left">
+                                                <div className="bg-slate-100/50 dark:bg-white/5 p-4 sm:p-5 rounded-2xl border border-slate-150 dark:border-white/10 space-y-3 shadow-inner">
+                                                  <h5 className="text-[10px] sm:text-xs font-black uppercase text-indigo-500 tracking-wider">List of Headings</h5>
+                                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    {(typeof q.passageText === "string" ? q.passageText : (Array.isArray(q.passageText) ? q.passageText.join("\n") : String(q.passageText || ""))).split("\n").filter(Boolean).map((opt: string, oIdx: number) => (
+                                                      <div key={oIdx} className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">{opt}</div>
+                                                    ))}
+                                                  </div>
+                                                </div>
+                                                
+                                                <div className="space-y-3">
                                                   {matchingGroupQuestions.map(({ q: groupQ, originalIdx }) => {
-                                                     const prompts = (typeof groupQ.text === "string" ? groupQ.text : (Array.isArray(groupQ.text) ? groupQ.text.join("\n") : String(groupQ.text || ""))).split("\n").filter(Boolean);
-                                                     return prompts.map((prompt: string, pIdx: number) => {
-                                                         const options = (typeof groupQ.passageText === "string" ? groupQ.passageText : (Array.isArray(groupQ.passageText) ? groupQ.passageText.join("\n") : String(groupQ.passageText || ""))).split("\n").filter(Boolean);
-                                                         
-                                                         const isSelectedCorrect = quizSubmitted ? (() => {
-                                                             const studentAns = (quizAnswers[groupQ.id]?.toString() || quizAnswers[`${groupQ.id}_${pIdx}`]?.toString() || "").trim().toLowerCase();
-                                                             const correctAns = (typeof groupQ.correctAnswer === "string" ? groupQ.correctAnswer : (Array.isArray(groupQ.correctAnswer) ? groupQ.correctAnswer.join("\n") : String(groupQ.correctAnswer || ""))).split("\n").filter(Boolean)[pIdx] || (typeof groupQ.correctAnswer === "string" ? groupQ.correctAnswer : "");
-                                                             const correctAlternatives = correctAns.split(",").map((x: string) => x.trim().toLowerCase());
-                                                             return correctAlternatives.some((opt: string) => studentAns === opt && opt);
-                                                         })() : null;
-                                                         
-                                                         return (
-                                                             <div key={`${groupQ.id}-${pIdx}`} className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3.5 sm:p-4 bg-white/40 dark:bg-slate-900/40 rounded-xl border border-slate-100 dark:border-white/5 shadow-sm max-w-full overflow-hidden">
-                                                                 {(() => {
-                                                                     const subQ = getFlatSubQuestions(currentQuizQuestions, quizAnswers, quizSubmitted).find(s => s.blockIdx === originalIdx && s.subIdx === pIdx);
-                                                                     const subQuestionNumber = subQ ? subQ.qNum : (groupQ.qNum || originalIdx + 1);
-                                                                     return (
-                                                                         <span className="text-sm font-bold text-slate-900 dark:text-white flex-1 flex items-start gap-2.5 min-w-0 pr-2">
-                                                                             <span className="w-6 h-6 rounded bg-primary/10 text-primary text-xs font-black italic flex items-center justify-center shrink-0 mt-0.5">{subQuestionNumber}</span>
-                                                                             <span className="break-words self-center leading-relaxed">{prompt}</span>
-                                                                         </span>
-                                                                     );
-                                                                 })()}
-                                                                 <div className="relative w-full md:w-64 shrink-0 text-left">
-                                                                     <select
-                                                                         disabled={quizSubmitted}
-                                                                         value={quizAnswers[groupQ.id] || quizAnswers[`${groupQ.id}_${pIdx}`] || ""}
-                                                                         onChange={e => setQuizAnswers(prev => ({ ...prev, [groupQ.id]: e.target.value, [`${groupQ.id}_${pIdx}`]: e.target.value }))}
-                                                                         className={`w-full h-11 rounded-xl border bg-white dark:bg-slate-900 text-sm font-semibold focus:ring-1 focus:ring-primary focus-visible:outline-none pl-4 pr-10 appearance-none font-sans cursor-pointer truncate ${quizSubmitted ? (isSelectedCorrect ? "border-emerald-500 bg-emerald-500/5 text-emerald-600 font-bold" : "border-red-500 bg-red-500/5 text-red-600 font-bold") : "border-slate-200 dark:border-white/10"}`}
-                                                                     >
-                                                                    <option value="" disabled>Select heading...</option>
-                                                                    {options.map((opt: string, oIdx: number) => (
-                                                                        <option key={oIdx} value={opt}>{opt}</option>
-                                                                    ))}
-                                                                 </select>
-                                                                 <div className="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-slate-400 dark:text-white/40">
-                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                                    </svg>
-                                                                 </div>
-                                                             </div>
+                                                    const prompts = (typeof groupQ.text === "string" ? groupQ.text : (Array.isArray(groupQ.text) ? groupQ.text.join("\n") : String(groupQ.text || ""))).split("\n").filter(Boolean);
+                                                    return prompts.map((prompt: string, pIdx: number) => {
+                                                      const options = (typeof groupQ.passageText === "string" ? groupQ.passageText : (Array.isArray(groupQ.passageText) ? groupQ.passageText.join("\n") : String(groupQ.passageText || ""))).split("\n").filter(Boolean);
+                                                      
+                                                      const isSelectedCorrect = quizSubmitted ? (() => {
+                                                          const studentAns = (quizAnswers[`${groupQ.id}_${pIdx}`]?.toString() || (prompts.length === 1 ? quizAnswers[groupQ.id]?.toString() : "") || "").trim();
+                                                          const corrList = parseMultiPromptAnswers(groupQ.correctAnswer, prompts.length);
+                                                          const correctAns = corrList[pIdx] || corrList[0] || (typeof groupQ.correctAnswer === "string" ? groupQ.correctAnswer : "");
+                                                          return isAnswerMatch(studentAns, correctAns, options);
+                                                      })() : null;
+                                                      
+                                                      return (
+                                                          <div key={`${groupQ.id}-${pIdx}`} className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3.5 sm:p-4 bg-white/40 dark:bg-slate-900/40 rounded-xl border border-slate-100 dark:border-white/5 shadow-sm max-w-full overflow-hidden">
+                                                              {(() => {
+                                                                  const subQ = getFlatSubQuestions(currentQuizQuestions, quizAnswers, quizSubmitted).find(s => s.blockIdx === originalIdx && s.subIdx === pIdx);
+                                                                  const subQuestionNumber = subQ ? subQ.qNum : (groupQ.qNum || originalIdx + 1);
+                                                                  return (
+                                                                      <span className="text-sm font-bold text-slate-900 dark:text-white flex-1 flex items-start gap-2.5 min-w-0 pr-2">
+                                                                          <span className="w-6 h-6 rounded bg-primary/10 text-primary text-xs font-black italic flex items-center justify-center shrink-0 mt-0.5">{subQuestionNumber}</span>
+                                                                          <span className="break-words self-center leading-relaxed">{prompt}</span>
+                                                                      </span>
+                                                                  );
+                                                              })()}
+                                                              <div className="relative w-full md:w-64 shrink-0 text-left">
+                                                                  <select
+                                                                      disabled={quizSubmitted}
+                                                                      value={quizAnswers[`${groupQ.id}_${pIdx}`] || (prompts.length === 1 ? quizAnswers[groupQ.id] : "") || ""}
+                                                                      onChange={e => setQuizAnswers(prev => ({ 
+                                                                        ...prev, 
+                                                                        [`${groupQ.id}_${pIdx}`]: e.target.value,
+                                                                        ...(prompts.length === 1 ? { [groupQ.id]: e.target.value } : {})
+                                                                      }))}
+                                                                      className={`w-full h-11 rounded-xl border bg-white dark:bg-slate-900 text-sm font-semibold focus:ring-1 focus:ring-primary focus-visible:outline-none pl-4 pr-10 appearance-none font-sans cursor-pointer truncate ${quizSubmitted ? (isSelectedCorrect ? "border-emerald-500 bg-emerald-500/5 text-emerald-600 font-bold" : "border-red-500 bg-red-500/5 text-red-600 font-bold") : "border-slate-200 dark:border-white/10"}`}
+                                                                  >
+                                                                     <option value="" disabled>Select heading...</option>
+                                                                     {options.map((opt: string, oIdx: number) => (
+                                                                         <option key={oIdx} value={opt}>{opt}</option>
+                                                                     ))}
+                                                                  </select>
+                                                                  <div className="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-slate-400 dark:text-white/40">
+                                                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                                     </svg>
+                                                                  </div>
+                                                              </div>
                                                           </div>
-                                                         );
-                                                     });
+                                                      );
+                                                    });
                                                   })}
+                                                </div>
                                               </div>
-                                          </div>
-                                        );
-                                      })()}
+                                            )}
 
-                                      {/* SPEAKING QUESTION / Voice Recorder per question */}
+                                            {/* SPEAKING QUESTION / Voice Recorder per question */}
                                       {qType === 'SPEAKING_QUESTION' && (
                                         <div className="pl-0 sm:pl-12 mt-4 space-y-4">
                                             {/* Handled by global SpeakingRecorder on the right panel */}

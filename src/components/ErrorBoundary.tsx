@@ -44,10 +44,18 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   private handleReload = () => {
+    try {
+      sessionStorage.removeItem("chunk_retry_refreshed");
+      sessionStorage.removeItem("page-has-been-force-refreshed");
+    } catch (_) {}
     window.location.reload();
   };
 
   private handleGoHome = () => {
+    try {
+      sessionStorage.removeItem("chunk_retry_refreshed");
+      sessionStorage.removeItem("page-has-been-force-refreshed");
+    } catch (_) {}
     window.location.href = "/";
   };
 

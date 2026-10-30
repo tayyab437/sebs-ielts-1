@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, Fragment } from "react";
 import IeltsTestView from "../../components/IeltsTestView";
 
-import { flattenQuestionsToIndividual, countTotalQuestions, normalizeCourseToSections } from "@/src/utils/questionFlattener";
+import { flattenQuestionsToIndividual, countTotalQuestions, normalizeCourseToSections, isAnswerMatch, parseMultiPromptAnswers, getQuestionCorrectIndex } from "@/src/utils/questionFlattener";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -1297,36 +1297,8 @@ export default function MockTest({ defaultCategory }: MockTestProps = {}) {
     let totalQuestions = 0;
     const sectionResults: any[] = [];
 
-    const compareAnswers = (stud: string, corr: string): boolean => {
-      const s = String(stud || "")
-        .trim()
-        .toLowerCase();
-      const c = String(corr || "")
-        .trim()
-        .toLowerCase();
-      if (!s || !c) return false;
-      const parts = c.split(",").map((p) => p.trim().toLowerCase());
-      
-      const isMatch = parts.some(p => {
-        if (p === s) return true;
-        
-        // Clean strings from non-alphanumeric for direct clean match
-        const cleanS = s.replace(/[^a-z0-9]/g, "");
-        const cleanP = p.replace(/[^a-z0-9]/g, "");
-        if (cleanS === cleanP && cleanS.length > 0) return true;
-        
-        // Support matching single letter options with their full text (e.g., "A" vs "A. The Heading")
-        if (s.startsWith(p + ".") || s.startsWith(p + ":") || s.startsWith(p + " ")) {
-          return true;
-        }
-        if (p.startsWith(s + ".") || p.startsWith(s + ":") || p.startsWith(s + " ")) {
-          return true;
-        }
-        
-        return false;
-      });
-      
-      return isMatch;
+    const compareAnswers = (stud: string, corr: string, opts?: any[]): boolean => {
+      return isAnswerMatch(stud, corr, opts);
     };
 
     (selectedTest.sections || []).forEach((sec: any) => {
@@ -1365,18 +1337,20 @@ export default function MockTest({ defaultCategory }: MockTestProps = {}) {
                 isCorrect,
               };
             });
-          } else if (qType === "MATCHING") {
+          } else if (qType === "MATCHING" || qType === "MATCHING-HEADINGS" || qType === "MATCHING-INFORMATION") {
             const prompts = String(q.text || "")
               .split("\n")
               .filter(Boolean);
-            const corrList = String(q.correctAnswer || "")
-              .split("\n")
-              .filter(Boolean);
+            const rawHeadings = q.passageText ?? q.headings ?? q.options ?? "";
+            const listHeadings = typeof rawHeadings === "string" 
+              ? rawHeadings.split("\n").filter(Boolean) 
+              : (Array.isArray(rawHeadings) ? rawHeadings : []);
+            const corrList = parseMultiPromptAnswers(q.correctAnswer, prompts.length);
             return prompts.map((prompt: string, idx: number) => {
               totalQuestions++;
-              const studentAns = (answers[`${q.id}_${idx}`] || "").trim();
-              const corr = corrList[idx] || "";
-              const isCorrect = compareAnswers(studentAns, corr);
+              const studentAns = (answers[`${q.id}_${idx}`] ?? (idx === 0 ? answers[q.id] : "") ?? "").trim();
+              const corr = corrList[idx] || corrList[0] || "";
+              const isCorrect = isAnswerMatch(studentAns, corr, listHeadings);
               if (isCorrect) totalCorrect++;
               return {
                 ...q,
@@ -1395,10 +1369,11 @@ export default function MockTest({ defaultCategory }: MockTestProps = {}) {
 
             if (qType === "BLANK" || !q.options || q.options.length === 0) {
               correctAns = String(q.correctAnswer || "").trim();
-              isCorrect = compareAnswers(studentAns, correctAns);
+              isCorrect = isAnswerMatch(studentAns, correctAns, q.options);
             } else {
-              correctAns = q.options[q.correctIndex] || "";
-              isCorrect = studentAns === correctAns;
+              const expectedIdx = getQuestionCorrectIndex(q);
+              correctAns = q.options[expectedIdx] ?? q.options[q.correctIndex] ?? "";
+              isCorrect = isAnswerMatch(studentAns, correctAns, q.options) || isAnswerMatch(studentAns, q.correctAnswer, q.options);
             }
             if (isCorrect) totalCorrect++;
             return [{ ...q, studentAns, correctAns, isCorrect }];
@@ -3022,7 +2997,7 @@ export default function MockTest({ defaultCategory }: MockTestProps = {}) {
                             answered++;
                           }
                         }
-                      } else if (qType === "MATCHING") {
+                      } else if (qType === "MATCHING" || qType === "MATCHING-HEADINGS" || qType === "MATCHING-INFORMATION") {
                         const prompts = String(q.text || "")
                           .split("\n")
                           .filter(Boolean);
@@ -3030,7 +3005,7 @@ export default function MockTest({ defaultCategory }: MockTestProps = {}) {
                         total += count;
                         for (let pIdx = 0; pIdx < count; pIdx++) {
                           if (
-                            (answers[`${q.id}_${pIdx}`] || "").trim() !== ""
+                            (answers[`${q.id}_${pIdx}`] || (pIdx === 0 ? answers[q.id] : "") || "").trim() !== ""
                           ) {
                             answered++;
                           }

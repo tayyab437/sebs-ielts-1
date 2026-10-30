@@ -25,6 +25,16 @@ export default defineConfig(() => {
       alias: {
         '@': path.resolve(__dirname, '.'),
       },
+      dedupe: ['react', 'react-dom', 'react-router', 'react-router-dom'],
+    },
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'react-dom/client',
+        'react-router',
+        'react-router-dom',
+      ],
     },
     esbuild: {
       legalComments: 'none' as const,
@@ -32,7 +42,7 @@ export default defineConfig(() => {
     build: {
       outDir: 'dist',
       emptyOutDir: true,
-      chunkSizeWarningLimit: 1200,
+      chunkSizeWarningLimit: 2500,
       sourcemap: true,
       cssCodeSplit: true,
       target: 'es2020',

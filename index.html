@@ -3,33 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
-    <!-- Critical LCP Hero Image Preload (0ms Resource Load Delay) -->
-    <link rel="preload" as="image" href="/syed_ejaz_bukhari_hero.webp" type="image/webp" fetchpriority="high" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; worker-src 'self' blob: data:; style-src 'self' 'unsafe-inline' https:; font-src 'self' https: data:; img-src 'self' data: blob: https: http:; media-src 'self' data: blob: https: http:; connect-src 'self' https: wss: ws: data: blob:; frame-src 'self' https: data: blob:; object-src 'none'; base-uri 'self';" />
-    <script>
-      (function() {
-        var origWarn = console.warn;
-        console.warn = function() {
-          var args = Array.prototype.slice.call(arguments);
-          var str = args.map(function(a) { return typeof a === 'object' ? JSON.stringify(a) : String(a); }).join(' ');
-          if (
-            str.indexOf('Custom Hostinger MySQL database engine is active') !== -1 ||
-            str.indexOf('Supabase credentials are not configured') !== -1 ||
-            str.indexOf('Supabase server-side credentials') !== -1
-          ) {
-            return;
-          }
-          return origWarn.apply(console, arguments);
-        };
-        window.addEventListener('unhandledrejection', function(e) {
-          var msg = (e.reason && (e.reason.message || e.reason.toString())) || '';
-          if (msg.indexOf('WebSocket') !== -1 || msg.indexOf('closed without opened') !== -1) {
-            e.preventDefault();
-          }
-        });
-      })();
-    </script>
-    <meta name="google-site-verification" content="9boolrWw7Q5IK0E_Zg3VGcR5Bwvo0Y04cMqXnrkrJxo" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
     <link rel="shortcut icon" href="/favicon.ico" />
@@ -57,11 +31,15 @@
     <!-- Performance Optimization: Preconnect & Asynchronous Non-blocking Font Loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://images.unsplash.com" />
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'" />
     <noscript>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
     </noscript>
+
+    <!-- Preload Above-The-Fold Hero Image for High LCP Performance -->
+    <link rel="preload" as="image" href="/ielts_prep_banner_960.webp" imagesrcset="/ielts_prep_banner_480.webp 480w, /ielts_prep_banner_640.webp 640w, /ielts_prep_banner_960.webp 960w" imagesizes="(max-width: 640px) 100vw, (max-width: 1024px) 768px, 960px" type="image/webp" fetchpriority="high" />
     
     <!-- Open Graph / Facebook / WhatsApp / LinkedIn -->
     <meta property="og:type" content="website" />
@@ -99,7 +77,7 @@
           "logo": {
             "@type": "ImageObject",
             "@id": "https://sebsinstitute.com/#logo",
-            "url": "https://i.ibb.co/Xxg75WQc/image-1.jpg",
+            "url": "https://sebsinstitute.com/sebs_official_logo_315.webp",
             "caption": "SEB's Institute Official Crest",
             "width": 315,
             "height": 172
@@ -117,7 +95,7 @@
             "@id": "https://sebsinstitute.com/#founder",
             "name": "Syed Ejaz Bukhari",
             "jobTitle": "Founder & Master Linguistics Trainer",
-            "image": "https://i.ibb.co/Xxg75WQc/image-1.jpg",
+            "image": "https://sebsinstitute.com/sebs_official_logo_315.webp",
             "description": "Renowned IELTS master trainer with over 15 years of experience coaching thousands of students to Band 8.5+."
           },
           "areaServed": [
@@ -289,243 +267,16 @@
   </head>
   <body>
     <div id="root">
-      <div class="min-h-screen bg-slate-900 text-slate-100 font-sans antialiased">
-        <!-- Site Navigation Header -->
-        <header class="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-800">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-            <a href="/" class="flex items-center gap-3">
-              <img src="https://i.ibb.co/Xxg75WQc/image-1.jpg" alt="SEB's Institute Logo" width="140" height="76" class="h-12 w-auto object-contain" />
-              <div>
-                <span class="text-lg font-black tracking-tight text-white block">SEB's Institute</span>
-                <span class="text-[10px] font-bold uppercase tracking-widest text-[#00a8cc] block">Global Language Institute</span>
-              </div>
-            </a>
-            <nav class="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-wider text-slate-300">
-              <a href="/" class="text-[#00a8cc] hover:text-white transition-colors">Home</a>
-              <a href="/courses" class="hover:text-[#00a8cc] transition-colors">Courses</a>
-              <a href="/mock-tests" class="hover:text-[#00a8cc] transition-colors">Mock Tests</a>
-              <a href="/pricing" class="hover:text-[#00a8cc] transition-colors">Pricing</a>
-              <a href="/about" class="hover:text-[#00a8cc] transition-colors">About Us</a>
-              <a href="/contact" class="hover:text-[#00a8cc] transition-colors">Contact</a>
-            </nav>
-            <div class="flex items-center gap-3">
-              <a href="/login" class="px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-200 hover:text-white">Login</a>
-              <a href="/signup" class="px-4 py-2 bg-[#00a8cc] hover:bg-[#0096b7] text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-lg">Get Started</a>
-            </div>
-          </div>
-        </header>
-
-        <!-- Main Content Area -->
-        <main>
-          <!-- 1. Hero Carousel Section -->
-          <section class="relative w-full min-h-[calc(100vh-80px)] flex items-center justify-center overflow-hidden bg-[#f9f9ff] dark:bg-slate-950 border-b border-slate-200/80 dark:border-slate-800 transition-colors">
-            <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20 z-10">
-              <div class="grid grid-cols-1 lg:grid-cols-12 gap-y-12 lg:gap-x-12 items-center">
-                <div class="lg:col-span-7 flex flex-col justify-center text-left">
-                  <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-50 dark:bg-sky-950/60 text-[#00a8cc] dark:text-cyan-300 w-fit shadow-sm border border-cyan-200/60 dark:border-cyan-800/40">
-                    <span class="w-2 h-2 rounded-full bg-[#00a8cc] dark:bg-cyan-400 animate-pulse"></span>
-                    <span class="text-[12px] font-extrabold uppercase tracking-wider">Trusted Since 1992</span>
-                    <span class="text-cyan-400 text-xs">•</span>
-                    <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">British Council Standards</span>
-                  </div>
-                  <h1 class="mt-5 text-4xl sm:text-5xl lg:text-[54px] font-extrabold text-slate-900 dark:text-white tracking-tight leading-[1.12]">
-                    A <span class="text-[#00a8cc] dark:text-[#00a8cc] underline decoration-[#00a8cc]/30 decoration-4 underline-offset-4">Great Mentor</span> Can Change the Way You See Yourself.
-                  </h1>
-                  <p class="mt-5 text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-xl leading-relaxed font-normal">
-                    English is more than a language. It is the confidence to express your ideas, the courage to pursue opportunities, and the ability to connect with the world. Learn with Sir Ejaz Bukhari at SEBS Institute.
-                  </p>
-                  <div class="mt-8 flex items-center gap-4 flex-wrap">
-                    <a href="https://wa.me/923304541573?text=Hello%20Sir%20Ejaz%2C%20I%20would%20like%20to%20speak%20with%20you%20regarding%20English%20%2F%20IELTS%20courses%20at%20SEBS%20Institute.%20Please%20guide%20me." target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl bg-[#202e43] hover:bg-[#152030] text-white font-bold text-sm shadow-lg shadow-slate-950/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl cursor-pointer">
-                      Talk with Sir Ejaz &rarr;
-                    </a>
-                    <a href="/courses" class="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-[#202e43] hover:bg-[#152030] text-white font-bold text-sm shadow-lg shadow-slate-950/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl cursor-pointer">
-                      View Our Courses
-                    </a>
-                  </div>
-                </div>
-                <div class="lg:col-span-5 relative">
-                  <div class="rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-2xl bg-slate-900">
-                    <img src="/syed_ejaz_bukhari_hero.webp" alt="Sir Syed Ejaz Bukhari - Founder &amp; Master English Coach" width="960" height="524" class="w-full h-auto object-cover" fetchpriority="high" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- 2. Live Lessons & Masterclasses Section -->
-          <section class="py-16 bg-slate-900 border-t border-slate-800 px-4 sm:px-6 lg:px-8">
-            <div class="max-w-7xl mx-auto space-y-8">
-              <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-800 pb-6">
-                <div>
-                  <span class="text-xs font-bold uppercase tracking-widest text-[#00a8cc] block mb-1">Live Online Classrooms</span>
-                  <h2 class="text-2xl sm:text-4xl font-black text-white tracking-tight uppercase">Live IELTS Masterclasses &amp; Webinars</h2>
-                </div>
-                <a href="/courses" class="text-xs font-bold uppercase text-[#00a8cc] hover:underline flex items-center gap-1">View Full Class Schedule &rarr;</a>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 space-y-4">
-                  <span class="text-[10px] font-black uppercase px-2.5 py-1 rounded bg-red-600 text-white inline-block">Live Interactive</span>
-                  <h3 class="text-lg font-bold text-white">IELTS Band 8.5 Speaking &amp; Phonetics Masterclass</h3>
-                  <p class="text-xs text-slate-400 leading-relaxed">Master natural intonation, stress-timed rhythm, and lexical diversity with master linguistics coach Syed Ejaz Bukhari.</p>
-                  <div class="text-xs text-[#00a8cc] font-bold">Daily Live Batches &bull; Google Meet &amp; Virtual Portal</div>
-                </div>
-                <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 space-y-4">
-                  <span class="text-[10px] font-black uppercase px-2.5 py-1 rounded bg-indigo-600 text-white inline-block">Academic &amp; GT</span>
-                  <h3 class="text-lg font-bold text-white">IELTS Task 1 &amp; Task 2 Academic Writing Workshop</h3>
-                  <p class="text-xs text-slate-400 leading-relaxed">Master essay structures, graph analysis, formal cohesion, and instant AI criteria band evaluation.</p>
-                  <div class="text-xs text-[#00a8cc] font-bold">12 Comprehensive Modules &bull; Live Feedback</div>
-                </div>
-                <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 space-y-4">
-                  <span class="text-[10px] font-black uppercase px-2.5 py-1 rounded bg-emerald-600 text-white inline-block">Speed &amp; Accuracy</span>
-                  <h3 class="text-lg font-bold text-white">IELTS Reading &amp; Listening Timed Strategies</h3>
-                  <p class="text-xs text-slate-400 leading-relaxed">Conquer True/False/Not Given, Headings Matching, and fast accent decoding with split-screen timed simulator.</p>
-                  <div class="text-xs text-[#00a8cc] font-bold">Full Test Bank &bull; Instant Band Calculation</div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- 3. Computer-Delivered Mock Tests Section -->
-          <section class="py-16 bg-slate-950 px-4 sm:px-6 lg:px-8 border-t border-slate-800">
-            <div class="max-w-7xl mx-auto space-y-8">
-              <div class="text-center max-w-3xl mx-auto space-y-3">
-                <span class="text-xs font-bold uppercase tracking-widest text-[#00a8cc]">Authentic Exam Simulator</span>
-                <h2 class="text-2xl sm:text-4xl font-black text-white tracking-tight uppercase">Official Computer-Delivered Mock Test Library</h2>
-                <p class="text-xs sm:text-sm text-slate-400">Authentic Cambridge, British Council, and IDP standard interfaces for Listening, Reading, Writing, and Speaking.</p>
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
-                  <div class="text-sm font-bold text-white">IELTS Academic Mock Test Series 2026</div>
-                  <p class="text-xs text-slate-400">Full 4-skill timed test with split-screen reading &amp; AI score report.</p>
-                  <a href="/mock-tests" class="text-xs font-black text-[#00a8cc] hover:underline block">Start Practice Test &rarr;</a>
-                </div>
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
-                  <div class="text-sm font-bold text-white">IELTS General Training Mock Tests</div>
-                  <p class="text-xs text-slate-400">Workplace and immigration reading passages with letter &amp; essay evaluation.</p>
-                  <a href="/mock-tests" class="text-xs font-black text-[#00a8cc] hover:underline block">Start Practice Test &rarr;</a>
-                </div>
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
-                  <div class="text-sm font-bold text-white">AI Spoken English &amp; Pronunciation Coach</div>
-                  <p class="text-xs text-slate-400">Real-time speaking conversation avatar with fluency analytics.</p>
-                  <a href="/dashboard" class="text-xs font-black text-[#00a8cc] hover:underline block">Open Speaking Simulator &rarr;</a>
-                </div>
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
-                  <div class="text-sm font-bold text-white">AI Writing Task 1 &amp; 2 Band Evaluator</div>
-                  <p class="text-xs text-slate-400">Instant criteria scoring across Task Achievement, Coherence, Vocabulary &amp; Grammar.</p>
-                  <a href="/dashboard/writing" class="text-xs font-black text-[#00a8cc] hover:underline block">Evaluate Essay &rarr;</a>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- 4. 6 Steps to Achieve Your IELTS Goal -->
-          <section class="py-16 bg-slate-900 border-t border-slate-800 px-4 sm:px-6 lg:px-8">
-            <div class="max-w-7xl mx-auto space-y-10">
-              <div class="text-center max-w-3xl mx-auto space-y-2">
-                <span class="text-xs font-bold uppercase tracking-widest text-[#00a8cc]">Proven Methodology</span>
-                <h2 class="text-2xl sm:text-4xl font-black text-white tracking-tight uppercase">6 Steps to Achieve Your IELTS Band 8.5+</h2>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700/40 space-y-2 text-center">
-                  <div class="w-8 h-8 rounded-full bg-[#00a8cc] text-slate-950 font-black text-xs flex items-center justify-center mx-auto">1</div>
-                  <h3 class="text-xs font-bold text-white">Diagnostic Test</h3>
-                  <p class="text-[11px] text-slate-400">Assess current benchmark band across all 4 modules.</p>
-                </div>
-                <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700/40 space-y-2 text-center">
-                  <div class="w-8 h-8 rounded-full bg-[#00a8cc] text-slate-950 font-black text-xs flex items-center justify-center mx-auto">2</div>
-                  <h3 class="text-xs font-bold text-white">Live Classes</h3>
-                  <p class="text-[11px] text-slate-400">Learn strategies directly from Syed Ejaz Bukhari.</p>
-                </div>
-                <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700/40 space-y-2 text-center">
-                  <div class="w-8 h-8 rounded-full bg-[#00a8cc] text-slate-950 font-black text-xs flex items-center justify-center mx-auto">3</div>
-                  <h3 class="text-xs font-bold text-white">Timed Simulators</h3>
-                  <p class="text-[11px] text-slate-400">Practice with official computer-delivered mock tests.</p>
-                </div>
-                <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700/40 space-y-2 text-center">
-                  <div class="w-8 h-8 rounded-full bg-[#00a8cc] text-slate-950 font-black text-xs flex items-center justify-center mx-auto">4</div>
-                  <h3 class="text-xs font-bold text-white">AI Diagnostics</h3>
-                  <p class="text-[11px] text-slate-400">Instant actionable feedback on writing &amp; speaking.</p>
-                </div>
-                <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700/40 space-y-2 text-center">
-                  <div class="w-8 h-8 rounded-full bg-[#00a8cc] text-slate-950 font-black text-xs flex items-center justify-center mx-auto">5</div>
-                  <h3 class="text-xs font-bold text-white">1-on-1 Coaching</h3>
-                  <p class="text-[11px] text-slate-400">Personalized speaking drills and error correction.</p>
-                </div>
-                <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700/40 space-y-2 text-center">
-                  <div class="w-8 h-8 rounded-full bg-[#00a8cc] text-slate-950 font-black text-xs flex items-center justify-center mx-auto">6</div>
-                  <h3 class="text-xs font-bold text-white">Exam Success</h3>
-                  <p class="text-[11px] text-slate-400">Walk into the test center fully confident for Band 8.5+.</p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- 5. Frequently Asked Questions (FAQ) -->
-          <section class="py-16 bg-slate-950 border-t border-slate-800 px-4 sm:px-6 lg:px-8">
-            <div class="max-w-5xl mx-auto space-y-8">
-              <div class="text-center space-y-2">
-                <span class="text-xs font-bold uppercase tracking-widest text-[#00a8cc]">Got Questions?</span>
-                <h2 class="text-2xl sm:text-4xl font-black text-white tracking-tight uppercase">Frequently Asked Questions</h2>
-              </div>
-              <div class="space-y-4">
-                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-2">
-                  <h3 class="text-sm font-bold text-white">What makes SEB's Institute IELTS mock tests authentic?</h3>
-                  <p class="text-xs text-slate-400 leading-relaxed">Our practice tests simulate official Cambridge, British Council, and IDP computer-delivered test interfaces, including timed sections, split-screen reading, authentic audio controls, and real-time AI band scoring.</p>
-                </div>
-                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-2">
-                  <h3 class="text-sm font-bold text-white">Who is Syed Ejaz Bukhari?</h3>
-                  <p class="text-xs text-slate-400 leading-relaxed">Syed Ejaz Bukhari is an internationally acclaimed IELTS linguistics trainer with over 15 years of experience coaching thousands of students worldwide to achieve Band 7.5 to 8.5+.</p>
-                </div>
-                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-2">
-                  <h3 class="text-sm font-bold text-white">How does the AI Writing and Speaking evaluation work?</h3>
-                  <p class="text-xs text-slate-400 leading-relaxed">Our AI evaluator benchmarks your submissions against official IELTS assessment criteria: Task Achievement, Coherence &amp; Cohesion, Lexical Resource, and Grammatical Range &amp; Accuracy with instant feedback.</p>
-                </div>
-              </div>
-            </div>
-          </section>
-        </main>
-
-        <!-- Footer -->
-        <footer class="bg-slate-950 border-t border-slate-800 py-12 px-4 sm:px-6 lg:px-8 text-xs text-slate-400">
-          <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div class="space-y-3">
-              <span class="text-sm font-black text-white uppercase tracking-wider block">SEB's Institute</span>
-              <p class="text-slate-400 leading-relaxed">Syed Ejaz Bukhari Institute of English &amp; IELTS. Established in 1992. Empowering global candidates across 45+ countries.</p>
-            </div>
-            <div class="space-y-2">
-              <span class="text-xs font-black text-white uppercase tracking-wider block">Quick Links</span>
-              <ul class="space-y-1.5">
-                <li><a href="/courses" class="hover:text-white">IELTS Courses</a></li>
-                <li><a href="/mock-tests" class="hover:text-white">Computer-Delivered Tests</a></li>
-                <li><a href="/pricing" class="hover:text-white">Tuition Plans</a></li>
-                <li><a href="/about" class="hover:text-white">About Syed Ejaz Bukhari</a></li>
-              </ul>
-            </div>
-            <div class="space-y-2">
-              <span class="text-xs font-black text-white uppercase tracking-wider block">Candidate Resources</span>
-              <ul class="space-y-1.5">
-                <li><a href="/dashboard" class="hover:text-white">Student Dashboard</a></li>
-                <li><a href="/dashboard/writing" class="hover:text-white">AI Writing Evaluator</a></li>
-                <li><a href="/terms" class="hover:text-white">Terms of Service</a></li>
-                <li><a href="/privacy" class="hover:text-white">Privacy Policy</a></li>
-              </ul>
-            </div>
-            <div class="space-y-2">
-              <span class="text-xs font-black text-white uppercase tracking-wider block">Admissions &amp; Support</span>
-              <p class="text-slate-400">Global Virtual Campus &bull; 24/7 Digital Exam Portal</p>
-              <p class="text-white font-bold">Helpline: +92 330 4541573</p>
-              <p class="text-[#00a8cc]">Email: sebs.info@gmail.com</p>
-            </div>
-          </div>
-          <div class="max-w-7xl mx-auto mt-8 pt-6 border-t border-slate-850 text-center text-slate-500">
-            &copy; 2026 SEB's Institute &bull; Syed Ejaz Bukhari. All rights reserved.
-          </div>
-        </footer>
+      <div id="initial-loader" style="min-height: 100vh; background: #020617; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #94a3b8;">
+        <img src="/sebs_official_logo_315.webp" alt="SEB's Institute" width="140" height="76" style="height: 48px; width: auto; object-fit: contain; margin-bottom: 20px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));" />
+        <div style="width: 32px; height: 32px; border: 3px solid rgba(0, 168, 204, 0.2); border-top-color: #00a8cc; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+        <p style="margin-top: 14px; font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #64748b;">Loading SEB's Institute...</p>
+        <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
       </div>
     </div>
     <noscript>
       <div style="padding: 32px 16px; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; min-height: 100vh;">
-        <img src="https://i.ibb.co/Xxg75WQc/image-1.jpg" alt="SEB's Institute Logo" width="160" height="87" style="margin: 0 auto 20px auto; display: block;" />
+        <img src="/sebs_official_logo_315.webp" alt="SEB's Institute Logo" width="160" height="87" style="margin: 0 auto 20px auto; display: block;" />
         <h1 style="font-size: 20px; font-weight: 800; margin-bottom: 12px; color: #ffffff;">SEB's Institute | Syed Ejaz Bukhari | IELTS Band 8.5+ &amp; Spoken English Mastery</h1>
         <p style="font-size: 14px; max-width: 600px; margin: 0 auto 24px auto; line-height: 1.6; color: #94a3b8;">
           Join Syed Ejaz Bukhari at SEB's Institute for world-class IELTS preparation, interactive AI mock tests, expert band evaluation, and masterly spoken English coaching. Please enable JavaScript in your browser to access the interactive mock test platform and student dashboard.

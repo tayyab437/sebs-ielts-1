@@ -4,111 +4,65 @@ import { Home, BookOpen, GraduationCap, Trophy, LayoutDashboard, User, LogIn, Me
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { fetchCustomPages, CustomPage } from "./lib/customPages";
 
-// Eagerly load HomePage for instant first contentful paint (FCP)
+// Core entry and auth pages are eagerly loaded for instantaneous rendering
 import { Toaster, toast } from "sonner";
 import HomePage from "./pages/public/Home";
+import LoginPage from "./pages/auth/Login";
+import SignupPage from "./pages/auth/Signup";
 import { lazyWithRetry } from "./lib/lazyRetry";
 
-// Code-split heavy routes to eliminate unused JavaScript from initial bundle
-const LoginPage = lazyWithRetry(() => import("./pages/auth/Login"));
-const SignupPage = lazyWithRetry(() => import("./pages/auth/Signup"));
+// Secondary pages and dashboards loaded with resilient lazy retry
+const AboutPage = lazyWithRetry(() => import("./pages/public/About"));
+const ContactPage = lazyWithRetry(() => import("./pages/public/Contact"));
+const PricingPage = lazyWithRetry(() => import("./pages/public/Pricing"));
+const TermsPage = lazyWithRetry(() => import("./pages/public/Terms"));
+const PrivacyPage = lazyWithRetry(() => import("./pages/public/Privacy"));
+const BooksPage = lazyWithRetry(() => import("./pages/public/Books"));
+const NotFoundPage = lazyWithRetry(() => import("./pages/public/NotFound"));
 const DashboardPage = lazyWithRetry(() => import("./pages/dashboard/StudentDashboard"));
 const WritingModule = lazyWithRetry(() => import("./pages/dashboard/WritingModule"));
 const MockTestPage = lazyWithRetry(() => import("./pages/dashboard/MockTest"));
 const AdminDashboard = lazyWithRetry(() => import("./pages/admin/AdminDashboard"));
 const TeacherDashboard = lazyWithRetry(() => import("./pages/dashboard/TeacherDashboard"));
 const StudentCourses = lazyWithRetry(() => import("./pages/public/Courses"));
-const PricingPage = lazyWithRetry(() => import("./pages/public/Pricing"));
-const TermsPage = lazyWithRetry(() => import("./pages/public/Terms"));
-const PrivacyPage = lazyWithRetry(() => import("./pages/public/Privacy"));
 const CustomPageView = lazyWithRetry(() => import("./pages/public/CustomPageView"));
-const ContactPage = lazyWithRetry(() => import("./pages/public/Contact"));
-const AboutPage = lazyWithRetry(() => import("./pages/public/About"));
-const BooksPage = lazyWithRetry(() => import("./pages/public/Books"));
-const IeltsSpeakingPage = lazyWithRetry(() => import("./pages/public/IeltsSpeaking"));
-const IeltsWritingPage = lazyWithRetry(() => import("./pages/public/IeltsWriting"));
-const BlogHomePage = lazyWithRetry(() => import("./pages/public/BlogHome").then(m => ({ default: m.BlogHome })));
-const BlogPostViewPage = lazyWithRetry(() => import("./pages/public/BlogPostView").then(m => ({ default: m.BlogPostView })));
-const BlogCategoryViewPage = lazyWithRetry(() => import("./pages/public/BlogCategoryView").then(m => ({ default: m.BlogCategoryView })));
-const BlogAuthorViewPage = lazyWithRetry(() => import("./pages/public/BlogAuthorView").then(m => ({ default: m.BlogAuthorView })));
-const NotFoundPage = lazyWithRetry(() => import("./pages/public/NotFound"));
 
-// Intelligent prefetcher on hover/touch/idle
-export const prefetchRoute = (path: string) => {
-  if (!path) return;
-  if (path.startsWith("/courses")) import("./pages/public/Courses");
-  else if (path.startsWith("/ielts-speaking") || path.startsWith("/speaking") || path.startsWith("/ielts/ielts-speaking")) import("./pages/public/IeltsSpeaking");
-  else if (path.startsWith("/ielts-writing") || path.startsWith("/writing") || path.startsWith("/ielts/ielts-writing")) import("./pages/public/IeltsWriting");
-  else if (path.startsWith("/blog")) {
-    import("./pages/public/BlogHome");
-    import("./pages/public/BlogPostView");
-  }
-  else if (path.startsWith("/mock-test") || path.startsWith("/academic") || path.startsWith("/general") || path.startsWith("/gt")) import("./pages/dashboard/MockTest");
-  else if (path.startsWith("/pricing")) import("./pages/public/Pricing");
-  else if (path.startsWith("/dashboard/writing")) import("./pages/dashboard/WritingModule");
-  else if (path.startsWith("/dashboard")) import("./pages/dashboard/StudentDashboard");
-  else if (path.startsWith("/admin")) import("./pages/admin/AdminDashboard");
-  else if (path.startsWith("/login")) import("./pages/auth/Login");
-  else if (path.startsWith("/signup")) import("./pages/auth/Signup");
-  else if (path.startsWith("/about")) import("./pages/public/About");
-  else if (path.startsWith("/contact")) import("./pages/public/Contact");
-  else if (path.startsWith("/books")) import("./pages/public/Books");
-};
 
-// Lazy accessor for supabase client to prevent vendor-supabase bundle in critical path
-const getSupabaseClient = async () => {
-  try {
-    const mod = await import("./lib/supabaseClient");
-    return mod.supabase;
-  } catch {
-    return null;
-  }
-};
+import { supabase } from "./lib/supabaseClient";
 import { MeetingsProvider } from "./context/MeetingsContext";
-import { fetchSiteSettings, sanitizeAssetUrl, defaultSettings, updateDocumentFavicon } from "./lib/settings";
+import { fetchSiteSettings, sanitizeAssetUrl } from "./lib/settings";
 import { PageSEOManager } from "./components/PageSEOManager";
 
 function Footer() {
-  const [logoUrl, setLogoUrl] = useState(() => sanitizeAssetUrl(localStorage.getItem("site_logo_url"), defaultSettings.site_logo_url));
+  const [logoUrl, setLogoUrl] = useState(() => sanitizeAssetUrl(localStorage.getItem("site_logo_url"), "/sebs_official_logo_315.webp"));
   const [logoAlt, setLogoAlt] = useState(() => localStorage.getItem("site_logo_alt") || "SEB's Institute Logo");
   const [emailValue, setEmailValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customPages, setCustomPages] = useState<CustomPage[]>([]);
 
   useEffect(() => {
-    const loadPages = () => {
-      fetchCustomPages().then(pages => {
-        if (pages && Array.isArray(pages)) {
-          setCustomPages(pages.filter(p => p.is_published && p.slug !== "about-us" && p.slug !== "faq" && p.id !== "about-us" && p.id !== "faq"));
-        }
-      }).catch(err => {
-        console.warn("Failed loading custom pages for footer", err);
-      });
-    };
-
-    if (typeof window !== "undefined") {
-      if ("requestIdleCallback" in window) {
-        (window as any).requestIdleCallback(loadPages, { timeout: 12000 });
-      } else {
-        setTimeout(loadPages, 4000);
+    fetchCustomPages().then(pages => {
+      if (pages && Array.isArray(pages)) {
+        setCustomPages(pages.filter(p => p.is_published && p.slug !== "about-us" && p.slug !== "faq" && p.id !== "about-us" && p.id !== "faq"));
       }
-    } else {
-      loadPages();
-    }
+    }).catch(err => {
+      console.warn("Failed loading custom pages for footer", err);
+    });
   }, []);
 
   useEffect(() => {
-    fetchSiteSettings(false).then(settings => {
-      if (!settings) return;
-      if (settings.site_logo_url) setLogoUrl(settings.site_logo_url);
-      if (settings.site_logo_alt) setLogoAlt(settings.site_logo_alt);
-    });
-    const onSettingsUpdate = (e: any) => {
-      if (e?.detail?.site_logo_url) setLogoUrl(e.detail.site_logo_url);
-      if (e?.detail?.site_logo_alt) setLogoAlt(e.detail.site_logo_alt);
+    const handleFooterLogoSync = (bypass = false) => {
+      fetchSiteSettings(typeof bypass === "boolean" ? bypass : false).then(settings => {
+        if (settings?.site_logo_url) setLogoUrl(settings.site_logo_url);
+        if (settings?.site_logo_alt) setLogoAlt(settings.site_logo_alt);
+      });
     };
+    handleFooterLogoSync(false);
+    const onSettingsUpdate = () => handleFooterLogoSync(true);
+    window.addEventListener("storage", onSettingsUpdate);
     window.addEventListener("site_settings_updated", onSettingsUpdate);
     return () => {
+      window.removeEventListener("storage", onSettingsUpdate);
       window.removeEventListener("site_settings_updated", onSettingsUpdate);
     };
   }, []);
@@ -142,19 +96,21 @@ function Footer() {
           <div className="lg:col-span-4 space-y-5">
             <Link to="/" className="inline-flex items-center space-x-2 group">
               <img 
-                src={logoUrl || "https://i.ibb.co/Xxg75WQc/image-1.jpg"} 
+                src={logoUrl || "/sebs_official_logo_315.webp"} 
+                srcSet={(!logoUrl || logoUrl === "/sebs_official_logo_315.webp" || logoUrl === "/sebs_official_logo_160.webp") ? "/sebs_official_logo_160.webp 160w, /sebs_official_logo_315.webp 315w" : undefined}
+                sizes={(!logoUrl || logoUrl === "/sebs_official_logo_315.webp" || logoUrl === "/sebs_official_logo_160.webp") ? "(max-width: 640px) 130px, 160px" : undefined}
                 alt={logoAlt} 
                 width={160}
                 height={87}
                 loading="lazy"
                 decoding="async"
-                style={{ aspectRatio: "160 / 87" }}
-                className="h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105 aspect-[160/87]" 
+                className="h-14 w-auto object-contain dark:brightness-200 dark:invert transition-transform duration-300 group-hover:scale-105" 
                 referrerPolicy="no-referrer"
                 onError={(e) => {
                   const target = e.currentTarget;
-                  target.onerror = null;
-                  target.src = "https://i.ibb.co/Xxg75WQc/image-1.jpg";
+                  if (target.src !== "/sebs_official_logo_315.webp") {
+                    target.src = "/sebs_official_logo_315.webp";
+                  }
                 }}
               />
               <span className="text-xl font-black italic tracking-tighter text-slate-900 dark:text-white font-sans">
@@ -182,7 +138,7 @@ function Footer() {
                     rel="nofollow noopener noreferrer"
                     aria-label={`Visit SEB's Institute on ${social.name}`}
                     title={`Visit SEB's Institute on ${social.name}`}
-                    className="w-12 h-12 min-w-[48px] min-h-[48px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-xl flex items-center justify-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-500/10 touch-manipulation"
+                    className="w-11 h-11 min-w-[44px] min-h-[44px] sm:w-12 sm:h-12 sm:min-w-[48px] sm:min-h-[48px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-xl flex items-center justify-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-500/10"
                   >
                     {social.icon}
                     <span className="sr-only">Visit SEB's Institute on {social.name}</span>
@@ -197,7 +153,7 @@ function Footer() {
             <h3 className="font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-widest mb-5 relative pl-3 border-l-2 border-emerald-500">
               Academic Tracks
             </h3>
-            <ul className="space-y-3.5 text-xs font-semibold text-slate-600 dark:text-slate-400">
+            <ul className="space-y-1 text-xs font-semibold text-slate-600 dark:text-slate-400">
               {[
                 { title: "Spoken English", tag: "Fluency" },
                 { title: "Writing Skills", tag: "Expert" },
@@ -207,7 +163,7 @@ function Footer() {
                 <li key={idx}>
                   <Link 
                     to="/courses" 
-                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3.5 px-3 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
+                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[40px] py-2 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
                   >
                     <span className="group-hover:translate-x-1 transition-transform">{course.title}</span>
                     <span className="text-[9px] uppercase tracking-widest font-black bg-slate-200 dark:bg-slate-900 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-950 text-slate-600 dark:text-slate-500 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors px-2 py-0.5 rounded">
@@ -224,20 +180,11 @@ function Footer() {
             <h3 className="font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-widest mb-5 relative pl-3 border-l-2 border-emerald-500">
               Resources & Info
             </h3>
-            <ul className="space-y-3.5 text-xs font-semibold text-slate-600 dark:text-slate-400">
-              <li>
-                <Link 
-                  to="/blog" 
-                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3.5 px-3 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
-                >
-                  <span className="group-hover:translate-x-1 transition-transform">Blog & Research</span>
-                  <span className="text-[8px] uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400 font-mono">Guides</span>
-                </Link>
-              </li>
+            <ul className="space-y-1 text-xs font-semibold text-slate-600 dark:text-slate-400">
               <li>
                 <Link 
                   to="/contact" 
-                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3.5 px-3 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
+                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[38px] py-1.5 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
                 >
                   <span className="group-hover:translate-x-1 transition-transform">Contact Us</span>
                   <span className="text-[8px] uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400 font-mono">Live</span>
@@ -246,7 +193,7 @@ function Footer() {
               <li>
                 <Link 
                   to="/books" 
-                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3.5 px-3 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
+                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[38px] py-1.5 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
                 >
                   <span className="group-hover:translate-x-1 transition-transform">Books</span>
                   <span className="text-[8px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">PDFs</span>
@@ -255,7 +202,7 @@ function Footer() {
               <li>
                 <Link 
                   to="/terms" 
-                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3.5 px-3 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
+                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[38px] py-1.5 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
                 >
                   <span className="group-hover:translate-x-1 transition-transform">Terms & Policies</span>
                   <span className="text-[8px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">Rules</span>
@@ -264,7 +211,7 @@ function Footer() {
               <li>
                 <Link 
                   to="/privacy" 
-                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3.5 px-3 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
+                  className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[38px] py-1.5 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
                 >
                   <span className="group-hover:translate-x-1 transition-transform">Privacy Policy</span>
                   <span className="text-[8px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">GDPR</span>
@@ -274,7 +221,7 @@ function Footer() {
                 <li key={cp.id}>
                   <Link 
                     to={`/pages/${cp.slug}`} 
-                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[48px] py-3.5 px-3 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
+                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center justify-between group min-h-[38px] py-1.5 px-1.5 -mx-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
                   >
                     <span className="group-hover:translate-x-1 transition-transform truncate pr-1">{cp.title}</span>
                     <span className="text-[8px] uppercase tracking-wider font-bold text-amber-600 dark:text-amber-400 shrink-0">Custom</span>
@@ -333,15 +280,11 @@ function Footer() {
                 <div className="relative">
                   <input
                     type="email"
-                    id="newsletter-email"
-                    name="email"
-                    autoComplete="email"
                     placeholder="name@address.com"
                     value={emailValue}
                     onChange={(e) => setEmailValue(e.target.value)}
                     className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 focus:border-emerald-500 rounded-xl h-10 px-4 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none placeholder-slate-400 dark:placeholder-slate-500 pr-10 shadow-xs"
                     disabled={isSubmitting}
-                    aria-label="Email address for weekly newsletter"
                   />
                   <button
                     type="submit"
@@ -368,42 +311,42 @@ function Footer() {
           <div className="flex items-center gap-2 font-bold text-slate-700 dark:text-slate-300">
             <span>Official Examination Portals:</span>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs">
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs">
             <a 
               href="https://takeielts.britishcouncil.org" 
               target="_blank" 
               rel="nofollow noopener noreferrer" 
-              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5 min-h-[48px] py-3 px-3.5 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
+              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1"
             >
               <span>British Council IELTS</span>
-              <ExternalLink className="w-3.5 h-3.5" />
+              <ExternalLink className="w-3 h-3" />
             </a>
             <a 
               href="https://www.ieltsidp.com" 
               target="_blank" 
               rel="nofollow noopener noreferrer" 
-              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5 min-h-[48px] py-3 px-3.5 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
+              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1"
             >
               <span>IDP Education</span>
-              <ExternalLink className="w-3.5 h-3.5" />
+              <ExternalLink className="w-3 h-3" />
             </a>
             <a 
               href="https://www.cambridgeenglish.org" 
               target="_blank" 
               rel="nofollow noopener noreferrer" 
-              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5 min-h-[48px] py-3 px-3.5 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
+              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1"
             >
               <span>Cambridge English</span>
-              <ExternalLink className="w-3.5 h-3.5" />
+              <ExternalLink className="w-3 h-3" />
             </a>
             <a 
               href="https://www.ielts.org" 
               target="_blank" 
               rel="nofollow noopener noreferrer" 
-              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5 min-h-[48px] py-3 px-3.5 rounded-xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 touch-manipulation"
+              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors inline-flex items-center gap-1"
             >
               <span>IELTS.org Official</span>
-              <ExternalLink className="w-3.5 h-3.5" />
+              <ExternalLink className="w-3 h-3" />
             </a>
           </div>
         </div>
@@ -413,17 +356,6 @@ function Footer() {
           <div className="flex flex-col gap-1 text-center md:text-left">
             <p className="font-medium text-slate-600 dark:text-slate-500">
               Copyright © {new Date().getFullYear()}. All Rights Reserved — Syed Ejaz Bukhari & SEB's Institute.
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-              Website created and SEO by{" "}
-              <a
-                href="https://wa.me/923176369458"
-                target="_blank"
-                rel="nofollow noopener noreferrer"
-                className="text-emerald-600 dark:text-emerald-500 hover:text-emerald-500 dark:hover:text-emerald-400 font-semibold underline decoration-dotted transition-colors"
-              >
-                Tayyab Ashfaq
-              </a>
             </p>
           </div>
           <div className="flex space-x-6 items-center">
@@ -439,7 +371,7 @@ function Footer() {
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [logoUrl, setLogoUrl] = useState(() => sanitizeAssetUrl(localStorage.getItem("site_logo_url"), defaultSettings.site_logo_url));
+  const [logoUrl, setLogoUrl] = useState(() => sanitizeAssetUrl(localStorage.getItem("site_logo_url"), "/sebs_official_logo_315.webp"));
   const [logoAlt, setLogoAlt] = useState(() => localStorage.getItem("site_logo_alt") || "SEB's Institute Logo");
 
   // Header Style & Layout States
@@ -461,45 +393,38 @@ function Navbar() {
   const [isOfferBarDismissed, setIsOfferBarDismissed] = useState(() => sessionStorage.getItem("top_offer_bar_dismissed") === "true");
 
   useEffect(() => {
-    fetchSiteSettings(false).then(settings => {
-      if (!settings) return;
-      if (settings.site_logo_url) setLogoUrl(settings.site_logo_url);
-      if (settings.site_logo_alt) setLogoAlt(settings.site_logo_alt);
-      setHeaderStyle(settings.site_header_style || "classic");
-      setIotBannerText(settings.iot_banner_text || "Self-study to boost your IELTS Score to 6.5+");
-      setIotBannerSubtext(settings.iot_banner_subtext || "Designed for Learners at IELTS 5.0-5.5");
-      setIotBannerButtonText(settings.iot_banner_button_text || "Learn more");
-      setIotBannerLink(settings.iot_banner_link || "/courses");
-      setOfferBarActive(settings.top_offer_bar_active !== undefined ? settings.top_offer_bar_active : true);
-      setOfferBarText(settings.top_offer_bar_text || "Special Live Batches with Syed Ejaz Bukhari now recruiting • Genuine IELTS Band 8.5+ Syllabus");
-      setOfferBarLinkText(settings.top_offer_bar_link_text || "Claim Seats");
-      setOfferBarLink(settings.top_offer_bar_link || "/courses");
-      
-      const favUrl = settings.site_favicon_url;
-      if (favUrl) {
-        updateDocumentFavicon(favUrl);
-      }
-    });
-
-    const onSettingsUpdate = (e: any) => {
-      const s = e?.detail;
-      if (!s) return;
-      if (s.site_logo_url) setLogoUrl(s.site_logo_url);
-      if (s.site_logo_alt) setLogoAlt(s.site_logo_alt);
-      if (s.site_header_style) setHeaderStyle(s.site_header_style);
-      if (s.iot_banner_text !== undefined) setIotBannerText(s.iot_banner_text);
-      if (s.iot_banner_subtext !== undefined) setIotBannerSubtext(s.iot_banner_subtext);
-      if (s.iot_banner_button_text !== undefined) setIotBannerButtonText(s.iot_banner_button_text);
-      if (s.iot_banner_link !== undefined) setIotBannerLink(s.iot_banner_link);
-      if (s.top_offer_bar_active !== undefined) setOfferBarActive(s.top_offer_bar_active);
-      if (s.top_offer_bar_text !== undefined) setOfferBarText(s.top_offer_bar_text);
-      if (s.top_offer_bar_link_text !== undefined) setOfferBarLinkText(s.top_offer_bar_link_text);
-      if (s.top_offer_bar_link !== undefined) setOfferBarLink(s.top_offer_bar_link);
-      if (s.site_favicon_url) updateDocumentFavicon(s.site_favicon_url);
+    const handleStorageChange = (bypass = false) => {
+      fetchSiteSettings(typeof bypass === "boolean" ? bypass : false).then(settings => {
+        if (settings?.site_logo_url) setLogoUrl(settings.site_logo_url);
+        if (settings?.site_logo_alt) setLogoAlt(settings.site_logo_alt);
+        setHeaderStyle(settings.site_header_style || "classic");
+        setIotBannerText(settings.iot_banner_text || "Self-study to boost your IELTS Score to 6.5+");
+        setIotBannerSubtext(settings.iot_banner_subtext || "Designed for Learners at IELTS 5.0-5.5");
+        setIotBannerButtonText(settings.iot_banner_button_text || "Learn more");
+        setIotBannerLink(settings.iot_banner_link || "/courses");
+        setOfferBarActive(settings.top_offer_bar_active !== undefined ? settings.top_offer_bar_active : true);
+        setOfferBarText(settings.top_offer_bar_text || "Special Live Batches with Syed Ejaz Bukhari now recruiting • Genuine IELTS Band 8.5+ Syllabus");
+        setOfferBarLinkText(settings.top_offer_bar_link_text || "Claim Seats");
+        setOfferBarLink(settings.top_offer_bar_link || "/courses");
+        
+        const favUrl = settings.site_favicon_url;
+        if (favUrl) {
+          const selectors = ["link[rel~='icon']", "link[rel='shortcut icon']", "link[rel='apple-touch-icon']"];
+          selectors.forEach((sel) => {
+            const existing = document.querySelectorAll<HTMLLinkElement>(sel);
+            existing.forEach((el) => {
+              el.href = favUrl;
+            });
+          });
+        }
+      });
     };
-
+    const onSettingsUpdate = () => handleStorageChange(true);
+    window.addEventListener("storage", onSettingsUpdate);
     window.addEventListener("site_settings_updated", onSettingsUpdate);
+    handleStorageChange(false);
     return () => {
+      window.removeEventListener("storage", onSettingsUpdate);
       window.removeEventListener("site_settings_updated", onSettingsUpdate);
     };
   }, []);
@@ -582,109 +507,94 @@ function Navbar() {
     };
 
     // Check initial session
-    const storedSession = localStorage.getItem("mysql-session");
-    const isMockUser = localStorage.getItem("mock_user_logged_in") === "true";
-    
-    if (!storedSession && !isMockUser) {
-      checkOfflineUser();
-    }
-
-    let subscription: any = null;
-    let isSubscribed = true;
-
-    // Only load supabase if there is an active session to verify
-    if (storedSession || isMockUser) {
-      getSupabaseClient().then((supabase) => {
-        if (!supabase || !isSubscribed) return;
-        try {
-          supabase.auth.getSession().then(({ data: { session }, error }) => {
-            if (!isSubscribed) return;
-            if (error) {
-              console.warn("App: getSession returned error:", error.message);
-              if (error.message.includes("Refresh Token")) {
-                supabase.auth.signOut().catch(() => {});
+    if (supabase) {
+      let subscription: any = null;
+      try {
+        supabase.auth.getSession().then(({ data: { session }, error }) => {
+          if (error) {
+            console.warn("App: getSession returned error:", error.message);
+            if (error.message.includes("Refresh Token")) {
+              supabase.auth.signOut().catch(() => {});
+            }
+          }
+          setUser(session?.user ?? null);
+          if (session?.user) {
+            supabase.from("profiles").select("role").eq("id", session.user.id).single().then(({ data }) => {
+              if (data?.role) {
+                setUserRole(data.role);
+                localStorage.setItem("user_role", data.role);
+              } else if (session.user.user_metadata?.role) {
+                setUserRole(session.user.user_metadata.role);
+                localStorage.setItem("user_role", session.user.user_metadata.role);
               }
-            }
-            setUser(session?.user ?? null);
-            if (session?.user) {
-              supabase.from("profiles").select("role").eq("id", session.user.id).single().then(({ data }) => {
-                if (!isSubscribed) return;
-                if (data?.role) {
-                  setUserRole(data.role);
-                  localStorage.setItem("user_role", data.role);
-                } else if (session.user.user_metadata?.role) {
-                  setUserRole(session.user.user_metadata.role);
-                  localStorage.setItem("user_role", session.user.user_metadata.role);
-                }
-              }).catch((err) => {
-                console.warn("App: profiles query failed on mount", err);
-                if (session.user.user_metadata?.role) {
-                  setUserRole(session.user.user_metadata.role);
-                  localStorage.setItem("user_role", session.user.user_metadata.role);
-                }
-              });
-            } else {
-              checkOfflineUser();
-            }
-          }).catch((err) => {
-            console.warn("App: getSession failed. Reverting to Offline Sandbox mode.", err);
+            }).catch((err) => {
+              console.warn("App: profiles query failed on mount", err);
+              if (session.user.user_metadata?.role) {
+                setUserRole(session.user.user_metadata.role);
+                localStorage.setItem("user_role", session.user.user_metadata.role);
+              }
+            });
+          } else {
             checkOfflineUser();
-          });
-
-          // Listen for changes
-          const authChangeResult = supabase.auth.onAuthStateChange((_event, session) => {
-            if (!isSubscribed) return;
-            setUser(session?.user ?? null);
-            if (session?.user) {
-              supabase.from("profiles").select("role").eq("id", session.user.id).single().then(({ data }) => {
-                if (!isSubscribed) return;
-                if (data?.role) {
-                  setUserRole(data.role);
-                  localStorage.setItem("user_role", data.role);
-                } else if (session.user.user_metadata?.role) {
-                  setUserRole(session.user.user_metadata.role);
-                  localStorage.setItem("user_role", session.user.user_metadata.role);
-                }
-              }).catch((err) => {
-                console.warn("App: profiles query failed during auth change", err);
-                if (session.user.user_metadata?.role) {
-                  setUserRole(session.user.user_metadata.role);
-                  localStorage.setItem("user_role", session.user.user_metadata.role);
-                }
-              });
-            } else {
-              if (localStorage.getItem("mock_user_logged_in") === "true") {
-                checkOfflineUser();
-              } else {
-                setUserRole("student");
-                localStorage.removeItem("user_role");
-              }
-            }
-          });
-          
-          subscription = authChangeResult?.data?.subscription;
-        } catch (err) {
-          console.warn("App: auth listener setup failed. Reverting to Offline Sandbox mode.", err);
+          }
+        }).catch((err) => {
+          console.warn("App: getSession failed. Reverting to Offline Sandbox mode.", err);
           checkOfflineUser();
-        }
-      });
-    }
+        });
 
-    window.addEventListener("storage", checkOfflineUser);
-    return () => {
-      isSubscribed = false;
-      window.removeEventListener("storage", checkOfflineUser);
-      if (subscription) subscription.unsubscribe();
-    };
+        // Listen for changes
+        const authChangeResult = supabase.auth.onAuthStateChange((_event, session) => {
+          setUser(session?.user ?? null);
+          if (session?.user) {
+            supabase.from("profiles").select("role").eq("id", session.user.id).single().then(({ data }) => {
+              if (data?.role) {
+                setUserRole(data.role);
+                localStorage.setItem("user_role", data.role);
+              } else if (session.user.user_metadata?.role) {
+                setUserRole(session.user.user_metadata.role);
+                localStorage.setItem("user_role", session.user.user_metadata.role);
+              }
+            }).catch((err) => {
+              console.warn("App: profiles query failed during auth change", err);
+              if (session.user.user_metadata?.role) {
+                setUserRole(session.user.user_metadata.role);
+                localStorage.setItem("user_role", session.user.user_metadata.role);
+              }
+            });
+          } else {
+            if (localStorage.getItem("mock_user_logged_in") === "true") {
+              checkOfflineUser();
+            } else {
+              setUserRole("student");
+              localStorage.removeItem("user_role");
+            }
+          }
+        });
+        
+        subscription = authChangeResult?.data?.subscription;
+      } catch (err) {
+        console.warn("App: auth listener setup failed. Reverting to Offline Sandbox mode.", err);
+        checkOfflineUser();
+      }
+
+      window.addEventListener("storage", checkOfflineUser);
+      return () => {
+        window.removeEventListener("storage", checkOfflineUser);
+        if (subscription) subscription.unsubscribe();
+      };
+    } else {
+      checkOfflineUser();
+      window.addEventListener("storage", checkOfflineUser);
+      return () => window.removeEventListener("storage", checkOfflineUser);
+    }
   }, []);
 
   const handleLogout = async () => {
     localStorage.removeItem("mock_user_logged_in");
     localStorage.removeItem("mock_user_email");
     localStorage.removeItem("user_role");
-    const supabase = await getSupabaseClient();
     if (supabase) {
-      await supabase.auth.signOut().catch(() => {});
+      await supabase.auth.signOut();
     }
     setUser(null);
     setUserRole("student");
@@ -695,9 +605,6 @@ function Navbar() {
     { name: "Home", path: "/" },
     { name: "Courses", path: "/courses", badge: "Live" },
     { name: "Mock Tests", path: "/mock-tests", badge: "IELTS" },
-    { name: "Speaking", path: "/ielts-speaking", badge: "2026" },
-    { name: "Writing", path: "/ielts-writing", badge: "Eval" },
-    { name: "Blog", path: "/blog" },
     { name: "Pricing", path: "/pricing" },
   ];
 
@@ -705,10 +612,10 @@ function Navbar() {
 
   if (headerStyle === "iot") {
     return (
-      <nav className="sticky top-0 z-50 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-300 w-full overflow-x-hidden box-border">
+      <nav className="sticky top-0 z-50 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-300">
         {/* IOT Style Header Banner Top Bar */}
-        <div className="bg-gradient-to-r from-red-500 via-rose-500 to-amber-500 text-white py-2 px-4 sm:px-8 border-b border-rose-600/30 w-full box-border">
-          <div className="max-w-[1600px] mx-auto w-full flex flex-col md:flex-row items-center justify-between gap-3 box-border">
+        <div className="bg-gradient-to-r from-red-500 via-rose-500 to-amber-500 text-white py-2 px-4 sm:px-8 border-b border-rose-600/30">
+          <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
             {/* Left: Branding Logo Section */}
             <Link to="/" className="flex items-center gap-2 group shrink-0">
               <div className="bg-white/95 dark:bg-slate-900/95 rounded-xl px-3 py-1.5 shadow-md flex items-center gap-2 border border-white/40">
@@ -743,38 +650,39 @@ function Navbar() {
         </div>
 
         {/* Main Nav Bar below Top Banner */}
-        <div className="max-w-[1600px] mx-auto w-full px-4 sm:px-6 lg:px-8 box-border">
-          <div className="flex justify-between items-center h-16 w-full box-border">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
             {/* Primary Navigation Links */}
             <div className="flex items-center space-x-6">
               <Link to="/" className="flex items-center space-x-2 shrink-0 pr-2">
                 <img 
-                  src={logoUrl || "https://i.ibb.co/Xxg75WQc/image-1.jpg"} 
+                  src={logoUrl || "/sebs_official_logo_160.webp"} 
+                  srcSet={(!logoUrl || logoUrl === "/sebs_official_logo_315.webp" || logoUrl === "/sebs_official_logo_160.webp") ? "/sebs_official_logo_160.webp 160w, /sebs_official_logo_315.webp 315w" : undefined}
+                  sizes={(!logoUrl || logoUrl === "/sebs_official_logo_315.webp" || logoUrl === "/sebs_official_logo_160.webp") ? "(max-width: 640px) 110px, 160px" : undefined}
                   alt={logoAlt} 
                   width={110}
                   height={60}
                   loading="eager"
                   decoding="async"
-                  className="h-9 w-auto object-contain" 
+                  className="h-9 w-auto object-contain dark:brightness-200 dark:invert" 
                   referrerPolicy="no-referrer"
                   onError={(e) => {
                     const target = e.currentTarget;
-                    target.onerror = null;
-                    target.src = "https://i.ibb.co/Xxg75WQc/image-1.jpg";
+                    if (target.src !== "/sebs_official_logo_315.webp") {
+                      target.src = "/sebs_official_logo_315.webp";
+                    }
                   }}
                 />
                 <span className="font-black text-sm text-slate-900 dark:text-white tracking-wider hidden xl:inline">SEB's Institute</span>
               </Link>
 
-              <div className="hidden md:flex items-center space-x-3 lg:space-x-4 xl:space-x-5">
+              <div className="hidden md:flex items-center space-x-5">
                 {navLinks.map((link) => {
                   const isActive = location.pathname === link.path;
                   return (
                     <Link
                       key={link.name}
                       to={link.path}
-                      onMouseEnter={() => prefetchRoute(link.path)}
-                      onTouchStart={() => prefetchRoute(link.path)}
                       className={`text-xs font-bold uppercase tracking-wider transition-all duration-200 py-1 ${
                         isActive
                           ? 'text-red-600 dark:text-red-400 font-black border-b-2 border-red-600 dark:border-red-400'
@@ -801,14 +709,10 @@ function Navbar() {
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  id="header-search-query"
-                  name="searchQuery"
-                  autoComplete="off"
                   placeholder="Search IELTS tests..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full pl-9 pr-4 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/50"
-                  aria-label="Search IELTS tests"
                 />
               </div>
             </div>
@@ -879,10 +783,10 @@ function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200/80 dark:border-white/5 transition-colors duration-300 w-full overflow-x-hidden box-border">
+    <nav className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200/80 dark:border-white/5 transition-colors duration-300">
       {/* Top Academic Promotion Ticker Banner */}
       {offerBarActive && !isOfferBarDismissed && (
-        <div className="bg-gradient-to-r from-emerald-700 via-emerald-600 to-slate-900 dark:to-black text-white text-[10.5px] font-black items-center justify-center py-2 px-8 text-center tracking-widest flex gap-2 overflow-hidden uppercase italic min-h-[38px] shadow-inner select-none relative w-full box-border">
+        <div className="bg-gradient-to-r from-emerald-700 via-emerald-600 to-slate-900 dark:to-black text-white text-[10.5px] font-black items-center justify-center py-2 px-8 text-center tracking-widest flex gap-2 overflow-hidden uppercase italic min-h-[38px] shadow-inner select-none relative">
           <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse shrink-0" />
           <span className="truncate pr-4">{offerBarText}</span>
           <Link to={offerBarLink} className="underline hover:text-emerald-300 transition-all ml-1.5 flex items-center gap-0.5 font-bold shrink-0">
@@ -901,25 +805,26 @@ function Navbar() {
         </div>
       )}
 
-      <div className="max-w-[1600px] mx-auto w-full px-4 sm:px-6 lg:px-8 box-border">
-        <div className="flex justify-between items-center h-20 w-full box-border">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-20">
           {/* Logo Brand Section */}
           <Link to="/" className="flex items-center space-x-3 group shrink-0">
             <div className="relative">
               <div className="absolute -inset-1 bg-gradient-to-tr from-emerald-500 to-violet-500 rounded-2xl blur opacity-15 group-hover:opacity-30 transition-all duration-300" />
               <img 
-                src={logoUrl || "https://i.ibb.co/Xxg75WQc/image-1.jpg"} 
+                src={logoUrl || "/sebs_official_logo_315.webp"} 
                 alt={logoAlt} 
                 width={160}
                 height={87}
                 loading="eager"
                 decoding="async"
-                className="relative h-14 w-auto object-contain transition-all duration-500 group-hover:scale-[1.04]" 
+                className="relative h-14 w-auto object-contain dark:brightness-200 dark:invert transition-all duration-500 group-hover:scale-[1.04]" 
                 referrerPolicy="no-referrer" 
                 onError={(e) => {
                   const target = e.currentTarget;
-                  target.onerror = null;
-                  target.src = "https://i.ibb.co/Xxg75WQc/image-1.jpg";
+                  if (target.src !== "/sebs_official_logo_315.webp") {
+                    target.src = "/sebs_official_logo_315.webp";
+                  }
                 }}
               />
             </div>
@@ -930,16 +835,14 @@ function Navbar() {
           </Link>
 
           {/* Desktop Nav Items */}
-          <div className="hidden md:flex items-center space-x-4 lg:space-x-8">
-            <div className="flex items-center space-x-3.5 lg:space-x-5 xl:space-x-6 bg-slate-100/50 dark:bg-white/5 border border-slate-200/30 dark:border-white/5 rounded-2xl px-3.5 lg:px-5 py-2">
+          <div className="hidden md:flex items-center space-x-8">
+            <div className="flex items-center space-x-7 bg-slate-100/50 dark:bg-white/5 border border-slate-200/30 dark:border-white/5 rounded-2xl px-5 py-2">
               {navLinks.map((link) => {
                 const isActive = location.pathname === link.path;
                 return (
                   <Link 
                     key={link.name} 
                     to={link.path} 
-                    onMouseEnter={() => prefetchRoute(link.path)}
-                    onTouchStart={() => prefetchRoute(link.path)}
                     className={`text-xs font-black uppercase tracking-wider transition-all duration-300 relative group py-1 ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
                   >
                     <span className="flex items-center gap-1.5">
@@ -1192,8 +1095,7 @@ function AnnouncementPopup() {
   }, []);
 
   useEffect(() => {
-    const isShown = sessionStorage.getItem("site_announcement_shown") === "true";
-    if (location.pathname === "/" && announcementActive && !isShown) {
+    if (location.pathname === "/" && announcementActive) {
       setShowAnnouncementPopup(true);
     }
   }, [location.pathname, announcementActive]);
@@ -1307,6 +1209,7 @@ function AnnouncementPopup() {
 
 function UnifiedDashboard() {
   const [role, setRole] = useState<string>(() => localStorage.getItem("user_role") || "student");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function determineRole() {
@@ -1315,8 +1218,8 @@ function UnifiedDashboard() {
         setRole(savedRole);
       }
 
-      const supabase = await getSupabaseClient();
       if (!supabase) {
+        setLoading(false);
         return;
       }
       try {
@@ -1338,6 +1241,8 @@ function UnifiedDashboard() {
         }
       } catch (e) {
         console.warn("Failed checking user profile role in UnifiedDashboard:", e);
+      } finally {
+        setLoading(false);
       }
     }
     determineRole();
@@ -1348,6 +1253,17 @@ function UnifiedDashboard() {
     window.addEventListener("storage", syncRoleChange);
     return () => window.removeEventListener("storage", syncRoleChange);
   }, []);
+
+  if (loading && supabase && !localStorage.getItem("user_role")) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="text-center space-y-4">
+          <Sparkles className="w-10 h-10 text-emerald-505 text-emerald-500 animate-spin mx-auto" />
+          <p className="text-xs font-black uppercase tracking-widest text-slate-500">Securing Academic Sessions...</p>
+        </div>
+      </div>
+    );
+  }
 
   return role === "teacher" ? <TeacherDashboard /> : <DashboardPage />;
 }
@@ -1363,7 +1279,14 @@ function AppContent() {
       <Navbar />
       <AnnouncementPopup />
       <main className="w-full min-w-0 max-w-full overflow-x-clip">
-        <Suspense fallback={<div className="fixed top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500 to-indigo-500 animate-pulse z-50 pointer-events-none" />}>
+        <Suspense fallback={
+          <div className="min-h-[60vh] flex items-center justify-center py-20">
+            <div className="flex flex-col items-center space-y-3">
+              <div className="w-8 h-8 rounded-full border-3 border-[#00a8cc] border-t-transparent animate-spin" />
+              <span className="text-xs font-semibold text-slate-500 tracking-wider uppercase">Loading page...</span>
+            </div>
+          </div>
+        }>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/about" element={<AboutPage />} />
@@ -1423,16 +1346,6 @@ function AppContent() {
             <Route path="/ielts-mock-test-:year/:month/:testName" element={<MockTestPage />} />
             <Route path="/ielts-mock-test-:year/:month/:testName/:testType" element={<MockTestPage />} />
             <Route path="/test/:testId" element={<MockTestPage />} />
-            <Route path="/speaking" element={<IeltsSpeakingPage />} />
-            <Route path="/ielts-speaking" element={<IeltsSpeakingPage />} />
-            <Route path="/ielts-speaking/" element={<IeltsSpeakingPage />} />
-            <Route path="/ielts/ielts-speaking" element={<IeltsSpeakingPage />} />
-            <Route path="/dashboard/ielts-speaking" element={<IeltsSpeakingPage />} />
-            <Route path="/writing" element={<IeltsWritingPage />} />
-            <Route path="/ielts-writing" element={<IeltsWritingPage />} />
-            <Route path="/ielts-writing/" element={<IeltsWritingPage />} />
-            <Route path="/ielts/ielts-writing" element={<IeltsWritingPage />} />
-            <Route path="/dashboard/ielts-writing" element={<IeltsWritingPage />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/courses" element={<StudentCourses />} />
             <Route path="/courses/:examType/:testType/:testNumber" element={<StudentCourses />} />
@@ -1440,16 +1353,6 @@ function AppContent() {
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
-            {/* Blog & Academic Resource Hub */}
-            <Route path="/blog" element={<BlogHomePage />} />
-            <Route path="/blog/" element={<BlogHomePage />} />
-            <Route path="/blog/preview/:id" element={<BlogPostViewPage isPreviewMode={true} />} />
-            <Route path="/blog/category/:categorySlug" element={<BlogCategoryViewPage />} />
-            <Route path="/blog/category/:slug" element={<BlogCategoryViewPage />} />
-            <Route path="/blog/author/:authorSlug" element={<BlogAuthorViewPage />} />
-            <Route path="/blog/author/:slug" element={<BlogAuthorViewPage />} />
-            <Route path="/blog/:slug" element={<BlogPostViewPage />} />
-
             <Route path="/pages/:slug" element={<CustomPageView />} />
             <Route path="/page/:slug" element={<CustomPageView />} />
             <Route path="*" element={<NotFoundPage />} />
