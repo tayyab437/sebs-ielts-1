@@ -43,10 +43,9 @@ function SortableBlockItem({ id, block, index, updateBlock, deleteBlock, duplica
 export function EditorCanvas({ blocks, setBlocks, panelId, title }: EditorCanvasProps) {
   const [slashMenu, setSlashMenu] = useState<{ isOpen: boolean; pos: {top: number, left: number}; blockIndex: number } | null>(null);
   
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
+  const pointerSensor = useSensor(PointerSensor, { activationConstraint: { distance: 5 } });
+  const keyboardSensor = useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates });
+  const sensors = useSensors(pointerSensor, keyboardSensor);
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;

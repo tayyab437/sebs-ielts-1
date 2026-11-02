@@ -53,7 +53,7 @@ import ReactMarkdown from "react-markdown";
 import { Link, useLocation, useParams, useNavigate } from "react-router-dom";
 import { safeSetItem, safeGetItemAndParse, safeJsonParse } from "@/src/lib/safeStorage";
 import IeltsTestView from "@/src/components/IeltsTestView";
-import { mergeCoursesWithMedia, fetchAllMediaCourses } from "@/src/lib/mediaCourseAdapter";
+import { mergeCoursesWithMedia, fetchAllMediaCourses, getStoredMediaCourses } from "@/src/lib/mediaCourseAdapter";
 import MediaCoursePlayer from "@/src/components/courses/MediaCoursePlayer";
 import InteractiveSpeakingExam from "@/src/components/courses/InteractiveSpeakingExam";
 import SecureVideoPlayer from "@/src/components/common/SecureVideoPlayer";
@@ -333,7 +333,21 @@ function StudentCoursesInner({
     testType?: string;
     testNumber?: string;
   }>();
-  const [courses, setCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>(() => {
+    try {
+      const cached = safeGetItemAndParse<any[]>("cached_published_courses", []);
+      if (Array.isArray(cached) && cached.length > 0) {
+        return sortCoursesList(cached);
+      }
+      const localC = safeGetItemAndParse<any[]>("mock_courses", []);
+      const localM = getStoredMediaCourses();
+      const merged = mergeCoursesWithMedia(localC, localM);
+      if (Array.isArray(merged) && merged.length > 0) {
+        return sortCoursesList(merged);
+      }
+    } catch (e) {}
+    return [];
+  });
   const [user, setUser] = useState<any>(() => {
     try {
       const stored = localStorage.getItem("sb-user") || localStorage.getItem("authenticated_user") || localStorage.getItem("student_profile");
@@ -602,7 +616,7 @@ function StudentCoursesInner({
     : catalogCourses;
 
   const [quizzes, setQuizzes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(() => courses.length === 0);
   const [subExamMode, setSubExamMode] = useState<"ac" | "gt">("ac");
   const FIVE_MINUTES_MS = 5 * 60 * 1000;
 
@@ -1660,7 +1674,9 @@ function StudentCoursesInner({
   }, []);
 
   const loadLearningData = async () => {
-    setLoading(true);
+    if (courses.length === 0) {
+      setLoading(true);
+    }
     try {
       if (!supabase) {
         // Safe developer mode local load
@@ -1863,22 +1879,42 @@ function StudentCoursesInner({
         const savedCompleted = localStorage.getItem("completed_lessons");
         if (savedCompleted) setCompletedLessons(JSON.parse(savedCompleted));
       } else {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          setUser(session.user);
-        }
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        if (authUser) {
-          setUser(authUser);
-        }
-        let userId = authUser?.id || session?.user?.id;
+        // Parallelized fetching for instant resolution: courses, quizzes, media courses, and auth profile run concurrently
+        const [coursesRes, quizzesRes, mediaCoursesRes, profileRes] = await Promise.all([
+          supabase.from('courses').select('*'),
+          supabase.from('quizzes').select('*'),
+          fetchAllMediaCourses().catch((mErr) => {
+            console.warn("Could not fetch media courses for remote catalog:", mErr);
+            return [];
+          }),
+          (async () => {
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session?.user) {
+                setUser(session.user);
+              }
+              const { data: { user: authUser } } = await supabase.auth.getUser();
+              const u = authUser || session?.user;
+              if (u) {
+                setUser(u);
+                const { data: pData } = await supabase
+                  .from('profiles')
+                  .select('completed_lessons, current_state, plan')
+                  .eq('id', u.id)
+                  .single();
+                return { user: u, profileData: pData };
+              }
+            } catch (err) {
+              console.warn("Failed loading user profile:", err);
+            }
+            return { user: null, profileData: null };
+          })()
+        ]);
 
-        const { data: profileData } = userId ? await supabase
-          .from('profiles')
-          .select('completed_lessons, current_state, plan')
-          .eq('id', userId)
-          .single() : { data: null };
-        
+        if (coursesRes.error) throw coursesRes.error;
+        if (quizzesRes.error) throw quizzesRes.error;
+
+        const profileData = profileRes?.profileData;
         if (profileData) {
           if (profileData.completed_lessons) {
             setCompletedLessons(profileData.completed_lessons);
@@ -1918,20 +1954,8 @@ function StudentCoursesInner({
           }
         }
 
-        const { data: coursesData, error: coursesError } = await supabase
-          .from('courses')
-          .select('*');
-        
-        if (coursesError) throw coursesError;
-
-        const { data: quizzesData, error: quizzesError } = await supabase
-          .from('quizzes')
-          .select('*');
-
-        if (quizzesError) throw quizzesError;
-
         // Parse JSON columns in Supabase mode
-        let parsedCourses = (coursesData || []).map(course => {
+        let parsedCourses = (coursesRes.data || []).map(course => {
           let mods = course.modules;
           if (typeof mods === 'string') {
             try { mods = JSON.parse(mods); } catch { mods = []; }
@@ -1952,14 +1976,11 @@ function StudentCoursesInner({
           };
         });
 
-        try {
-          const mediaCourses = await fetchAllMediaCourses();
-          parsedCourses = mergeCoursesWithMedia(parsedCourses, mediaCourses);
-        } catch (mErr) {
-          console.warn("Could not fetch media courses for remote catalog:", mErr);
+        if (Array.isArray(mediaCoursesRes) && mediaCoursesRes.length > 0) {
+          parsedCourses = mergeCoursesWithMedia(parsedCourses, mediaCoursesRes);
         }
 
-        const parsedQuizzes = (quizzesData || []).map(qz => {
+        const parsedQuizzes = (quizzesRes.data || []).map(qz => {
           let qs = qz.questions;
           if (typeof qs === 'string') {
             try { qs = JSON.parse(qs); } catch { qs = []; }
@@ -1967,7 +1988,47 @@ function StudentCoursesInner({
           return { ...qz, questions: qs || [] };
         });
 
-        setCourses(sortCoursesList(parsedCourses));
+        const sorted = sortCoursesList(parsedCourses);
+        setCourses(sorted);
+        
+        try {
+          const lightweightCache = sorted.map((c: any) => ({
+            id: c.id,
+            title: c.title || c.name,
+            name: c.name || c.title,
+            type: c.type,
+            course_type: c.course_type,
+            course_format: c.course_format,
+            category: c.category,
+            difficulty: c.difficulty,
+            level: c.level,
+            featured_image: c.featured_image,
+            thumbnail_url: c.thumbnail_url,
+            access_tier: c.access_tier,
+            status: c.status,
+            isMediaCourse: c.isMediaCourse,
+            mediaType: c.mediaType,
+            show_in_catalog: c.show_in_catalog,
+            show_in_syllabus: c.show_in_syllabus,
+            show_in_practice: c.show_in_practice,
+            test_number: c.test_number,
+            created_at: c.created_at,
+            tags: c.tags,
+            modules: Array.isArray(c.modules) ? c.modules.map((m: any) => ({
+              id: m.id,
+              title: m.title,
+              lessons: Array.isArray(m.lessons) ? m.lessons.map((l: any) => ({
+                id: l.id,
+                title: l.title,
+                type: l.type
+              })) : []
+            })) : []
+          }));
+          safeSetItem("cached_published_courses", JSON.stringify(lightweightCache));
+        } catch (cacheErr) {
+          console.warn("Notice: Published courses cache update:", cacheErr);
+        }
+        
         setQuizzes(parsedQuizzes);
       }
     } catch (e) {

@@ -81,6 +81,8 @@ export function safeSetItem(key: string, value: string): boolean {
       
       // 1. Purge non-essential caching keys to reclaim storage
       const nonCriticalKeys = [
+        "cached_published_courses",
+        "cached_admin_courses",
         "mock_courses",
         "mock_quizzes",
         "quiz_history",
@@ -95,9 +97,11 @@ export function safeSetItem(key: string, value: string): boolean {
       ];
 
       for (const k of nonCriticalKeys) {
-        try {
-          localStorage.removeItem(k);
-        } catch (e) {}
+        if (k !== key) {
+          try {
+            localStorage.removeItem(k);
+          } catch (e) {}
+        }
       }
 
       // 2. Truncate long arrays (specifically keeping only the top 3 submissions)
@@ -111,7 +115,41 @@ export function safeSetItem(key: string, value: string): boolean {
         }
       } catch (e) {}
 
-      // 3. Special target: If we're setting student_profile, strip the avatar_url as it's the largest part
+      // 3. Special target: If setting course catalog cache, convert to lightweight metadata
+      if (key === "cached_published_courses" || key === "cached_admin_courses") {
+        try {
+          const list = JSON.parse(value);
+          if (Array.isArray(list)) {
+            const lightweight = list.map((c: any) => ({
+              id: c.id,
+              title: c.title || c.name,
+              name: c.name || c.title,
+              type: c.type,
+              course_type: c.course_type,
+              course_format: c.course_format,
+              category: c.category,
+              difficulty: c.difficulty,
+              level: c.level,
+              featured_image: c.featured_image,
+              thumbnail_url: c.thumbnail_url,
+              access_tier: c.access_tier,
+              status: c.status,
+              isMediaCourse: c.isMediaCourse,
+              mediaType: c.mediaType,
+              show_in_catalog: c.show_in_catalog,
+              show_in_syllabus: c.show_in_syllabus,
+              show_in_practice: c.show_in_practice,
+              test_number: c.test_number,
+              created_at: c.created_at
+            }));
+            localStorage.setItem(key, JSON.stringify(lightweight));
+            console.info(`Saved lightweight catalog fallback for key "${key}".`);
+            return true;
+          }
+        } catch (e) {}
+      }
+
+      // 4. Special target: If we're setting student_profile, strip the avatar_url as it's the largest part
       if (key === "student_profile") {
         try {
           const profile = JSON.parse(value);
@@ -127,12 +165,12 @@ export function safeSetItem(key: string, value: string): boolean {
         }
       }
 
-      // 4. Try the write one final time
+      // 5. Try the write one final time
       try {
         localStorage.setItem(key, value);
         return true;
       } catch (retryError) {
-        console.error(`Final critical storage write fallback failed for key "${key}":`, retryError);
+        console.warn(`Storage write fallback notice for key "${key}":`, retryError);
         
         // If it's STILL student_profile, make a super-minimal payload to at least save core state (XP, streak)
         if (key === "student_profile") {

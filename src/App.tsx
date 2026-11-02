@@ -27,6 +27,43 @@ const TeacherDashboard = lazyWithRetry(() => import("./pages/dashboard/TeacherDa
 const StudentCourses = lazyWithRetry(() => import("./pages/public/Courses"));
 const CustomPageView = lazyWithRetry(() => import("./pages/public/CustomPageView"));
 
+export function prefetchRoute(path: string) {
+  try {
+    const cleanPath = (path || "").split("?")[0].split("#")[0];
+    if (cleanPath.startsWith("/courses")) {
+      import("./pages/public/Courses");
+    } else if (
+      cleanPath.startsWith("/mock-test") ||
+      cleanPath.startsWith("/mock-tests") ||
+      cleanPath.startsWith("/academic-test") ||
+      cleanPath.startsWith("/general-training") ||
+      cleanPath.startsWith("/gt-tests")
+    ) {
+      import("./pages/dashboard/MockTest");
+    } else if (cleanPath === "/dashboard/writing") {
+      import("./pages/dashboard/WritingModule");
+    } else if (cleanPath.startsWith("/dashboard")) {
+      import("./pages/dashboard/StudentDashboard");
+      import("./pages/dashboard/TeacherDashboard");
+    } else if (cleanPath.startsWith("/books")) {
+      import("./pages/public/Books");
+    } else if (cleanPath.startsWith("/about")) {
+      import("./pages/public/About");
+    } else if (cleanPath.startsWith("/contact")) {
+      import("./pages/public/Contact");
+    } else if (cleanPath.startsWith("/pricing")) {
+      import("./pages/public/Pricing");
+    } else if (cleanPath.startsWith("/terms")) {
+      import("./pages/public/Terms");
+    } else if (cleanPath.startsWith("/privacy")) {
+      import("./pages/public/Privacy");
+    } else if (cleanPath.startsWith("/admin")) {
+      import("./pages/admin/AdminDashboard");
+    }
+  } catch {
+    // Non-blocking prefetch failure
+  }
+}
 
 import { supabase } from "./lib/supabaseClient";
 import { MeetingsProvider } from "./context/MeetingsContext";
@@ -34,7 +71,7 @@ import { fetchSiteSettings, sanitizeAssetUrl } from "./lib/settings";
 import { PageSEOManager } from "./components/PageSEOManager";
 
 function Footer() {
-  const [logoUrl, setLogoUrl] = useState(() => sanitizeAssetUrl(localStorage.getItem("site_logo_url"), "/sebs_official_logo_315.webp"));
+  const [logoUrl, setLogoUrl] = useState(() => sanitizeAssetUrl(localStorage.getItem("site_logo_url"), "https://i.ibb.co/Xxg75WQc/image-1.jpg"));
   const [logoAlt, setLogoAlt] = useState(() => localStorage.getItem("site_logo_alt") || "SEB's Institute Logo");
   const [emailValue, setEmailValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -96,9 +133,7 @@ function Footer() {
           <div className="lg:col-span-4 space-y-5">
             <Link to="/" className="inline-flex items-center space-x-2 group">
               <img 
-                src={logoUrl || "/sebs_official_logo_315.webp"} 
-                srcSet={(!logoUrl || logoUrl === "/sebs_official_logo_315.webp" || logoUrl === "/sebs_official_logo_160.webp") ? "/sebs_official_logo_160.webp 160w, /sebs_official_logo_315.webp 315w" : undefined}
-                sizes={(!logoUrl || logoUrl === "/sebs_official_logo_315.webp" || logoUrl === "/sebs_official_logo_160.webp") ? "(max-width: 640px) 130px, 160px" : undefined}
+                src={logoUrl || "https://i.ibb.co/Xxg75WQc/image-1.jpg"} 
                 alt={logoAlt} 
                 width={160}
                 height={87}
@@ -108,8 +143,8 @@ function Footer() {
                 referrerPolicy="no-referrer"
                 onError={(e) => {
                   const target = e.currentTarget;
-                  if (target.src !== "/sebs_official_logo_315.webp") {
-                    target.src = "/sebs_official_logo_315.webp";
+                  if (target.src !== "https://i.ibb.co/Xxg75WQc/image-1.jpg") {
+                    target.src = "https://i.ibb.co/Xxg75WQc/image-1.jpg";
                   }
                 }}
               />
@@ -158,7 +193,7 @@ function Footer() {
                 { title: "Spoken English", tag: "Fluency" },
                 { title: "Writing Skills", tag: "Expert" },
                 { title: "IELTS Preparation", tag: "Band 8.5" },
-                { title: "PTE Masterclass", tag: "Live" }
+                { title: "General Training", tag: "GT Exam" }
               ].map((course, idx) => (
                 <li key={idx}>
                   <Link 
@@ -371,7 +406,7 @@ function Footer() {
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [logoUrl, setLogoUrl] = useState(() => sanitizeAssetUrl(localStorage.getItem("site_logo_url"), "/sebs_official_logo_315.webp"));
+  const [logoUrl, setLogoUrl] = useState(() => sanitizeAssetUrl(localStorage.getItem("site_logo_url"), "https://i.ibb.co/Xxg75WQc/image-1.jpg"));
   const [logoAlt, setLogoAlt] = useState(() => localStorage.getItem("site_logo_alt") || "SEB's Institute Logo");
 
   // Header Style & Layout States
@@ -608,11 +643,13 @@ function Navbar() {
     { name: "Pricing", path: "/pricing" },
   ];
 
+  const isAdmin = user?.email === "ac.repair.in.dubai3@gmail.com" || userRole === "admin";
+
   if (isHidden) return null;
 
   if (headerStyle === "iot") {
     return (
-      <nav className="sticky top-0 z-50 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-300">
+      <nav className="sticky top-0 z-50 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-300 w-full overflow-x-clip">
         {/* IOT Style Header Banner Top Bar */}
         <div className="bg-gradient-to-r from-red-500 via-rose-500 to-amber-500 text-white py-2 px-4 sm:px-8 border-b border-rose-600/30">
           <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
@@ -656,9 +693,7 @@ function Navbar() {
             <div className="flex items-center space-x-6">
               <Link to="/" className="flex items-center space-x-2 shrink-0 pr-2">
                 <img 
-                  src={logoUrl || "/sebs_official_logo_160.webp"} 
-                  srcSet={(!logoUrl || logoUrl === "/sebs_official_logo_315.webp" || logoUrl === "/sebs_official_logo_160.webp") ? "/sebs_official_logo_160.webp 160w, /sebs_official_logo_315.webp 315w" : undefined}
-                  sizes={(!logoUrl || logoUrl === "/sebs_official_logo_315.webp" || logoUrl === "/sebs_official_logo_160.webp") ? "(max-width: 640px) 110px, 160px" : undefined}
+                  src={logoUrl || "https://i.ibb.co/Xxg75WQc/image-1.jpg"} 
                   alt={logoAlt} 
                   width={110}
                   height={60}
@@ -668,15 +703,15 @@ function Navbar() {
                   referrerPolicy="no-referrer"
                   onError={(e) => {
                     const target = e.currentTarget;
-                    if (target.src !== "/sebs_official_logo_315.webp") {
-                      target.src = "/sebs_official_logo_315.webp";
+                    if (target.src !== "https://i.ibb.co/Xxg75WQc/image-1.jpg") {
+                      target.src = "https://i.ibb.co/Xxg75WQc/image-1.jpg";
                     }
                   }}
                 />
                 <span className="font-black text-sm text-slate-900 dark:text-white tracking-wider hidden xl:inline">SEB's Institute</span>
               </Link>
 
-              <div className="hidden md:flex items-center space-x-5">
+              <div className="hidden lg:flex items-center space-x-5">
                 {navLinks.map((link) => {
                   const isActive = location.pathname === link.path;
                   return (
@@ -704,7 +739,7 @@ function Navbar() {
             </div>
 
             {/* Quick Search */}
-            <div className="hidden lg:flex items-center flex-1 max-w-xs mx-6">
+            <div className="hidden xl:flex items-center flex-1 max-w-xs mx-6">
               <div className="relative w-full">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
@@ -718,34 +753,34 @@ function Navbar() {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
               {user ? (
-                <div className="hidden sm:flex items-center space-x-2">
-                  {user.email === "ac.repair.in.dubai3@gmail.com" && (
-                    <Link to="/admin">
-                      <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-[10px] uppercase rounded-lg px-3 py-1">
-                        Admin Console
+                <div className="hidden sm:flex items-center space-x-2 shrink-0">
+                  {isAdmin && (
+                    <Link to="/admin" className="shrink-0">
+                      <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-[10px] uppercase rounded-lg px-2.5 py-1 whitespace-nowrap">
+                        Admin
                       </Button>
                     </Link>
                   )}
-                  <Link to="/dashboard">
-                    <Button size="sm" variant="outline" className="text-[10px] font-bold uppercase rounded-lg px-3 py-1">
+                  <Link to="/dashboard" className="shrink-0">
+                    <Button size="sm" variant="outline" className="text-[10px] font-bold uppercase rounded-lg px-2.5 py-1 whitespace-nowrap">
                       Dashboard
                     </Button>
                   </Link>
-                  <Button size="sm" variant="ghost" onClick={handleLogout} className="text-[10px] font-bold uppercase text-slate-500 rounded-lg px-2">
+                  <Button size="sm" variant="ghost" onClick={handleLogout} className="text-[10px] font-bold uppercase text-slate-500 rounded-lg px-2 shrink-0 whitespace-nowrap">
                     Logout
                   </Button>
                 </div>
               ) : (
-                <div className="hidden sm:flex items-center space-x-2">
-                  <Link to="/login">
+                <div className="hidden sm:flex items-center space-x-2 shrink-0">
+                  <Link to="/login" className="shrink-0">
                     <Button size="sm" variant="ghost" className="text-[11px] font-bold uppercase text-slate-700 dark:text-slate-200">
                       Login
                     </Button>
                   </Link>
-                  <Link to="/signup">
-                    <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white font-black text-[11px] uppercase rounded-lg px-4 shadow-sm border-none">
+                  <Link to="/signup" className="shrink-0">
+                    <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white font-black text-[11px] uppercase rounded-lg px-4 shadow-sm border-none whitespace-nowrap">
                       Get Started
                     </Button>
                   </Link>
@@ -755,9 +790,9 @@ function Navbar() {
               <button
                 onClick={() => setIsOpen(!isOpen)}
                 aria-label="Toggle navigation menu"
-                className="md:hidden min-w-[48px] min-h-[48px] p-3 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors"
+                className="lg:hidden min-w-[40px] min-h-[40px] p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors shrink-0"
               >
-                {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
             </div>
           </div>
@@ -765,7 +800,7 @@ function Navbar() {
 
         {/* Mobile Dropdown */}
         {isOpen && (
-          <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-2">
+          <div className="lg:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-4 space-y-2">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
@@ -776,6 +811,19 @@ function Navbar() {
                 {link.name}
               </Link>
             ))}
+            {user && (
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2">
+                {isAdmin && (
+                  <Link to="/admin" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full bg-amber-500 text-slate-950 font-black uppercase text-xs rounded-lg">Admin Console</Button>
+                  </Link>
+                )}
+                <Link to="/dashboard" onClick={() => setIsOpen(false)}>
+                  <Button variant="outline" className="w-full font-bold uppercase text-xs rounded-lg">Dashboard</Button>
+                </Link>
+                <Button variant="ghost" onClick={() => { handleLogout(); setIsOpen(false); }} className="w-full font-bold uppercase text-xs text-red-600">Logout</Button>
+              </div>
+            )}
           </div>
         )}
       </nav>
@@ -783,7 +831,7 @@ function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200/80 dark:border-white/5 transition-colors duration-300">
+    <nav className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200/80 dark:border-white/5 transition-colors duration-300 w-full overflow-x-clip">
       {/* Top Academic Promotion Ticker Banner */}
       {offerBarActive && !isOfferBarDismissed && (
         <div className="bg-gradient-to-r from-emerald-700 via-emerald-600 to-slate-900 dark:to-black text-white text-[10.5px] font-black items-center justify-center py-2 px-8 text-center tracking-widest flex gap-2 overflow-hidden uppercase italic min-h-[38px] shadow-inner select-none relative">
@@ -805,45 +853,45 @@ function Navbar() {
         </div>
       )}
 
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+      <div className="max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 w-full overflow-x-clip">
+        <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-4 max-w-full">
           {/* Logo Brand Section */}
-          <Link to="/" className="flex items-center space-x-3 group shrink-0">
+          <Link to="/" className="flex items-center space-x-2 sm:space-x-3 group shrink-0">
             <div className="relative">
               <div className="absolute -inset-1 bg-gradient-to-tr from-emerald-500 to-violet-500 rounded-2xl blur opacity-15 group-hover:opacity-30 transition-all duration-300" />
               <img 
-                src={logoUrl || "/sebs_official_logo_315.webp"} 
+                src={logoUrl || "https://i.ibb.co/Xxg75WQc/image-1.jpg"} 
                 alt={logoAlt} 
                 width={160}
                 height={87}
                 loading="eager"
                 decoding="async"
-                className="relative h-14 w-auto object-contain dark:brightness-200 dark:invert transition-all duration-500 group-hover:scale-[1.04]" 
+                className="relative h-11 sm:h-14 w-auto object-contain dark:brightness-200 dark:invert transition-all duration-500 group-hover:scale-[1.04]" 
                 referrerPolicy="no-referrer" 
                 onError={(e) => {
                   const target = e.currentTarget;
-                  if (target.src !== "/sebs_official_logo_315.webp") {
-                    target.src = "/sebs_official_logo_315.webp";
+                  if (target.src !== "https://i.ibb.co/Xxg75WQc/image-1.jpg") {
+                    target.src = "https://i.ibb.co/Xxg75WQc/image-1.jpg";
                   }
                 }}
               />
             </div>
-            <div className="hidden lg:flex flex-col text-left">
+            <div className="hidden xl:flex flex-col text-left">
               <span className="text-sm font-black tracking-tight text-slate-900 dark:text-white leading-none">SEB's Institute</span>
               <span className="text-[8.5px] font-bold text-emerald-600 tracking-widest uppercase mt-0.5 font-mono">Global Language Institute</span>
             </div>
           </Link>
 
           {/* Desktop Nav Items */}
-          <div className="hidden md:flex items-center space-x-8">
-            <div className="flex items-center space-x-7 bg-slate-100/50 dark:bg-white/5 border border-slate-200/30 dark:border-white/5 rounded-2xl px-5 py-2">
+          <div className="hidden lg:flex items-center space-x-2 xl:space-x-6 shrink-0">
+            <div className="flex items-center space-x-3 xl:space-x-6 bg-slate-100/50 dark:bg-white/5 border border-slate-200/30 dark:border-white/5 rounded-2xl px-3 xl:px-5 py-1.5 xl:py-2 shrink-0">
               {navLinks.map((link) => {
                 const isActive = location.pathname === link.path;
                 return (
                   <Link 
                     key={link.name} 
                     to={link.path} 
-                    className={`text-xs font-black uppercase tracking-wider transition-all duration-300 relative group py-1 ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                    className={`text-[11px] xl:text-xs font-black uppercase tracking-wider transition-all duration-300 relative group py-1 shrink-0 whitespace-nowrap ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
                   >
                     <span className="flex items-center gap-1.5">
                       {link.name}
@@ -861,14 +909,14 @@ function Navbar() {
 
             {/* Notifications Indicator Portal */}
             {user && (
-              <div className="relative" ref={notificationRef}>
+              <div className="relative shrink-0" ref={notificationRef}>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="rounded-xl text-muted-foreground hover:bg-slate-100 dark:hover:bg-white/5 relative w-10 h-10"
+                  className="rounded-xl text-muted-foreground hover:bg-slate-100 dark:hover:bg-white/5 relative w-9 h-9 sm:w-10 sm:h-10"
                   onClick={() => setShowNotifications(!showNotifications)}
                 >
-                  <Bell className="w-5 h-5" />
+                  <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
                   {unreadCount > 0 && (
                     <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-550 bg-red-500 rounded-full animate-pulse" />
                   )}
@@ -891,7 +939,7 @@ function Navbar() {
                     </div>
                     <div className="max-h-[320px] overflow-y-auto">
                       {notifications.length === 0 ? (
-                        <div className="p-6 text-center text-slate-550 dark:text-slate-405 text-slate-400">
+                        <div className="p-6 text-center text-slate-400">
                           <Bell className="w-8 h-8 opacity-25 mx-auto mb-2" />
                           <p className="text-xs font-bold uppercase tracking-wider">No notifications yet</p>
                         </div>
@@ -940,44 +988,47 @@ function Navbar() {
             )}
 
             {/* Profile or Authentication Controllers */}
-            <div className="flex items-center space-x-4 pl-4 border-l border-slate-200 dark:border-white/10">
+            <div className="flex items-center space-x-1.5 sm:space-x-2 xl:space-x-3 pl-2 sm:pl-3 xl:pl-4 border-l border-slate-200 dark:border-white/10 shrink-0">
               {user ? (
                 <>
-                  {user.email === "ac.repair.in.dubai3@gmail.com" && (
-                    <Link to="/admin">
-                      <Button variant="ghost" size="sm" className="font-extrabold text-[10.5px] uppercase tracking-wider text-emerald-505 text-emerald-650 dark:text-emerald-400 italic border border-emerald-500/20 dark:border-emerald-500/10 rounded-xl px-4 hover:bg-emerald-500/5">
-                        Admin Console
+                  {isAdmin && (
+                    <Link to="/admin" className="shrink-0">
+                      <Button variant="ghost" size="sm" className="font-extrabold text-[10px] xl:text-[10.5px] uppercase tracking-wider text-emerald-650 dark:text-emerald-400 italic border border-emerald-500/20 dark:border-emerald-500/10 rounded-xl px-2.5 sm:px-3 py-1 hover:bg-emerald-500/5 shrink-0 whitespace-nowrap">
+                        <ShieldCheck className="w-3.5 h-3.5 mr-1 inline sm:hidden md:inline" />
+                        <span className="hidden xl:inline">Admin Console</span>
+                        <span className="inline xl:hidden">Admin</span>
                       </Button>
                     </Link>
                   )}
                   {userRole === "teacher" && (
-                    <span className="text-[10px] uppercase font-black tracking-widest text-[#059669] dark:text-[#34d399] italic font-mono animate-pulse rounded-full border border-emerald-550/20 px-2 py-0.5 leading-none">
+                    <span className="hidden xl:inline-block text-[9px] uppercase font-black tracking-widest text-[#059669] dark:text-[#34d399] italic font-mono rounded-full border border-emerald-550/20 px-2 py-0.5 leading-none shrink-0">
                       Teacher Mode
                     </span>
                   )}
-                  <Link to="/dashboard">
-                    <Button variant="ghost" size="sm" className="font-extrabold text-[10.5px] uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl">
-                      {userRole === "teacher" ? "Teacher Dashboard" : "Student Dashboard"}
+                  <Link to="/dashboard" className="shrink-0">
+                    <Button variant="ghost" size="sm" className="font-extrabold text-[10px] xl:text-[10.5px] uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl px-2.5 sm:px-3 py-1 shrink-0 whitespace-nowrap">
+                      <span className="hidden xl:inline">{userRole === "teacher" ? "Teacher Dashboard" : "Student Dashboard"}</span>
+                      <span className="inline xl:hidden">Dashboard</span>
                     </Button>
                   </Link>
                   <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={handleLogout}
-                    className="rounded-xl px-4 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 font-extrabold text-[10.5px] uppercase tracking-wider"
+                    className="rounded-xl px-2.5 sm:px-3 py-1 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 font-extrabold text-[10px] xl:text-[10.5px] uppercase tracking-wider shrink-0 whitespace-nowrap"
                   >
                     Logout
                   </Button>
                 </>
               ) : (
                 <>
-                  <Link to="/login">
-                    <Button variant="ghost" size="sm" className="font-extrabold text-[10.5px] uppercase tracking-wider text-slate-605 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl">
+                  <Link to="/login" className="shrink-0">
+                    <Button variant="ghost" size="sm" className="font-extrabold text-[10px] xl:text-[10.5px] uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl px-2.5 sm:px-3">
                       Login
                     </Button>
                   </Link>
-                  <Link to="/signup">
-                    <Button size="sm" className="rounded-xl px-5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white shadow-lg shadow-emerald-600/10 border-none font-extrabold text-[10.5px] uppercase tracking-wider hover:scale-[1.02] transition-transform">
+                  <Link to="/signup" className="shrink-0">
+                    <Button size="sm" className="rounded-xl px-3.5 sm:px-4 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white shadow-lg shadow-emerald-600/10 border-none font-extrabold text-[10px] xl:text-[10.5px] uppercase tracking-wider hover:scale-[1.02] transition-transform shrink-0 whitespace-nowrap">
                       Get Started
                     </Button>
                   </Link>
@@ -987,12 +1038,12 @@ function Navbar() {
           </div>
 
           {/* Mobile Navigation Command buttons */}
-          <div className="md:hidden flex items-center space-x-2">
+          <div className="lg:hidden flex items-center space-x-1.5 sm:space-x-2 shrink-0">
             {user && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative text-slate-600 dark:text-slate-300 hover:text-primary w-10 h-10"
+                className="relative text-slate-600 dark:text-slate-300 hover:text-primary w-9 h-9 sm:w-10 sm:h-10 shrink-0"
                 onClick={() => setShowNotifications(!showNotifications)}
               >
                 <Bell className="w-5 h-5" />
@@ -1003,8 +1054,8 @@ function Navbar() {
             )}
             <button 
               onClick={() => setIsOpen(!isOpen)} 
-              className="min-w-[48px] min-h-[48px] p-3 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center justify-center rounded-xl" 
-              aria-label="Toggle mobile menu"
+              className="min-w-[40px] min-h-[40px] p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center justify-center rounded-xl shrink-0" 
+              aria-label="Toggle navigation menu"
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -1012,19 +1063,19 @@ function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Nav Overlay Panel */}
+      {/* Mobile / Tablet Nav Overlay Panel */}
       {isOpen && (
         <div 
-          className="md:hidden bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-white/10 absolute w-full left-0 right-0 shadow-xl overflow-hidden transition-all duration-300 animate-in slide-in-from-top-2 fade-in"
+          className="lg:hidden bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-white/10 absolute w-full left-0 right-0 shadow-xl overflow-hidden transition-all duration-300 animate-in slide-in-from-top-2 fade-in z-50"
         >
-          <div className="px-5 pt-2 pb-6 space-y-1 text-left">
+          <div className="px-5 pt-2 pb-6 space-y-1 text-left max-w-full">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.path;
               return (
                 <Link 
                   key={link.name} 
                   to={link.path} 
-                  className={`block px-4 py-3.5 text-sm font-black uppercase tracking-wider rounded-xl transition-all min-h-[48px] flex items-center ${isActive ? 'text-emerald-600 bg-emerald-500/5 pl-6' : 'text-slate-605 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
+                  className={`block px-4 py-3.5 text-sm font-black uppercase tracking-wider rounded-xl transition-all min-h-[48px] flex items-center ${isActive ? 'text-emerald-600 bg-emerald-500/5 pl-6' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
                   onClick={() => setIsOpen(false)}
                 >
                   <span className="flex items-center justify-between w-full">
@@ -1042,25 +1093,27 @@ function Navbar() {
             <div className="pt-4 flex flex-col space-y-2.5 border-t border-slate-100 dark:border-white/5 mt-3">
               {user ? (
                 <>
-                  {user.email === "ac.repair.in.dubai3@gmail.com" && (
+                  {isAdmin && (
                     <Link to="/admin" onClick={() => setIsOpen(false)}>
-                      <Button variant="ghost" className="w-full font-black text-emerald-650 dark:text-emerald-400 bg-emerald-500/5 rounded-xl uppercase tracking-wider text-xs">Admin Console</Button>
+                      <Button variant="ghost" className="w-full font-black text-emerald-650 dark:text-emerald-400 bg-emerald-500/5 rounded-xl uppercase tracking-wider text-xs justify-center flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4 text-emerald-500" /> Admin Console
+                      </Button>
                     </Link>
                   )}
                   <Link to="/dashboard" onClick={() => setIsOpen(false)}>
-                    <Button variant="outline" className="w-full font-black uppercase tracking-wider text-xs">
+                    <Button variant="outline" className="w-full font-black uppercase tracking-wider text-xs justify-center">
                       {userRole === "teacher" ? "Teacher Dashboard" : "Student Dashboard"}
                     </Button>
                   </Link>
-                  <Button onClick={() => { handleLogout(); setIsOpen(false); }} className="w-full bg-red-50 text-red-600 hover:bg-red-100 border-red-200 uppercase font-black tracking-wider text-xs rounded-xl">Logout</Button>
+                  <Button onClick={() => { handleLogout(); setIsOpen(false); }} className="w-full bg-red-50 text-red-600 hover:bg-red-100 border-red-200 uppercase font-black tracking-wider text-xs rounded-xl justify-center">Logout</Button>
                 </>
               ) : (
                 <>
                   <Link to="/login" onClick={() => setIsOpen(false)}>
-                    <Button variant="outline" className="w-full font-black uppercase tracking-wider text-xs rounded-xl">Login</Button>
+                    <Button variant="outline" className="w-full font-black uppercase tracking-wider text-xs rounded-xl justify-center">Login</Button>
                   </Link>
                   <Link to="/signup" onClick={() => setIsOpen(false)}>
-                    <Button className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-black uppercase tracking-wider text-xs rounded-xl border-none">Get Started</Button>
+                    <Button className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-black uppercase tracking-wider text-xs rounded-xl border-none justify-center">Get Started</Button>
                   </Link>
                 </>
               )}

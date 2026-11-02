@@ -1118,6 +1118,27 @@ async function startServer() {
     }
   });
 
+  // High-performance in-memory cache and in-flight deduplicator for frequent, heavy table queries
+  const tableQueryCache = new Map<string, { data: any[]; time: number }>();
+  const inFlightTableQueries = new Map<string, Promise<any[]>>();
+  const TABLE_CACHE_TTL_MS = 60 * 1000; // 60 seconds
+
+  let cachedMysqlCourses: any[] | null = null;
+  let cachedMysqlCoursesTime = 0;
+
+  const invalidateTableCache = (table: string) => {
+    const prefix = `${table}:`;
+    for (const key of Array.from(tableQueryCache.keys())) {
+      if (key.startsWith(prefix) || key === table) {
+        tableQueryCache.delete(key);
+      }
+    }
+    if (table === "courses") {
+      cachedMysqlCourses = null;
+    }
+    inFlightTableQueries.clear();
+  };
+
   // Generic Supabase-like querying proxy to Hostinger MySQL
   app.post("/api/mysql/query", async (req: any, res: any) => {
     try {
@@ -1127,6 +1148,36 @@ async function startServer() {
       
       if (!table) {
         return res.status(400).json({ error: "Missing table parameter" });
+      }
+
+      // Fast-path: Check in-memory cache for high-traffic read queries (courses, quizzes, mock_tests, resources)
+      const isReadQuery = !insertData && !updateData && !upsertData && !deleteFlag;
+      const isCacheableTable = isReadQuery && ["courses", "quizzes", "mock_tests", "resources", "membership_tiers"].includes(table);
+      const cacheKey = isCacheableTable
+        ? `${table}:${selectFields || '*'}:${JSON.stringify(filters || [])}:${JSON.stringify(orderConfig || {})}:${limitCount || ''}`
+        : null;
+
+      if (cacheKey && tableQueryCache.has(cacheKey)) {
+        const cached = tableQueryCache.get(cacheKey)!;
+        if (Date.now() - cached.time < TABLE_CACHE_TTL_MS) {
+          res.setHeader("X-Cache", "HIT");
+          res.setHeader("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
+          return res.json(cached.data);
+        } else {
+          tableQueryCache.delete(cacheKey);
+        }
+      }
+
+      // Fast-path: In-flight deduplication if an identical query is currently executing
+      if (cacheKey && inFlightTableQueries.has(cacheKey)) {
+        try {
+          const inFlightData = await inFlightTableQueries.get(cacheKey)!;
+          res.setHeader("X-Cache", "INFLIGHT_HIT");
+          res.setHeader("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
+          return res.json(inFlightData);
+        } catch (e) {
+          // If in-flight query failed, proceed to retry below
+        }
       }
 
       const authHeader = req.headers.authorization;
@@ -1267,6 +1318,28 @@ async function startServer() {
           }
         }
       }
+ 
+      // Helper to offload large base64 images to static files so database remains lightweight
+      const saveBase64ImageIfPresent = (row: any, fieldName: string) => {
+        if (!row || !row[fieldName] || typeof row[fieldName] !== "string") return;
+        const val = row[fieldName];
+        if (val.startsWith("data:image/") && val.length > 50000) {
+          try {
+            const match = val.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/);
+            if (match) {
+              const uploadsDir = path.join(process.cwd(), "public", "uploads", "courses");
+              if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+              const ext = match[1] === "jpeg" ? "jpg" : match[1];
+              const filename = `img_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${ext}`;
+              const filePath = path.join(uploadsDir, filename);
+              fs.writeFileSync(filePath, Buffer.from(match[2], "base64"));
+              row[fieldName] = `/uploads/courses/${filename}`;
+            }
+          } catch (e) {
+            console.warn("Could not save base64 image to static file:", e);
+          }
+        }
+      };
 
       if (insertData) {
         let insertArr = Array.isArray(insertData) ? insertData : [insertData];
@@ -1274,6 +1347,8 @@ async function startServer() {
         
         // Auto-generate UUID if id column is missing or empty
         insertArr = insertArr.map(row => {
+          saveBase64ImageIfPresent(row, "featured_image");
+          saveBase64ImageIfPresent(row, "thumbnail_url");
           if (!row.hasOwnProperty("id") || !row.id || String(row.id).trim() === "") {
             return { ...row, id: crypto.randomUUID() };
           }
@@ -1295,9 +1370,11 @@ async function startServer() {
         
         const sql = `INSERT INTO \`${table}\` (${cols}) VALUES ${placeholders.join(", ")}`;
         await mysqlPool.query(sql, insertVals);
-        
+        invalidateTableCache(table);
         return res.json(insertArr);
       } else if (updateData) {
+        saveBase64ImageIfPresent(updateData, "featured_image");
+        saveBase64ImageIfPresent(updateData, "thumbnail_url");
         const rawKeys = Object.keys(updateData);
         const keys = validCols ? rawKeys.filter(k => validCols!.has(k)) : rawKeys;
         if (keys.length === 0) return res.json([updateData]);
@@ -1307,7 +1384,7 @@ async function startServer() {
         
         const sql = `UPDATE \`${table}\` SET ${sets} ${whereSQL}`;
         await mysqlPool.query(sql, [...updateVals, ...queryValues]);
-        
+        invalidateTableCache(table);
         return res.json([updateData]);
       } else if (upsertData) {
         let upsertArr = Array.isArray(upsertData) ? upsertData : [upsertData];
@@ -1315,6 +1392,8 @@ async function startServer() {
 
         // Auto-generate UUID if id column is missing or empty
         upsertArr = upsertArr.map(row => {
+          saveBase64ImageIfPresent(row, "featured_image");
+          saveBase64ImageIfPresent(row, "thumbnail_url");
           if (!row.hasOwnProperty("id") || !row.id || String(row.id).trim() === "") {
             return { ...row, id: crypto.randomUUID() };
           }
@@ -1337,11 +1416,13 @@ async function startServer() {
         const updates = keys.map(k => `\`${k}\` = VALUES(\`${k}\`)`).join(", ");
         const sql = `INSERT INTO \`${table}\` (${cols}) VALUES ${placeholders.join(", ")} ON DUPLICATE KEY UPDATE ${updates}`;
         await mysqlPool.query(sql, upsertVals);
+        invalidateTableCache(table);
         return res.json(upsertArr);
       } else if (deleteFlag) {
         if (!whereSQL) return res.status(400).json({ error: "DELETE requires filters" });
         const sql = `DELETE FROM \`${table}\` ${whereSQL}`;
         await mysqlPool.query(sql, queryValues);
+        invalidateTableCache(table);
         return res.json([]);
       } else {
         const RELATION_MAP: Record<string, { fk: string; targetTable: string }> = {
@@ -1446,35 +1527,59 @@ async function startServer() {
           sql += ` LIMIT ${limitCount}`;
         }
         
-        const [rows]: any = await mysqlPool.query(sql, queryValues);
-        
-        let formatted = rows.map((row: any) => {
-          for (const key in row) {
-            if (typeof row[key] === "string" && (row[key].startsWith("{") || row[key].startsWith("["))) {
-              try {
-                row[key] = JSON.parse(row[key]);
-              } catch (e) {}
-            }
-            // Boolean fields normalization for membership_tiers
-            if (table === "membership_tiers") {
-              if ([
-                "isDefaultFreeTier", "isActive", "accessAllCourses",
-                "accessAllMockTests", "accessAllPractice", "hasAiEvaluation",
-                "hasLiveMeetings", "hasCertificates", "hasDownloadMaterials",
-                "hasPrioritySupport"
-              ].includes(key)) {
-                row[key] = Boolean(row[key]);
+        const executeFetch = async () => {
+          const [rows]: any = await mysqlPool.query(sql, queryValues);
+          
+          let formatted = rows.map((row: any) => {
+            for (const key in row) {
+              if (typeof row[key] === "string" && (row[key].startsWith("{") || row[key].startsWith("["))) {
+                try {
+                  row[key] = JSON.parse(row[key]);
+                } catch (e) {}
+              }
+              // Boolean fields normalization for membership_tiers
+              if (table === "membership_tiers") {
+                if ([
+                  "isDefaultFreeTier", "isActive", "accessAllCourses",
+                  "accessAllMockTests", "accessAllPractice", "hasAiEvaluation",
+                  "hasLiveMeetings", "hasCertificates", "hasDownloadMaterials",
+                  "hasPrioritySupport"
+                ].includes(key)) {
+                  row[key] = Boolean(row[key]);
+                }
               }
             }
-          }
-          return row;
-        });
+            return row;
+          });
 
-        if (hasRelation) {
-          formatted = await resolveRelations(table, formatted, selectFields);
+          if (hasRelation) {
+            formatted = await resolveRelations(table, formatted, selectFields);
+          }
+
+          if (cacheKey) {
+            tableQueryCache.set(cacheKey, { data: formatted, time: Date.now() });
+          }
+          return formatted;
+        };
+
+        let fetchPromise: Promise<any[]>;
+        if (cacheKey) {
+          fetchPromise = executeFetch();
+          inFlightTableQueries.set(cacheKey, fetchPromise);
+        } else {
+          fetchPromise = executeFetch();
         }
-        
-        return res.json(formatted);
+
+        try {
+          const finalResult = await fetchPromise;
+          res.setHeader("X-Cache", "MISS");
+          res.setHeader("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
+          return res.json(finalResult);
+        } finally {
+          if (cacheKey) {
+            inFlightTableQueries.delete(cacheKey);
+          }
+        }
       }
     } catch (err: any) {
       const tableName = req.body?.table;
@@ -1750,15 +1855,30 @@ async function startServer() {
     }
   };
 
+  let cachedMediaCoursesList: any[] | null = null;
+  let cachedMediaCoursesListTime = 0;
+
+  const invalidateMediaCoursesCache = () => {
+    cachedMediaCoursesList = null;
+    cachedMediaCoursesListTime = 0;
+  };
+
   app.get("/api/media_courses", async (req, res) => {
+    res.setHeader("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
+    const now = Date.now();
+    if (cachedMediaCoursesList && (now - cachedMediaCoursesListTime) < 60000) {
+      res.setHeader("X-Cache", "HIT");
+      return res.json(cachedMediaCoursesList);
+    }
     try {
       const fileData = readServerMediaCoursesFile();
       let mysqlData: any[] = [];
 
       try {
-        const [rows]: any = await mysqlPool.execute(
-          "SELECT * FROM resources WHERE name = 'SITE_MEDIA_COURSES' AND type = 'MEDIA_COURSES' LIMIT 1"
-        );
+        const [rows]: any = await Promise.race([
+          mysqlPool.execute("SELECT * FROM resources WHERE name = 'SITE_MEDIA_COURSES' AND type = 'MEDIA_COURSES' LIMIT 1"),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 400))
+        ]);
         if (rows && rows.length > 0 && rows[0].url) {
           mysqlData = JSON.parse(rows[0].url);
         }
@@ -1768,10 +1888,15 @@ async function startServer() {
       fileData.forEach((item: any) => { if (item && item.id) mergedMap.set(item.id, item); });
       mysqlData.forEach((item: any) => { if (item && item.id) mergedMap.set(item.id, item); });
 
-      return res.json(Array.from(mergedMap.values()));
+      const finalResult = Array.from(mergedMap.values());
+      cachedMediaCoursesList = finalResult;
+      cachedMediaCoursesListTime = Date.now();
+      res.setHeader("X-Cache", "MISS");
+      return res.json(finalResult);
     } catch (err: any) {
       console.error("Media courses GET error:", err);
-      res.json(readServerMediaCoursesFile());
+      const fallback = readServerMediaCoursesFile();
+      return res.json(fallback);
     }
   });
 
@@ -1783,6 +1908,7 @@ async function startServer() {
       }
 
       writeServerMediaCoursesFile(incomingCourses);
+      invalidateMediaCoursesCache();
 
       try {
         const [rows]: any = await mysqlPool.execute(
@@ -1823,6 +1949,7 @@ async function startServer() {
       }
 
       writeServerMediaCoursesFile(updatedList);
+      invalidateMediaCoursesCache();
 
       try {
         const [rows]: any = await mysqlPool.execute(
@@ -1853,6 +1980,7 @@ async function startServer() {
       const currentList = readServerMediaCoursesFile();
       const filtered = currentList.filter((item: any) => item.id !== id);
       writeServerMediaCoursesFile(filtered);
+      invalidateMediaCoursesCache();
 
       try {
         const [rows]: any = await mysqlPool.execute(
@@ -1983,6 +2111,12 @@ async function startServer() {
   });
 
   app.get("/api/mysql/courses", async (req, res) => {
+    res.setHeader("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
+    const now = Date.now();
+    if (cachedMysqlCourses && (now - cachedMysqlCoursesTime) < 60000) {
+      res.setHeader("X-Cache", "HIT");
+      return res.json(cachedMysqlCourses);
+    }
     try {
       const [rows]: any = await mysqlPool.execute(
         "SELECT id, title, description, category, status, level, type, difficulty, test_number, modules FROM courses"
@@ -1997,6 +2131,9 @@ async function startServer() {
           modules: mods || []
         };
       });
+      cachedMysqlCourses = formatted;
+      cachedMysqlCoursesTime = Date.now();
+      res.setHeader("X-Cache", "MISS");
       res.json(formatted);
     } catch (err: any) {
       console.error("MySQL courses GET error:", err);

@@ -25,7 +25,7 @@ export default defineConfig(() => {
       alias: {
         '@': path.resolve(__dirname, '.'),
       },
-      dedupe: ['react', 'react-dom', 'react-router', 'react-router-dom'],
+      dedupe: ['react', 'react-dom', 'react-router', 'react-router-dom', '@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
     },
     optimizeDeps: {
       include: [
@@ -34,6 +34,9 @@ export default defineConfig(() => {
         'react-dom/client',
         'react-router',
         'react-router-dom',
+        '@dnd-kit/core',
+        '@dnd-kit/sortable',
+        '@dnd-kit/utilities',
       ],
     },
     esbuild: {

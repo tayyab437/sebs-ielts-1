@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/src/lib/supabaseClient";
-import { safeGetItemAndParse } from "@/src/lib/safeStorage";
+import { safeGetItemAndParse, safeSetItem } from "@/src/lib/safeStorage";
 import { fetchSiteSettings, saveSiteSettings, updateDocumentFavicon, defaultSettings } from "@/src/lib/settings";
 import { flattenQuestionsToIndividual, countTotalQuestions } from "@/src/utils/questionFlattener";
 import { CourseDesignerComponent } from "../../components/course-designer";
@@ -16,7 +16,7 @@ import SpeakingCourseBuilder from "../../components/admin/SpeakingCourseBuilder"
 import MembershipsManager from "../../components/admin/MembershipsManager";
 import CourseAccessTierPicker from "../../components/admin/CourseAccessTierPicker";
 import { syncMockTestTierAccess, syncCourseTierAccess } from "@/src/lib/membershipService";
-import { mergeCoursesWithMedia, fetchAllMediaCourses } from "@/src/lib/mediaCourseAdapter";
+import { mergeCoursesWithMedia, fetchAllMediaCourses, getStoredMediaCourses } from "@/src/lib/mediaCourseAdapter";
 import SecureVideoPlayer from "@/src/components/common/SecureVideoPlayer";
 import { BlogManager } from "../../components/admin/blog/BlogManager";
 import { Button } from "@/components/ui/button";
@@ -967,7 +967,20 @@ export default function AdminDashboard() {
   }>({ type: "none", message: "" });
 
   // Management State
-  const [courses, setCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>(() => {
+    try {
+      const cached = safeGetItemAndParse<any[]>("cached_admin_courses", []);
+      if (Array.isArray(cached) && cached.length > 0) return cached;
+      const pubCached = safeGetItemAndParse<any[]>("cached_published_courses", []);
+      if (Array.isArray(pubCached) && pubCached.length > 0) return pubCached;
+      const mock = safeGetItemAndParse<any[]>("mock_courses", []);
+      const media = getStoredMediaCourses();
+      const merged = mergeCoursesWithMedia(mock, media);
+      if (Array.isArray(merged) && merged.length > 0) return merged;
+    } catch (e) {}
+    return [];
+  });
+  const [courseImageFilter, setCourseImageFilter] = useState<"all" | "with_image" | "no_image">("all");
   const [mockTests, setMockTests] = useState<any[]>([]);
   const [resources, setResources] = useState<any[]>([]);
   const [quizzes, setQuizzes] = useState<any[]>([]);
@@ -1646,211 +1659,268 @@ export default function AdminDashboard() {
         return;
       }
 
+      // Fetch primary learning datasets concurrently (including media courses)
       const [
-        { data: c },
-        { data: m },
-        { data: r },
-        { data: q }
+        coursesRes,
+        mockTestsRes,
+        resourcesRes,
+        quizzesRes,
+        mediaCoursesRes
       ] = await Promise.all([
         supabase.from("courses").select("*").order("created_at", { ascending: false }),
         supabase.from("mock_tests").select("*").order("created_at", { ascending: false }),
         supabase.from("resources").select("*").order("created_at", { ascending: false }),
-        supabase.from("quizzes").select("*").order("created_at", { ascending: false })
+        supabase.from("quizzes").select("*").order("created_at", { ascending: false }),
+        fetchAllMediaCourses().catch((e) => {
+          console.warn("Could not fetch media courses for admin dashboard:", e);
+          return [];
+        })
       ]);
 
-      let teamData: any[] = [];
-      try {
-        const res = await fetch("/api/mysql/team_members");
-        if (res.ok) {
-          const team = await res.json();
-          if (team && team.length > 0) {
-            teamData = team;
-          } else {
-            const local = localStorage.getItem("sebs_team_members");
-            if (local) teamData = JSON.parse(local);
-          }
-        }
-      } catch (err) {
-        console.warn("Could not query 'team_members' from Hostinger MySQL, falling back to local storage:", err);
-      }
+      const c = coursesRes?.data || [];
+      const m = mockTestsRes?.data || [];
+      const r = resourcesRes?.data || [];
+      const q = quizzesRes?.data || [];
 
-      let tCount = [];
-      try {
-        const res = await fetch("/api/mysql/testimonials");
-        if (res.ok) {
-          const testData = await res.json();
-          if (testData && testData.length > 0) {
-            tCount = testData;
-          } else {
-            tCount = localStorage.getItem("mock_testimonials")
-              ? JSON.parse(localStorage.getItem("mock_testimonials")!)
-              : [];
-          }
-        }
-      } catch (err) {
-        console.warn("Could not query 'testimonials' from Hostinger MySQL, falling back to local storage:", err);
-        tCount = localStorage.getItem("mock_testimonials")
-          ? JSON.parse(localStorage.getItem("mock_testimonials")!)
-          : [];
-      }
-
-      let sCount: any[] = [];
-      try {
-        // Fetch from profiles (Real Registered Users from Auth)
-        const { data: pData } = await supabase
-          .from("profiles")
-          .select("*")
-          .order("created_at", { ascending: false });
-        
-        // Fetch from students (Legacy or manually added)
-        const { data: sData } = await supabase
-          .from("students")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        const profiles = pData || [];
-        const manualStudents = sData || [];
-        
-        const profileStudents = profiles.map(p => ({
-          id: p.id,
-          name: p.full_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || p.email?.split('@')[0] || "User",
-          email: p.email,
-          country: p.country || "Unknown",
-          examType: p.exam_type || "Academic",
-          currentBand: Number(p.current_band || 6.0),
-          targetBand: Number(p.target_band || 7.5),
-          speaking: Number(p.speaking || 6.0),
-          writing: Number(p.writing || 6.0),
-          reading: Number(p.reading || 6.0),
-          listening: Number(p.listening || 6.0),
-          enrolledPlan: p.plan || p.enrolled_plan || "Free Trial",
-          status: p.status || "Active",
-          enrollmentDate: p.created_at ? new Date(p.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-          notes: p.notes || ""
-        }));
-
-        // Combine and deduplicate by email
-        const combined = [...profileStudents];
-        manualStudents.forEach(ms => {
-          if (!combined.some(cs => cs.email === ms.email)) {
-            combined.push(ms);
-          }
-        });
-
-        sCount = combined.length > 0 ? combined : DEFAULT_STUDENTS;
-      } catch (err) {
-        console.warn("Could not query 'profiles' or 'students' table, falling back to local mock storage:", err);
-        sCount = localStorage.getItem("mock_students")
-          ? JSON.parse(localStorage.getItem("mock_students")!)
-          : DEFAULT_STUDENTS;
-        if (!localStorage.getItem("mock_students")) {
-          localStorage.setItem("mock_students", JSON.stringify(DEFAULT_STUDENTS));
-        }
-      }
-
-      let subCount: any[] = [];
-      try {
-        const result = await supabase
-          .from("student_submissions")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(300);
-        console.log("Submissions fetch result:", result);
-        const subData = result.data;
-        subCount = (subData || []).map((s: any) => {
-          const matchedStudent = (sCount || []).find((st: any) => 
-            (s.student_id && st.id && String(st.id) === String(s.student_id)) ||
-            (s.student_name && st.name && st.name.trim().toLowerCase() === s.student_name.trim().toLowerCase())
-          );
-          
-          let resolvedName = s.student_name;
-          if (!resolvedName || resolvedName === "Anonymous Student" || resolvedName === "Anonymous") {
-            resolvedName = matchedStudent?.name || (matchedStudent?.email ? matchedStudent.email.split("@")[0] : "Student");
-          }
-          const resolvedEmail = matchedStudent?.email || "";
-
-          return {
-            id: s.id,
-            studentId: s.student_id || matchedStudent?.id || null,
-            studentName: resolvedName,
-            studentEmail: resolvedEmail,
-            courseTitle: s.course_title || "Mock Examination",
-            lessonTitle: s.lesson_title || "General Evaluation",
-            lessonType: (s.lesson_type || "READING").toUpperCase(),
-            content: s.content,
-            wordCount: s.content ? String(s.content).split(" ").filter((w: string) => w.length > 0).length : 0,
-            submittedAt: s.created_at
-          };
-        });
-      } catch (err) {
-        const localSubs = safeGetItemAndParse<any[]>("admin_writing_submissions", []);
-        subCount = localSubs.map((s: any) => {
-          const matchedStudent = (sCount || []).find((st: any) => 
-            (s.studentId && st.id && String(st.id) === String(s.studentId)) ||
-            (s.studentName && st.name && st.name.trim().toLowerCase() === s.studentName.trim().toLowerCase())
-          );
-          return {
-            id: s.id,
-            studentId: s.studentId || s.student_id || matchedStudent?.id || null,
-            studentName: s.studentName || s.student_name || matchedStudent?.name || "Student",
-            studentEmail: matchedStudent?.email || "",
-            courseTitle: s.courseTitle || s.course_title || "Course Test",
-            lessonTitle: s.lessonTitle || s.lesson_title || "Practice Drill",
-            lessonType: (s.lessonType || s.lesson_type || "WRITING").toUpperCase(),
-            content: s.content,
-            wordCount: s.content ? String(s.content).split(" ").filter((w: string) => w.length > 0).length : 0,
-            submittedAt: s.submittedAt || s.created_at
-          };
-        });
-      }
-
-      // Parse modules and questions if they are stored as JSON strings
-      const parsedCourses = (c || []).map((course) => ({
+      // Parse courses immediately and update UI without waiting for other tabs
+      const parsedCourses = (c || []).map((course: any) => ({
         ...course,
         modules:
           typeof course.modules === "string"
-            ? JSON.parse(course.modules)
+            ? (function() { try { return JSON.parse(course.modules); } catch { return []; } })()
             : course.modules || [],
       }));
 
-      const parsedQuizzes = (q || []).map((quiz) => ({
+      let finalAdminCourses = parsedCourses;
+      if (Array.isArray(mediaCoursesRes) && mediaCoursesRes.length > 0) {
+        finalAdminCourses = mergeCoursesWithMedia(finalAdminCourses, mediaCoursesRes);
+      }
+
+      const getTestNum = (testNum: any): number => {
+        if (testNum === undefined || testNum === null) return Infinity;
+        const str = String(testNum).trim();
+        if (str === "") return Infinity;
+        const parsedVal = parseInt(str, 10);
+        if (!isNaN(parsedVal)) return parsedVal;
+        const match = str.match(/\d+/);
+        return match ? parseInt(match[0], 10) : Infinity;
+      };
+
+      const sortedCourses = [...finalAdminCourses].sort((a, b) => {
+        const aVal = getTestNum(a.test_number);
+        const bVal = getTestNum(b.test_number);
+        if (aVal !== bVal) return aVal - bVal;
+        return String(a.name || a.title || "").localeCompare(String(b.name || b.title || ""));
+      });
+
+      // Strictly deduplicate courses by ID and normalized title to prevent double-publish display
+      const remoteCourseMap = new Map<string, any>();
+      const remoteSeenTitles = new Map<string, any>();
+      sortedCourses.forEach((cItem: any) => {
+        if (!cItem) return;
+        const normTitle = String(cItem.title || cItem.name || "").trim().toLowerCase();
+        const cat = String(cItem.course_type || cItem.category || cItem.type || "").trim().toLowerCase();
+        const titleKey = normTitle ? `${normTitle}__${cat}` : String(cItem.id);
+
+        if (remoteSeenTitles.has(titleKey)) {
+          const prev = remoteSeenTitles.get(titleKey);
+          const prevSq = Array.isArray(prev.speaking_questions) ? prev.speaking_questions.length : 0;
+          const currSq = Array.isArray(cItem.speaking_questions) ? cItem.speaking_questions.length : 0;
+          if (currSq > prevSq) {
+            remoteSeenTitles.set(titleKey, cItem);
+            remoteCourseMap.set(cItem.id, cItem);
+          }
+        } else {
+          remoteSeenTitles.set(titleKey, cItem);
+          if (cItem.id && !remoteCourseMap.has(cItem.id)) remoteCourseMap.set(cItem.id, cItem);
+        }
+      });
+      const deduplicatedAdminCourses = Array.from(remoteSeenTitles.values());
+      setCourses(deduplicatedAdminCourses);
+      
+      try {
+        const lightweightAdminCache = deduplicatedAdminCourses.map((cItem: any) => ({
+          id: cItem.id,
+          title: cItem.title || cItem.name,
+          name: cItem.name || cItem.title,
+          type: cItem.type,
+          course_type: cItem.course_type,
+          course_format: cItem.course_format,
+          category: cItem.category,
+          difficulty: cItem.difficulty,
+          level: cItem.level,
+          featured_image: cItem.featured_image,
+          thumbnail_url: cItem.thumbnail_url,
+          access_tier: cItem.access_tier,
+          status: cItem.status,
+          isMediaCourse: cItem.isMediaCourse,
+          mediaType: cItem.mediaType,
+          show_in_catalog: cItem.show_in_catalog,
+          show_in_syllabus: cItem.show_in_syllabus,
+          show_in_practice: cItem.show_in_practice,
+          test_number: cItem.test_number,
+          created_at: cItem.created_at
+        }));
+        safeSetItem("cached_admin_courses", JSON.stringify(lightweightAdminCache));
+      } catch (cacheErr) {
+        console.warn("Notice: Admin courses cache update:", cacheErr);
+      }
+
+      // Parse quizzes & resources immediately
+      const parsedQuizzes = (q || []).map((quiz: any) => ({
         ...quiz,
         questions:
           typeof quiz.questions === "string"
-            ? JSON.parse(quiz.questions)
+            ? (function() { try { return JSON.parse(quiz.questions); } catch { return []; } })()
             : quiz.questions || [],
       }));
+      setQuizzes(parsedQuizzes);
 
-      const parsedResources = (r || []).map((resource) => ({
+      const parsedResources = (r || []).map((resource: any) => ({
         ...resource,
         tags:
           typeof resource.tags === "string"
-            ? JSON.parse(resource.tags)
+            ? (function() { try { return JSON.parse(resource.tags); } catch { return []; } })()
             : resource.tags || [],
       }));
+      setResources(parsedResources);
 
-      // Sync mock tests with central server API
-      let apiMockTests: any[] = [];
-      try {
-        const mockRes = await fetch("/api/mysql/mock_tests");
-        if (mockRes.ok) {
-          const apiData = await mockRes.json();
-          if (Array.isArray(apiData)) apiMockTests = apiData;
-        }
-      } catch (err) {
-        console.warn("Could not query 'mock_tests' from server API:", err);
+      // Concurrently fetch secondary background data (team, testimonials, students, submissions, mock_tests API)
+      const [teamSettled, testimonialsSettled, studentsSettled, submissionsSettled, apiMockTestsSettled] = await Promise.allSettled([
+        (async () => {
+          try {
+            const res = await fetch("/api/mysql/team_members");
+            if (res.ok) {
+              const team = await res.json();
+              if (team && team.length > 0) return team;
+            }
+          } catch (err) {}
+          const local = localStorage.getItem("sebs_team_members");
+          return local ? JSON.parse(local) : [];
+        })(),
+        (async () => {
+          try {
+            const res = await fetch("/api/mysql/testimonials");
+            if (res.ok) {
+              const testData = await res.json();
+              if (testData && testData.length > 0) return testData;
+            }
+          } catch (err) {}
+          return localStorage.getItem("mock_testimonials")
+            ? JSON.parse(localStorage.getItem("mock_testimonials")!)
+            : [];
+        })(),
+        (async () => {
+          try {
+            const [pRes, sRes] = await Promise.all([
+              supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+              supabase.from("students").select("*").order("created_at", { ascending: false })
+            ]);
+            const profiles = pRes.data || [];
+            const manualStudents = sRes.data || [];
+            const profileStudents = profiles.map((p: any) => ({
+              id: p.id,
+              name: p.full_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || p.email?.split('@')[0] || "User",
+              email: p.email,
+              country: p.country || "Unknown",
+              examType: p.exam_type || "Academic",
+              currentBand: Number(p.current_band || 6.0),
+              targetBand: Number(p.target_band || 7.5),
+              speaking: Number(p.speaking || 6.0),
+              writing: Number(p.writing || 6.0),
+              reading: Number(p.reading || 6.0),
+              listening: Number(p.listening || 6.0),
+              enrolledPlan: p.plan || p.enrolled_plan || "Free Trial",
+              status: p.status || "Active",
+              enrollmentDate: p.created_at ? new Date(p.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+              notes: p.notes || ""
+            }));
+            const combined = [...profileStudents];
+            manualStudents.forEach((ms: any) => {
+              if (!combined.some(cs => cs.email === ms.email)) {
+                combined.push(ms);
+              }
+            });
+            return combined.length > 0 ? combined : DEFAULT_STUDENTS;
+          } catch (err) {
+            return localStorage.getItem("mock_students")
+              ? JSON.parse(localStorage.getItem("mock_students")!)
+              : DEFAULT_STUDENTS;
+          }
+        })(),
+        (async () => {
+          try {
+            const result = await supabase
+              .from("student_submissions")
+              .select("*")
+              .order("created_at", { ascending: false })
+              .limit(300);
+            return result.data || [];
+          } catch (err) {
+            return safeGetItemAndParse<any[]>("admin_writing_submissions", []);
+          }
+        })(),
+        (async () => {
+          try {
+            const mockRes = await fetch("/api/mysql/mock_tests");
+            if (mockRes.ok) {
+              const apiData = await mockRes.json();
+              if (Array.isArray(apiData)) return apiData;
+            }
+          } catch (err) {}
+          return [];
+        })()
+      ]);
+
+      const teamData = teamSettled.status === "fulfilled" ? teamSettled.value : [];
+      if (teamData && teamData.length > 0) {
+        setTeamMembers(teamData);
+        localStorage.setItem("sebs_team_members", JSON.stringify(teamData));
       }
 
+      const tCount = testimonialsSettled.status === "fulfilled" ? testimonialsSettled.value : [];
+      setTestimonials(tCount);
+
+      const sCount = studentsSettled.status === "fulfilled" ? studentsSettled.value : DEFAULT_STUDENTS;
+      setStudents(sCount);
+
+      const rawSubmissions = submissionsSettled.status === "fulfilled" ? submissionsSettled.value : [];
+      const subCount = (rawSubmissions || []).map((s: any) => {
+        const matchedStudent = (sCount || []).find((st: any) => 
+          (s.student_id && st.id && String(st.id) === String(s.student_id)) ||
+          (s.studentId && st.id && String(st.id) === String(s.studentId)) ||
+          (s.student_name && st.name && st.name.trim().toLowerCase() === s.student_name.trim().toLowerCase()) ||
+          (s.studentName && st.name && st.name.trim().toLowerCase() === s.studentName.trim().toLowerCase())
+        );
+        let resolvedName = s.student_name || s.studentName;
+        if (!resolvedName || resolvedName === "Anonymous Student" || resolvedName === "Anonymous") {
+          resolvedName = matchedStudent?.name || (matchedStudent?.email ? matchedStudent.email.split("@")[0] : "Student");
+        }
+        const resolvedEmail = matchedStudent?.email || "";
+        return {
+          id: s.id,
+          studentId: s.student_id || s.studentId || matchedStudent?.id || null,
+          studentName: resolvedName,
+          studentEmail: resolvedEmail,
+          courseTitle: s.course_title || s.courseTitle || "Mock Examination",
+          lessonTitle: s.lesson_title || s.lessonTitle || "General Evaluation",
+          lessonType: (s.lesson_type || s.lessonType || "READING").toUpperCase(),
+          content: s.content,
+          wordCount: s.content ? String(s.content).split(" ").filter((w: string) => w.length > 0).length : 0,
+          submittedAt: s.created_at || s.submittedAt
+        };
+      });
+      setSubmissions(subCount);
+
+      const apiMockTests = apiMockTestsSettled.status === "fulfilled" ? apiMockTestsSettled.value : [];
       const localMockTests = safeGetItemAndParse<any[]>("mock_tests", []);
-      // Merge server API tests into local array
       const combinedMockMap = new Map();
       (localMockTests || []).forEach((item: any) => { if (item.id) combinedMockMap.set(item.id, item); });
       apiMockTests.forEach((item: any) => { if (item.id) combinedMockMap.set(item.id, item); });
       const mergedLocalMockTests = Array.from(combinedMockMap.values());
-
       const localMap = new Map(mergedLocalMockTests.map((item: any) => [item.id, item]));
 
-      const parsedTest = (m || []).map((test) => {
+      const parsedTest = (m || []).map((test: any) => {
         const localOverride = localMap.get(test.id) || {};
         const monthVal = test.test_month || test.month || localOverride.test_month || localOverride.month || "January";
         const yearVal = test.test_year || test.year || localOverride.test_year || localOverride.year || "2026";
@@ -1863,12 +1933,11 @@ export default function AdminDashboard() {
           year: yearVal,
           sections:
             typeof test.sections === "string"
-              ? JSON.parse(test.sections)
+              ? (function() { try { return JSON.parse(test.sections); } catch { return []; } })()
               : test.sections || localOverride.sections || [],
         };
       });
 
-      // Include any local or server API mock tests not present in database
       const dbTestIds = new Set((m || []).map((test: any) => test.id));
       mergedLocalMockTests.forEach((lt: any) => {
         if (lt.id && !dbTestIds.has(lt.id)) {
@@ -1878,7 +1947,7 @@ export default function AdminDashboard() {
             month: lt.test_month || lt.month || "January",
             test_year: lt.test_year || lt.year || "2026",
             year: lt.test_year || lt.year || "2026",
-            sections: typeof lt.sections === "string" ? JSON.parse(lt.sections) : lt.sections || []
+            sections: typeof lt.sections === "string" ? (function() { try { return JSON.parse(lt.sections); } catch { return []; } })() : lt.sections || []
           });
         }
       });
@@ -1886,13 +1955,13 @@ export default function AdminDashboard() {
       const countActualQuestions = (questions: any[]): number => {
         if (!Array.isArray(questions)) return 0;
         let count = 0;
-        questions.forEach((q: any) => {
-          const qType = String(q.type || "").toUpperCase();
+        questions.forEach((questionItem: any) => {
+          const qType = String(questionItem.type || "").toUpperCase();
           if (qType === "INLINE_BLANKS") {
-            const corrList = String(q.correctAnswer || "").split("|").filter(Boolean);
+            const corrList = String(questionItem.correctAnswer || "").split("|").filter(Boolean);
             count += corrList.length > 0 ? corrList.length : 1;
           } else if (qType === "MATCHING") {
-            const prompts = String(q.text || "").split("\n").filter(Boolean);
+            const prompts = String(questionItem.text || "").split("\n").filter(Boolean);
             count += prompts.length > 0 ? prompts.length : 1;
           } else {
             count += 1;
@@ -1901,20 +1970,20 @@ export default function AdminDashboard() {
         return count;
       };
 
-      const coursesMockTests = parsedCourses.filter((course: any) => {
-        const cls = String(course.course_type || "").toLowerCase();
-        return cls === "mock test" || course.is_mock_test === true || cls.includes("test") || cls.includes("task");
-      }).map((course: any) => {
+      const coursesMockTests = parsedCourses.filter((courseItem: any) => {
+        const cls = String(courseItem.course_type || "").toLowerCase();
+        return cls === "mock test" || courseItem.is_mock_test === true || cls.includes("test") || cls.includes("task");
+      }).map((courseItem: any) => {
         let allQs: any[] = [];
-        let sectionType = "Reading"; // Default fallback
-        const formatLower = String(course.course_type || "").toLowerCase();
+        let sectionType = "Reading";
+        const formatLower = String(courseItem.course_type || "").toLowerCase();
         if (formatLower.includes("listening")) sectionType = "Listening";
         else if (formatLower.includes("writing")) sectionType = "Writing";
         else if (formatLower.includes("speaking")) sectionType = "Speaking";
 
         let normalizedSections: any[] = [];
-        if (course.modules && course.modules.length > 0) {
-          course.modules.forEach((mod: any, mIdx: number) => {
+        if (courseItem.modules && courseItem.modules.length > 0) {
+          courseItem.modules.forEach((mod: any, mIdx: number) => {
             if (mod.lessons && mod.lessons.length > 0) {
               mod.lessons.forEach((les: any) => {
                 let sType = sectionType;
@@ -1958,81 +2027,24 @@ export default function AdminDashboard() {
         }
         const totalQsCount = countActualQuestions(allQs);
         return {
-          id: course.id,
-          name: course.title,
-          difficulty: course.level || "7.0",
-          questions: totalQsCount > 0 ? totalQsCount : (course.questions || 40),
-          status: course.status || "Published",
+          id: courseItem.id,
+          name: courseItem.title,
+          difficulty: courseItem.level || "7.0",
+          questions: totalQsCount > 0 ? totalQsCount : (courseItem.questions || 40),
+          status: courseItem.status || "Published",
           sections: normalizedSections,
-          thumbnail: course.featured_image || course.thumbnail_url || "",
+          thumbnail: courseItem.featured_image || courseItem.thumbnail_url || "",
           isFromCourses: true,
           course_type: "Mock Test",
-          test_number: course.test_number
+          test_number: courseItem.test_number
         };
       });
-
-      let finalAdminCourses = parsedCourses;
-      try {
-        const mediaCourses = await fetchAllMediaCourses();
-        finalAdminCourses = mergeCoursesWithMedia(finalAdminCourses, mediaCourses);
-      } catch (e) {
-        console.warn("Could not fetch media courses for admin dashboard:", e);
-      }
-
-      const sortedCourses = [...finalAdminCourses].sort((a, b) => {
-        const getTestNum = (testNum: any): number => {
-          if (testNum === undefined || testNum === null) return Infinity;
-          const str = String(testNum).trim();
-          if (str === "") return Infinity;
-          const parsedVal = parseInt(str, 10);
-          if (!isNaN(parsedVal)) return parsedVal;
-          const match = str.match(/\d+/);
-          return match ? parseInt(match[0], 10) : Infinity;
-        };
-        const aVal = getTestNum(a.test_number);
-        const bVal = getTestNum(b.test_number);
-        if (aVal !== bVal) return aVal - bVal;
-        return String(a.name || a.title || "").localeCompare(String(b.name || b.title || ""));
-      });
-
-      // Strictly deduplicate courses by ID and normalized title to prevent double-publish display
-      const remoteCourseMap = new Map<string, any>();
-      const remoteSeenTitles = new Map<string, any>();
-      sortedCourses.forEach((c: any) => {
-        if (!c) return;
-        const normTitle = String(c.title || c.name || "").trim().toLowerCase();
-        const cat = String(c.course_type || c.category || c.type || "").trim().toLowerCase();
-        const titleKey = normTitle ? `${normTitle}__${cat}` : String(c.id);
-
-        if (remoteSeenTitles.has(titleKey)) {
-          const prev = remoteSeenTitles.get(titleKey);
-          const prevSq = Array.isArray(prev.speaking_questions) ? prev.speaking_questions.length : 0;
-          const currSq = Array.isArray(c.speaking_questions) ? c.speaking_questions.length : 0;
-          if (currSq > prevSq) {
-            remoteSeenTitles.set(titleKey, c);
-            remoteCourseMap.set(c.id, c);
-          }
-        } else {
-          remoteSeenTitles.set(titleKey, c);
-          if (c.id && !remoteCourseMap.has(c.id)) remoteCourseMap.set(c.id, c);
-        }
-      });
-      setCourses(Array.from(remoteSeenTitles.values()));
 
       const remoteTestMap = new Map<string, any>();
       [...parsedTest, ...coursesMockTests].forEach((t: any) => {
         if (t && t.id && !remoteTestMap.has(t.id)) remoteTestMap.set(t.id, t);
       });
       setMockTests(Array.from(remoteTestMap.values()));
-      setResources(parsedResources);
-      setQuizzes(parsedQuizzes);
-      setStudents(sCount);
-      setSubmissions(subCount);
-      setTestimonials(tCount);
-      if (teamData && teamData.length > 0) {
-        setTeamMembers(teamData);
-        localStorage.setItem("sebs_team_members", JSON.stringify(teamData));
-      }
     } catch (e) {
       console.error("Error fetching admin data", e);
     }
@@ -2982,7 +2994,7 @@ export default function AdminDashboard() {
                   System Management
                 </Label>
               )}
-              <TabsList className="bg-transparent gap-1 h-auto p-0 flex flex-col items-stretch w-full">
+              <TabsList className="bg-transparent gap-1.5 h-auto p-0 flex flex-row lg:flex-col items-stretch overflow-x-auto max-w-full pb-2 lg:pb-0 no-scrollbar w-full">
                 {[
                   {
                     value: "courses",
@@ -3058,10 +3070,10 @@ export default function AdminDashboard() {
                   <TabsTrigger
                     key={tab.value}
                     value={tab.value}
-                    className={`justify-start rounded-xl text-left font-bold transition-all flex items-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:border-transparent border border-transparent ${
+                    className={`justify-start rounded-xl text-left font-bold transition-all flex items-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:border-transparent border border-transparent shrink-0 whitespace-nowrap ${
                       isSidebarCollapsed || isEditingCourse
                         ? "w-12 h-12 mx-auto justify-center px-0 mb-2"
-                        : "w-full px-4 py-3 gap-3 text-xs"
+                        : "px-3.5 py-2.5 lg:px-4 lg:py-3 gap-2 lg:gap-3 text-xs"
                     }`}
                     title={(isSidebarCollapsed || isEditingCourse) ? tab.label : undefined}
                     onClick={() => {
@@ -3246,17 +3258,66 @@ export default function AdminDashboard() {
                           <CardDescription>
                             Manage your academic syllabus
                           </CardDescription>
+
+                          {/* Course Image Filter Bar */}
+                          <div className="flex items-center gap-1.5 pt-1.5 flex-wrap">
+                            <button
+                              type="button"
+                              onClick={() => setCourseImageFilter("all")}
+                              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase italic transition-all cursor-pointer ${
+                                courseImageFilter === "all"
+                                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs"
+                                  : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                              }`}
+                            >
+                              All ({courses.length})
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCourseImageFilter("with_image")}
+                              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase italic transition-all flex items-center gap-1 cursor-pointer ${
+                                courseImageFilter === "with_image"
+                                  ? "bg-emerald-600 text-white shadow-xs"
+                                  : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                              }`}
+                            >
+                              <ImageIcon className="w-3 h-3" />
+                              With Image ({courses.filter(c => Boolean(c.featured_image || c.thumbnail_url)).length})
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCourseImageFilter("no_image")}
+                              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase italic transition-all cursor-pointer ${
+                                courseImageFilter === "no_image"
+                                  ? "bg-amber-600 text-white shadow-xs"
+                                  : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                              }`}
+                            >
+                              No Image ({courses.filter(c => !c.featured_image && !c.thumbnail_url).length})
+                            </button>
+                          </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                          {courses.length === 0 ? (
-                            <div className="text-center py-10 opacity-40">
-                              <BookOpen className="w-12 h-12 mx-auto mb-2" />
-                              <p className="text-xs font-bold italic uppercase tracking-widest">
-                                No Active Curriculum
-                              </p>
-                            </div>
-                          ) : (
-                            courses.map((course) => (
+                          {(() => {
+                            const displayedCourses = courses.filter((cItem) => {
+                              const hasImg = Boolean(cItem.featured_image || cItem.thumbnail_url);
+                              if (courseImageFilter === "with_image") return hasImg;
+                              if (courseImageFilter === "no_image") return !hasImg;
+                              return true;
+                            });
+
+                            if (displayedCourses.length === 0) {
+                              return (
+                                <div className="text-center py-10 opacity-40">
+                                  <BookOpen className="w-12 h-12 mx-auto mb-2" />
+                                  <p className="text-xs font-bold italic uppercase tracking-widest">
+                                    {courseImageFilter === "with_image" ? "No Courses With Image Set" : "No Active Curriculum"}
+                                  </p>
+                                </div>
+                              );
+                            }
+
+                            return displayedCourses.map((course) => (
                               <div
                                 key={course.id}
                                 onClick={() => {
@@ -3264,19 +3325,23 @@ export default function AdminDashboard() {
                                     JSON.parse(JSON.stringify(course)),
                                   );
                                   setIsEditingCourse(true);
-                                  // When editing a course from the list, also set the active designer ID
                                   localStorage.setItem('active_course_designer_id', course.id);
                                 }}
                                 className={`flex items-center justify-between p-4 rounded-2xl transition-all cursor-pointer border gap-2 ${currentCourse?.id === course.id ? "bg-primary/5 border-primary/20" : "bg-slate-50 dark:bg-white/5 border-transparent hover:border-primary/10"}`}
                               >
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                                  {course.featured_image ? (
-                                    <img
-                                      src={course.featured_image}
-                                      alt={course.title}
-                                      className="w-10 h-10 shrink-0 rounded-xl object-cover border border-slate-200 dark:border-white/10"
-                                      referrerPolicy="no-referrer"
-                                    />
+                                  {course.featured_image || course.thumbnail_url ? (
+                                    <div className="relative shrink-0">
+                                      <img
+                                        src={course.featured_image || course.thumbnail_url}
+                                        alt={course.title}
+                                        className="w-10 h-10 shrink-0 rounded-xl object-cover border border-slate-200 dark:border-white/10"
+                                        referrerPolicy="no-referrer"
+                                      />
+                                      <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 flex items-center justify-center">
+                                        <CheckCircle2 className="w-2.5 h-2.5 text-white" />
+                                      </div>
+                                    </div>
                                   ) : (
                                     <div className="w-10 h-10 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center font-black text-primary italic">
                                       {String(course?.title || "C").charAt(0) || "C"}
@@ -3328,8 +3393,8 @@ export default function AdminDashboard() {
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </Button>
                               </div>
-                            ))
-                          )}
+                            ));
+                          })()}
                         </CardContent>
                       </Card>
                     )}
@@ -3581,6 +3646,62 @@ export default function AdminDashboard() {
                                   />
                                 </div>
                               </div>
+
+                              {/* Gallery of Courses with Images Set */}
+                              {courses.filter(c => Boolean(c.featured_image || c.thumbnail_url)).length > 0 && (
+                                <div className="pt-3.5 border-t border-slate-200/60 dark:border-white/5 space-y-2">
+                                  <div className="flex items-center justify-between flex-wrap gap-1">
+                                    <span className="text-[10px] uppercase font-black italic text-slate-500 flex items-center gap-1.5">
+                                      <ImageIcon className="w-3.5 h-3.5 text-primary" />
+                                      Courses With Image Set ({courses.filter(c => Boolean(c.featured_image || c.thumbnail_url)).length})
+                                    </span>
+                                    <span className="text-[9px] text-slate-400 italic">Click any course thumbnail below to apply its image</span>
+                                  </div>
+                                  
+                                  <ScrollArea className="w-full whitespace-nowrap rounded-xl pb-1">
+                                    <div className="flex gap-2.5 p-1">
+                                      {courses.filter(c => Boolean(c.featured_image || c.thumbnail_url)).map((imgCourse) => {
+                                        const imgSrc = imgCourse.featured_image || imgCourse.thumbnail_url;
+                                        const isSelected = currentCourse.featured_image === imgSrc;
+                                        return (
+                                          <button
+                                            key={imgCourse.id}
+                                            type="button"
+                                            onClick={() => setCurrentCourse({ ...currentCourse, featured_image: imgSrc })}
+                                            className={`shrink-0 flex items-center gap-2.5 p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                                              isSelected 
+                                                ? "bg-primary/10 border-primary ring-2 ring-primary/20" 
+                                                : "bg-white dark:bg-slate-800/80 border-slate-200 dark:border-white/10 hover:border-primary/40 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                            }`}
+                                          >
+                                            <div className="relative shrink-0">
+                                              <img
+                                                src={imgSrc}
+                                                alt={imgCourse.title}
+                                                className="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-white/10"
+                                                referrerPolicy="no-referrer"
+                                              />
+                                              {isSelected && (
+                                                <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 flex items-center justify-center">
+                                                  <CheckCircle2 className="w-2.5 h-2.5 text-white" />
+                                                </div>
+                                              )}
+                                            </div>
+                                            <div className="min-w-0 max-w-[140px] pr-1">
+                                              <p className="text-[11px] font-black truncate text-slate-800 dark:text-slate-100">
+                                                {imgCourse.title}
+                                              </p>
+                                              <p className="text-[9px] font-bold text-slate-400 uppercase italic">
+                                                {imgCourse.level || "7.0"} Band &bull; {imgCourse.type || "AC"}
+                                              </p>
+                                            </div>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </ScrollArea>
+                                </div>
+                              )}
                             </div>
                           </div>
 

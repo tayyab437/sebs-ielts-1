@@ -122,31 +122,63 @@ export function getStoredMediaCourses(): MediaCourse[] {
   return DEFAULT_MEDIA_COURSES;
 }
 
+let inFlightMediaCoursesPromise: Promise<MediaCourse[]> | null = null;
+let memoryMediaCoursesCache: MediaCourse[] | null = null;
+let memoryMediaCoursesTime = 0;
+
 /**
- * Fetches media courses from the server API and syncs with localStorage.
+ * Invalidate client in-memory cache for media courses
  */
-export async function fetchAllMediaCourses(): Promise<MediaCourse[]> {
-  try {
-    const res = await fetch("/api/media_courses");
-    if (res.ok) {
-      const serverData = await res.json();
-      if (Array.isArray(serverData) && serverData.length > 0) {
-        // Merge with local storage
-        const local = getStoredMediaCourses();
-        const map = new Map<string, MediaCourse>();
-        local.forEach((c) => map.set(c.id, c));
-        serverData.forEach((c: MediaCourse) => map.set(c.id, c));
-        const merged = Array.from(map.values());
-        try {
-          localStorage.setItem("mock_media_courses", JSON.stringify(merged));
-        } catch (e) {}
-        return merged;
-      }
-    }
-  } catch (err) {
-    console.warn("Media courses API unavailable, using local cache:", err);
+export function invalidateMediaCoursesCache() {
+  memoryMediaCoursesCache = null;
+  memoryMediaCoursesTime = 0;
+  inFlightMediaCoursesPromise = null;
+}
+
+/**
+ * Fetches media courses from the server API and syncs with localStorage with in-memory caching and request deduplication.
+ */
+export async function fetchAllMediaCourses(forceRefresh = false): Promise<MediaCourse[]> {
+  const now = Date.now();
+  if (!forceRefresh && memoryMediaCoursesCache && (now - memoryMediaCoursesTime < 60000)) {
+    return memoryMediaCoursesCache;
   }
-  return getStoredMediaCourses();
+  if (!forceRefresh && inFlightMediaCoursesPromise) {
+    return inFlightMediaCoursesPromise;
+  }
+
+  inFlightMediaCoursesPromise = (async () => {
+    try {
+      const res = await fetch("/api/media_courses");
+      if (res.ok) {
+        const serverData = await res.json();
+        if (Array.isArray(serverData) && serverData.length > 0) {
+          // Merge with local storage
+          const local = getStoredMediaCourses();
+          const map = new Map<string, MediaCourse>();
+          local.forEach((c) => map.set(c.id, c));
+          serverData.forEach((c: MediaCourse) => map.set(c.id, c));
+          const merged = Array.from(map.values());
+          memoryMediaCoursesCache = merged;
+          memoryMediaCoursesTime = Date.now();
+          try {
+            localStorage.setItem("mock_media_courses", JSON.stringify(merged));
+          } catch (e) {}
+          return merged;
+        }
+      }
+    } catch (err) {
+      console.warn("Media courses API unavailable, using local cache:", err);
+    } finally {
+      inFlightMediaCoursesPromise = null;
+    }
+    const fallback = getStoredMediaCourses();
+    memoryMediaCoursesCache = fallback;
+    memoryMediaCoursesTime = Date.now();
+    return fallback;
+  })();
+
+  return inFlightMediaCoursesPromise;
 }
 
 /**

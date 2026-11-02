@@ -192,12 +192,19 @@ export function updateDocumentFavicon(faviconUrl: string) {
 }
 
 export function sanitizeAssetUrl(url: string | null | undefined, defaultUrl: string): string {
-  if (defaultUrl === "https://i.ibb.co/Xxg75WQc/image-1.jpg") {
-    return "https://i.ibb.co/Xxg75WQc/image-1.jpg";
-  }
-  if (!url) return defaultUrl;
+  const targetDefault = "https://i.ibb.co/Xxg75WQc/image-1.jpg";
+  if (!url) return defaultUrl || targetDefault;
   const trimmed = url.trim();
-  if (!trimmed || trimmed === "/sebs_official_logo_315.webp") return defaultUrl;
+  if (
+    !trimmed ||
+    trimmed.includes("sebs_official_logo") ||
+    trimmed.includes("sebs_logo") ||
+    trimmed === "/sebs_official_logo_315.webp" ||
+    trimmed === "/sebs_official_logo_160.webp" ||
+    trimmed === "/sebs_official_logo_315.png"
+  ) {
+    return targetDefault;
+  }
   if (trimmed.startsWith("/src/assets/images/")) {
     return trimmed.replace("/src/assets/images/", "/");
   }
