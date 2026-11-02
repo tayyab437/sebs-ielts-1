@@ -62,6 +62,19 @@ export default function IeltsTestView({
 }: IeltsTestViewProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const optionsMenuRef = useRef<HTMLDivElement>(null);
+
+  // Auto-close Options Dropdown when clicking outside
+  useEffect(() => {
+    if (!showOptionsMenu) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (optionsMenuRef.current && !optionsMenuRef.current.contains(event.target as Node)) {
+        setShowOptionsMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showOptionsMenu]);
   const [showSolutionsModal, setShowSolutionsModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -650,7 +663,7 @@ export default function IeltsTestView({
         </button>
 
         {/* Options Dropdown */}
-        <div className="relative">
+        <div className="relative" ref={optionsMenuRef}>
           <button
             onClick={() => setShowOptionsMenu(!showOptionsMenu)}
             className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer"
@@ -1881,9 +1894,12 @@ export default function IeltsTestView({
 
       {/* Solutions Key Modal */}
       {showSolutionsModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-700 max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 mb-4">
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) setShowSolutionsModal(false); }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in cursor-pointer"
+        >
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-700 max-h-[85vh] flex flex-col cursor-default">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 mb-4 shrink-0">
               <div>
                 <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-teal-600" /> Answer Solutions Key
@@ -1894,7 +1910,7 @@ export default function IeltsTestView({
               </div>
               <button
                 onClick={() => setShowSolutionsModal(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-900 cursor-pointer"
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-900 cursor-pointer shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1902,15 +1918,15 @@ export default function IeltsTestView({
 
             {/* Quick Section Tabs in Solutions Key */}
             {allSections.length > 1 && (
-              <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+              <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1.5 shrink-0 min-h-[44px] py-1">
                 {allSections.map((s: any, idx: number) => (
                   <button
                     key={s.id || idx}
                     type="button"
                     onClick={() => handleSectionSwitch(idx)}
-                    className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer shrink-0 whitespace-nowrap inline-flex items-center justify-center ${
                       activeSecIdx === idx
-                        ? "bg-teal-600 text-white shadow-xs"
+                        ? "bg-teal-600 text-white shadow-md shadow-teal-600/30"
                         : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
                     }`}
                   >
@@ -2016,8 +2032,11 @@ export default function IeltsTestView({
 
       {/* Performance & Score Diagnostic Report Modal */}
       {showReportResultModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-700 max-h-[90vh] flex flex-col">
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) setShowReportResultModal(false); }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in cursor-pointer"
+        >
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-700 max-h-[90vh] flex flex-col cursor-default">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 mb-5">
               <div className="flex items-center gap-3">
@@ -2154,8 +2173,11 @@ export default function IeltsTestView({
 
       {/* Report Mistake Modal */}
       {showReportModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-700">
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) setShowReportModal(false); }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in cursor-pointer"
+        >
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-700 cursor-default">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 mb-4">
               <h3 className="text-xl font-black text-rose-600 flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5" /> Report Mistake or Issue
@@ -2222,8 +2244,11 @@ export default function IeltsTestView({
 
       {/* Exit Confirmation Modal */}
       {showExitConfirm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-700 text-center space-y-4">
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) setShowExitConfirm(false); }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in cursor-pointer"
+        >
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-700 text-center space-y-4 cursor-default">
             <div className="w-14 h-14 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 mx-auto">
               <AlertTriangle className="w-7 h-7" />
             </div>
@@ -2254,8 +2279,11 @@ export default function IeltsTestView({
 
       {/* Submit Test Confirmation Modal */}
       {showSubmitConfirm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-700 text-center space-y-4">
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) setShowSubmitConfirm(false); }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in cursor-pointer"
+        >
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-700 text-center space-y-4 cursor-default">
             <div className="w-14 h-14 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-teal-600 mx-auto">
               <Send className="w-7 h-7" />
             </div>

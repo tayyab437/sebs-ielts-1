@@ -249,8 +249,11 @@ export default function HeroSection() {
 
       {/* Quick Advisory Contact Modal */}
       {isContactModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800 text-left relative animate-in zoom-in-95">
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) setIsContactModalOpen(false); }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in cursor-pointer"
+        >
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800 text-left relative animate-in zoom-in-95 cursor-default">
             <button
               type="button"
               onClick={() => setIsContactModalOpen(false)}
@@ -270,7 +273,7 @@ export default function HeroSection() {
 
             <div className="mt-6 space-y-3">
               <a
-                href="https://wa.me/923000000000"
+                href="https://wa.me/923304541573?text=Hello%20SEBS%20Institute%2C%20I%20would%20like%20to%20inquire%20about%20courses."
                 target="_blank"
                 rel="noreferrer"
                 className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider shadow-md transition-all"
@@ -280,11 +283,11 @@ export default function HeroSection() {
               </a>
 
               <a
-                href="tel:+923000000000"
+                href="tel:+923304541573"
                 className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 font-bold text-xs uppercase tracking-wider transition-all"
               >
                 <Phone className="w-4 h-4" />
-                <span>Call Admissions Office</span>
+                <span>Call Admissions Office (+92 330 4541573)</span>
               </a>
             </div>
           </div>
